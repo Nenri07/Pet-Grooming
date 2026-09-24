@@ -1,12 +1,10 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 import './globals.css';
+import { fontVars } from '@/styles/fonts';
 import { SessionProvider } from '@/components/providers/SessionProvider';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { ToastProvider } from '@/components/providers/ToastProvider';
 import { AnimationProvider } from '@/lib/animation';
-
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
   title: 'PawPort',
@@ -19,8 +17,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-theme="pawport_light" suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans`}>
+    <html lang="en" suppressHydrationWarning className={fontVars}>
+      <body className="bg-base-100 text-base-content antialiased">
         <SessionProvider>
           <ThemeProvider>
             <AnimationProvider>

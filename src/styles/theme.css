@@ -1,94 +1,53 @@
-/* =====================================================================
-   PawPort — Central Theme Tokens (single source of truth)
-   Edit THIS file to re-theme the entire site (marketing + portal).
-   Colors are HSL channel triples: "H S% L%" so consumers can apply
-   alpha via hsl(var(--x) / <alpha>).
-   ===================================================================== */
+/* THE ONLY FILE YOU EDIT TO RE-THEME. Colors are OKLCH components "L C H" (no oklch()),
+   because daisyUI 4 reads them this way and derives alpha (bg-primary/20). */
 
-:root,
-[data-theme='pawport_light'] {
-  /* ---- Brand palette (luxury mobile pet spa) ---- */
-  --color-primary: 210 55% 60%;      /* soft blue      #5B9BD5 */
-  --color-primary-content: 0 0% 100%;
-  --color-secondary: 344 74% 80%;    /* gentle pink    #F5A5B8 */
-  --color-secondary-content: 220 26% 17%;
-  --color-accent: 180 39% 64%;       /* calm teal      #7EC8C8 */
-  --color-accent-content: 220 26% 17%;
-  --color-neutral: 220 9% 46%;       /* warm neutral   #6B7280 */
-  --color-neutral-content: 210 20% 98%;
-
-  /* ---- Surfaces ---- */
-  --color-base-100: 0 0% 100%;       /* page bg        #FFFFFF */
-  --color-base-200: 210 20% 98%;     /* raised surface #F9FAFB */
-  --color-base-300: 220 14% 96%;     /* border/well    #F3F4F6 */
-  --color-base-content: 220 26% 17%; /* body text      #1F2937 */
-
-  /* ---- Status ---- */
-  --color-info: 213 94% 68%;
-  --color-success: 158 64% 52%;
-  --color-warning: 43 96% 56%;
-  --color-error: 0 91% 71%;
-
-  /* ---- Marketing-only accents (warm neutrals + glow) ---- */
-  --color-cream: 40 33% 96%;         /* warm off-white section bg */
-  --color-sand: 35 30% 88%;          /* warm neutral band */
-  --color-ink: 222 47% 11%;          /* near-black headings */
-
-  /* ---- Radii ---- */
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;   /* = DaisyUI --rounded-btn */
-  --radius-lg: 1rem;     /* = DaisyUI --rounded-box */
-  --radius-xl: 1.75rem;
-  --radius-full: 9999px;
-
-  /* ---- Shadows ---- */
-  --shadow-card: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
-  --shadow-soft: 0 10px 30px -12px rgb(31 41 55 / 0.18);
-  --shadow-glow: 0 0 60px -12px hsl(var(--color-primary) / 0.45);
-
-  /* ---- Spacing scale (section rhythm) ---- */
-  --space-section: clamp(4rem, 10vw, 9rem);
-  --space-gutter: clamp(1rem, 5vw, 3rem);
-
-  /* ---- Typography ---- */
-  --font-sans: 'Inter', 'Geist', system-ui, sans-serif;
-  --font-display: 'Inter', system-ui, sans-serif; /* swap for a display face later */
-  --text-hero: clamp(2.75rem, 7vw, 5.5rem);
-  --text-h2: clamp(1.75rem, 4vw, 3rem);
-  --leading-tight: 1.08;
-
-  /* ---- Motion ---- */
-  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-  --dur-reveal: 0.7s;
+:root {
+  --font-display-stack: var(--font-display), "Iowan Old Style", Georgia, serif;
+  --font-body-stack: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  --rounded-box: 1.5rem;  --rounded-btn: 999px;  --rounded-badge: 999px;
+  --animation-btn: 0.25s; --animation-input: 0.2s; --btn-focus-scale: 0.97;
+  --border-btn: 1px; --tab-border: 1px; --tab-radius: 0.75rem;
 }
 
-[data-theme='pawport_dark'] {
-  --color-primary: 210 71% 70%;      /* #7BB8E8 */
-  --color-primary-content: 222 47% 11%;
-  --color-secondary: 344 74% 80%;
-  --color-secondary-content: 222 47% 11%;
-  --color-accent: 180 39% 64%;
-  --color-accent-content: 222 47% 11%;
-  --color-neutral: 217 19% 27%;
-  --color-neutral-content: 210 20% 98%;
-
-  --color-base-100: 220 26% 17%;     /* #1F2937 */
-  --color-base-200: 221 39% 11%;     /* #111827 */
-  --color-base-300: 222 47% 11%;     /* #0F172A */
-  --color-base-content: 210 20% 98%;
-
-  --color-cream: 220 26% 20%;
-  --color-sand: 221 39% 14%;
-  --color-ink: 210 20% 98%;
-
-  --shadow-card: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.4);
-  --shadow-soft: 0 10px 30px -12px rgb(0 0 0 / 0.6);
-  --shadow-glow: 0 0 60px -12px hsl(var(--color-primary) / 0.55);
+/* LIGHT — "Ivory Spa" */
+[data-theme="pawport_light"] {
+  color-scheme: light;
+  --p: 42% 0.11 255;  --pc: 98% 0.01 255;
+  --s: 74% 0.08 170;  --sc: 24% 0.04 170;
+  --a: 80% 0.09 15;   --ac: 30% 0.05 15;
+  --n: 24% 0.03 260;  --nc: 96% 0.01 260;
+  --b1: 98.5% 0.008 85; --b2: 95.5% 0.012 85; --b3: 91% 0.016 85;
+  --bc: 24% 0.025 260;
+  --in: 70% 0.12 235; --inc: 20% 0.04 235;
+  --su: 72% 0.14 155; --suc: 20% 0.05 155;
+  --wa: 82% 0.14 85;  --wac: 25% 0.05 85;
+  --er: 64% 0.20 25;  --erc: 98% 0.01 25;
+  --pp-hero-gradient: radial-gradient(120% 90% at 20% 10%, oklch(92% 0.05 240) 0%, oklch(97% 0.02 85) 55%, oklch(94% 0.05 15) 100%);
+  --pp-glow: 0 20px 60px -20px oklch(var(--p) / 0.35);
+  --pp-shadow-card: 0 10px 30px -12px oklch(20% 0.03 260 / 0.10);
+  --pp-border: oklch(var(--bc) / 0.10);
+  --pp-glass: oklch(var(--b1) / 0.7);
 }
 
-/* Accessibility: collapse motion tokens when the user prefers reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  :root {
-    --dur-reveal: 0.001s;
-  }
+/* DARK — "Midnight Spa" */
+[data-theme="pawport_dark"] {
+  color-scheme: dark;
+  --p: 74% 0.12 245;  --pc: 18% 0.03 245;
+  --s: 78% 0.09 175;  --sc: 20% 0.04 175;
+  --a: 82% 0.10 20;   --ac: 22% 0.04 20;
+  --n: 26% 0.03 265;  --nc: 95% 0.01 265;
+  --b1: 18% 0.025 265; --b2: 15% 0.025 265; --b3: 12% 0.025 265;
+  --bc: 94% 0.01 90;
+  --in: 72% 0.12 235; --inc: 18% 0.04 235;
+  --su: 76% 0.14 155; --suc: 18% 0.05 155;
+  --wa: 84% 0.14 85;  --wac: 22% 0.05 85;
+  --er: 68% 0.19 25;  --erc: 18% 0.05 25;
+  --pp-hero-gradient: radial-gradient(120% 90% at 20% 10%, oklch(30% 0.08 250) 0%, oklch(18% 0.025 265) 55%, oklch(24% 0.06 15) 100%);
+  --pp-glow: 0 20px 80px -20px oklch(var(--p) / 0.45);
+  --pp-shadow-card: 0 12px 40px -12px oklch(0% 0 0 / 0.55);
+  --pp-border: oklch(var(--bc) / 0.10);
+  --pp-glass: oklch(var(--b1) / 0.6);
 }
+
+html { font-family: var(--font-body-stack); font-size: 16px; line-height: 1.6; }
+h1, h2, h3, .font-display { font-family: var(--font-display-stack); letter-spacing: -0.02em; }
