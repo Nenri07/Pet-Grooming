@@ -37,6 +37,9 @@ import {
   sendGroomerNotificationEmail,
 } from '@/lib/email/send';
 import { createCalendarEventForAppointment } from '@/lib/calendar/google-sync';
+import { idempotencyOnce, isRedisConfigured } from '@/lib/redis';
+import { releaseHold } from '@/lib/calendar/holds';
+import { invalidateSlotsCache } from '@/lib/calendar/slots';
 import type {
   AddressInput,
   CoatCondition,
@@ -69,6 +72,12 @@ interface BookingMetadata {
   slotEnd?: string;
   /** Optional explicit service id the client is booking. */
   serviceId?: string;
+  /**
+   * Optional Redis hold id placed on the slot before payment. When present we
+   * release it (and bust the slot cache) after fulfilment. Optional for
+   * back-compat: older pending records / no-Redis flows simply omit it.
+   */
+  holdId?: string;
 }
 
 const COAT_CONDITIONS: readonly CoatCondition[] = [
@@ -139,6 +148,7 @@ function normalizePendingBooking(record: unknown): BookingMetadata | null {
     slotStart: b.slotStart,
     slotEnd: typeof b.slotEnd === 'string' ? b.slotEnd : undefined,
     serviceId: typeof b.serviceId === 'string' ? b.serviceId : undefined,
+    holdId: typeof b.holdId === 'string' ? b.holdId : undefined,
     pet: {
       name: pet.name,
       photoUrl: typeof pet.photoUrl === 'string' ? pet.photoUrl : undefined,
@@ -308,6 +318,30 @@ async function fulfilBooking(paymentIntent: Stripe.PaymentIntent): Promise<void>
   // record (the TTL index would eventually reap it anyway).
   await PendingBooking.deleteOne({ paymentIntentId: stripePaymentId });
 
+  // Best-effort: if the checkout placed a Redis hold on this slot, release it
+  // and bust the cached availability for that day so the freed hold + the new
+  // appointment are both reflected immediately (Master Spec §9.4 step 4). This
+  // block must never throw — a Redis hiccup cannot fail a paid booking.
+  if (booking.holdId) {
+    const holdDateStr = scheduledDate.toISOString().slice(0, 10);
+    try {
+      await releaseHold(String(groomerId), booking.holdId, holdDateStr);
+    } catch (holdErr) {
+      console.error(
+        `Stripe webhook: releaseHold failed for payment ${stripePaymentId}:`,
+        holdErr
+      );
+    }
+    try {
+      await invalidateSlotsCache(String(groomerId), holdDateStr);
+    } catch (cacheErr) {
+      console.error(
+        `Stripe webhook: invalidateSlotsCache failed for payment ${stripePaymentId}:`,
+        cacheErr
+      );
+    }
+  }
+
   // Best-effort: mirror this booking onto the shared Google Calendar and
   // persist the returned event id so later status changes can patch it. This
   // helper never throws and returns null on failure/unconfigured, so a
@@ -451,6 +485,26 @@ export async function POST(req: Request): Promise<Response> {
     const message = err instanceof Error ? err.message : 'Invalid signature';
     console.error('Stripe webhook signature verification failed:', message);
     return NextResponse.json({ error: `Webhook Error: ${message}` }, { status: 400 });
+  }
+
+  // Fast idempotency guard (Master Spec §9.4): claim this event id in Redis
+  // exactly once. This is ADDITIVE to the authoritative Transaction-based guard
+  // in fulfilBooking — it cheaply short-circuits Stripe's duplicate deliveries
+  // before any DB work. Guarded by isRedisConfigured() so local/no-Redis setups
+  // still work purely on the Transaction unique-index guard. Fail open: if the
+  // claim itself errors, fall through to normal (idempotent) processing.
+  if (isRedisConfigured()) {
+    try {
+      const first = await idempotencyOnce(event.id);
+      if (!first) {
+        return NextResponse.json({ received: true, duplicate: true }, { status: 200 });
+      }
+    } catch (idemErr) {
+      console.error(
+        `Stripe webhook: idempotency check failed for event ${event.id}; proceeding:`,
+        idemErr
+      );
+    }
   }
 
   try {

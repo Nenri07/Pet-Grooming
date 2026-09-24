@@ -34,6 +34,12 @@ export interface IPendingBooking {
   slotEnd?: string;
   /** Optional explicit service id the client is booking. */
   serviceId?: string;
+  /**
+   * Optional Redis hold id placed on the slot before payment (Master Spec
+   * §9.4). Threaded through so the webhook can release the hold + bust the slot
+   * cache once the booking is fulfilled. Absent for back-compat / no-Redis.
+   */
+  holdId?: string;
   createdAt: Date;
 }
 
@@ -49,6 +55,7 @@ const pendingBookingSchema = new Schema<IPendingBooking>({
   slotStart: { type: String, required: true },
   slotEnd: { type: String },
   serviceId: { type: String },
+  holdId: { type: String },
   createdAt: { type: Date, default: Date.now },
 });
 

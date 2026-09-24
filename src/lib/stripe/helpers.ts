@@ -32,6 +32,8 @@ import { connectDB } from '@/lib/db/connect';
 import { GroomerProfile } from '@/lib/db/models/groomer-profile';
 import { PendingBooking } from '@/lib/db/models/pending-booking';
 import { getStripe, isStripeConfigured } from '@/lib/stripe/client';
+import { createHold, SlotHeldError } from '@/lib/calendar/holds';
+import { isRedisConfigured } from '@/lib/redis';
 import type { OwnerDetailsInput, PetInfoInput } from '@/types';
 
 /** Hard fallback deposit if neither the profile nor the env configure one. */
@@ -142,6 +144,46 @@ export async function createDepositPaymentIntent(
 
     const groomerId = profile.userId.toString();
 
+    // Best-effort: place a 10-minute Redis hold on the selected slot BEFORE
+    // charging, so a concurrent client can't book the same time mid-checkout
+    // (Master Spec §9.4). The hold id is threaded onto the PendingBooking and
+    // released by the webhook after fulfilment.
+    //
+    // Degradation rules (must never break checkout):
+    //  - No Redis / no valid slot times → skip the hold, proceed to payment.
+    //    The authoritative commit-time re-check in Mongo still prevents
+    //    double-booking, so correctness is preserved without the early guard.
+    //  - Slot already held (SlotHeldError) → return a clear conflict so the UI
+    //    can refresh availability instead of charging for a taken slot.
+    let holdId: string | undefined;
+    const slotStartMs = Date.parse(booking.slotStart);
+    const slotEndMs = booking.slotEnd ? Date.parse(booking.slotEnd) : NaN;
+    if (
+      isRedisConfigured() &&
+      Number.isFinite(slotStartMs) &&
+      Number.isFinite(slotEndMs) &&
+      slotEndMs > slotStartMs
+    ) {
+      try {
+        const hold = await createHold(
+          groomerId,
+          slotStartMs,
+          slotEndMs,
+          booking.owner.email.toLowerCase()
+        );
+        holdId = hold.holdId;
+      } catch (holdErr) {
+        if (holdErr instanceof SlotHeldError) {
+          return {
+            ok: false,
+            error: 'That time slot was just taken. Please choose another and try again.',
+          };
+        }
+        // Any other hold error is non-fatal — proceed without the early guard.
+        console.error('createDepositPaymentIntent: hold creation failed:', holdErr);
+      }
+    }
+
     const stripe = getStripe();
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(amount * 100), // Stripe expects the smallest unit (cents).
@@ -182,6 +224,9 @@ export async function createDepositPaymentIntent(
           slotStart: booking.slotStart,
           slotEnd: booking.slotEnd,
           serviceId: booking.serviceId,
+          // Thread the hold id through so the webhook can release it + bust the
+          // slot cache after fulfilment. Absent when no hold was placed.
+          holdId,
         },
         $setOnInsert: { paymentIntentId: paymentIntent.id, createdAt: new Date() },
       },
