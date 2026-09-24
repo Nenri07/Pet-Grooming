@@ -51,3 +51,32 @@
 
 html { font-family: var(--font-body-stack); font-size: 16px; line-height: 1.6; }
 h1, h2, h3, .font-display { font-family: var(--font-display-stack); letter-spacing: -0.02em; }
+
+/* ============================================================================
+   VISIBLE BY DEFAULT (Section 6.3)
+   ---------------------------------------------------------------------------
+   Reveal targets carry the `.reveal-init` class. By default they are fully
+   visible, so with JavaScript OFF, during SSR, or under reduced motion the
+   whole page (stats, testimonials, pricing) reads normally.
+
+   Elements are hidden-until-revealed ONLY when BOTH are true:
+     - `html.js-anim` is present (added by MotionProvider only when JS is live
+       AND reduced motion is off), and
+     - the 2s failsafe has NOT yet fired (`html.anim-done` absent).
+
+   Framer Motion still drives the actual reveal on these nodes; this rule only
+   sets the pre-hydration hidden state so there is no flash of content before
+   Framer's `initial="hidden"` takes over. The failsafe guarantees content can
+   never stay stuck invisible.
+   ========================================================================== */
+html.js-anim:not(.anim-done) .reveal-init {
+  opacity: 0;
+}
+
+/* Respect the OS setting directly too: never hide reveal targets when the user
+   prefers reduced motion, even if a stale js-anim class lingers. */
+@media (prefers-reduced-motion: reduce) {
+  .reveal-init {
+    opacity: 1 !important;
+  }
+}

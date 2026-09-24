@@ -28,7 +28,7 @@ type ContainerProps = React.HTMLAttributes<HTMLDivElement> & {
   /** Maximum content width. Defaults to `lg`. */
   size?: ContainerSize;
   /** Render as a semantic element other than div (e.g. 'main', 'section'). */
-  as?: keyof JSX.IntrinsicElements;
+  as?: React.ElementType;
 };
 
 export function Container({

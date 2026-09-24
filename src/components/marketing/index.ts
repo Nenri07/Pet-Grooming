@@ -1,6 +1,7 @@
 export { MarketingHeader } from './MarketingHeader';
 export { MarketingFooter } from './MarketingFooter';
 export { Hero } from './Hero';
+export { HeroObject } from './HeroObject';
 export { heroMedia } from './heroMedia';
 export type { HeroMedia } from './heroMedia';
 export { FeatureSection } from './FeatureSection';
