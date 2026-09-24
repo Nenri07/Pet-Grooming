@@ -1,0 +1,53 @@
+{
+  "pbtResults": {
+    "3.3 Write property test for groomer slug validation": {
+      "status": "passed",
+      "lastRunTimestamp": 1788095821601
+    },
+    "2.5 Write property test for password validation": {
+      "status": "passed",
+      "lastRunTimestamp": 1788097607105
+    },
+    "5.2 Write property tests for Estimate Engine": {
+      "status": "passed",
+      "lastRunTimestamp": 1788105349174
+    },
+    "5.3 Write property test for Estimate Engine monotonicity": {
+      "status": "passed",
+      "lastRunTimestamp": 1788099384800
+    },
+    "5.5 Write property tests for availability slots": {
+      "status": "passed",
+      "lastRunTimestamp": 1788099414291
+    },
+    "5.6 Write property test for slot duration": {
+      "status": "passed",
+      "lastRunTimestamp": 1788099415288
+    },
+    "6.2 Write property test for booking flow state preservation": {
+      "status": "passed",
+      "lastRunTimestamp": 1788100546412
+    },
+    "6.8 Write property test for slot reservation atomicity": {
+      "status": "passed",
+      "lastRunTimestamp": 1788101423855
+    },
+    "10.2 Write property test for appointment status transitions": {
+      "status": "passed",
+      "lastRunTimestamp": 1788109729536
+    },
+    "11.2 Write property test for client search scoping": {
+      "status": "passed",
+      "lastRunTimestamp": 1788109820759
+    },
+    "14.4 Write property test for Digital Pet Card data completeness": {
+      "status": "passed",
+      "lastRunTimestamp": 1788110367391
+    },
+    "20.2 Write property test for no-show rate calculation": {
+      "status": "passed",
+      "lastRunTimestamp": 1788115058553
+    }
+  },
+  "executionHistory": {}
+}
