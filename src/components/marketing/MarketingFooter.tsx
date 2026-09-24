@@ -58,8 +58,8 @@ export function MarketingFooter() {
             <Link href="/login" className="text-base-content/70 hover:text-primary">
               Log in
             </Link>
-            <Link href="#" className="text-base-content/70 hover:text-primary">
-              About
+            <Link href="/credits" className="text-base-content/70 hover:text-primary">
+              Credits
             </Link>
             <Link href="#" className="text-base-content/70 hover:text-primary">
               Contact
@@ -113,8 +113,23 @@ export function MarketingFooter() {
           </div>
         </div>
 
-        <div className="mt-10 border-t border-base-300 pt-6 text-sm text-base-content/60">
-          &copy; {year} PawPort. All rights reserved.
+        <div className="mt-10 flex flex-col gap-2 border-t border-base-300 pt-6 text-sm text-base-content/60 sm:flex-row sm:items-center sm:justify-between">
+          <span>&copy; {year} PawPort. All rights reserved.</span>
+          <span>
+            Photography:{' '}
+            <a
+              href="https://www.pexels.com"
+              target="_blank"
+              rel="noreferrer noopener"
+              className="hover:text-primary"
+            >
+              Pexels
+            </a>
+            {' · '}
+            <Link href="/credits" className="hover:text-primary">
+              Photo credits
+            </Link>
+          </span>
         </div>
       </div>
     </footer>

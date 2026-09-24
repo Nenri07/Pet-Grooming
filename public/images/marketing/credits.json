@@ -1,0 +1,58 @@
+{
+  "hero": {
+    "photographer": "Tima Miroshnichenko",
+    "photographerUrl": "https://www.pexels.com/@tima-miroshnichenko",
+    "sourceUrl": "https://www.pexels.com/photo/groomer-blow-drying-a-yorkshire-terrier-6131575/",
+    "provider": "Pexels",
+    "photoId": 6131575
+  },
+  "featureBooking": {
+    "photographer": "Anna Galimova",
+    "photographerUrl": "https://www.pexels.com/@anna-galimova-81015115",
+    "sourceUrl": "https://www.pexels.com/photo/a-woman-sitting-outdoors-with-a-dog-10458497/",
+    "provider": "Pexels",
+    "photoId": 10458497
+  },
+  "featureRoute": {
+    "photographer": "Artem Podrez",
+    "photographerUrl": "https://www.pexels.com/@artempodrez",
+    "sourceUrl": "https://www.pexels.com/photo/man-carrying-boxes-beside-a-van-5025669/",
+    "provider": "Pexels",
+    "photoId": 5025669
+  },
+  "featureCard": {
+    "photographer": "Helena Lopes",
+    "photographerUrl": "https://www.pexels.com/@helenalopes",
+    "sourceUrl": "https://www.pexels.com/photo/elegant-poodle-with-flower-outdoors-39609535/",
+    "provider": "Pexels",
+    "photoId": 39609535
+  },
+  "cat": {
+    "photographer": "Tuğba",
+    "photographerUrl": "https://www.pexels.com/@tugba",
+    "sourceUrl": "https://www.pexels.com/photo/fluffy-cat-grooming-on-rocky-surface-35697928/",
+    "provider": "Pexels",
+    "photoId": 35697928
+  },
+  "before": {
+    "photographer": "David Mosquera",
+    "photographerUrl": "https://www.pexels.com/@sie7e",
+    "sourceUrl": "https://www.pexels.com/photo/white-dog-portrait-18027067/",
+    "provider": "Pexels",
+    "photoId": 18027067
+  },
+  "after": {
+    "photographer": "Quang Viet Nguyen",
+    "photographerUrl": "https://www.pexels.com/@quang-viet-nguyen-107013384",
+    "sourceUrl": "https://www.pexels.com/photo/a-cute-dog-wearing-striped-clothes-while-lying-on-the-floor-13073385/",
+    "provider": "Pexels",
+    "photoId": 13073385
+  },
+  "bath": {
+    "photographer": "Alice Castro",
+    "photographerUrl": "https://www.pexels.com/@alicedecasttro",
+    "sourceUrl": "https://www.pexels.com/photo/bubbles-near-the-brown-and-white-long-coated-dog-14568191/",
+    "provider": "Pexels",
+    "photoId": 14568191
+  }
+}

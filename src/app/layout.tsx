@@ -6,9 +6,24 @@ import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { ToastProvider } from '@/components/providers/ToastProvider';
 import { AnimationProvider } from '@/lib/animation';
 
+const description =
+  'The booking, routing and no-show shield built for solo mobile pet groomers. Groom more dogs. Drive less.';
+
 export const metadata: Metadata = {
   title: 'PawPort',
-  description: 'Mobile-first booking and client management for solo mobile pet groomers.',
+  description,
+  openGraph: {
+    title: 'PawPort — Groom more dogs. Drive less.',
+    description,
+    type: 'website',
+    images: [{ url: '/og.jpg', width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'PawPort — Groom more dogs. Drive less.',
+    description,
+    images: ['/og.jpg'],
+  },
 };
 
 export default function RootLayout({

@@ -1,43 +1,28 @@
 'use client';
 import * as React from 'react';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Quote } from 'lucide-react';
 import { fadeUp, staggerParent } from '@/lib/animation';
 import { SectionHeading } from './SectionHeading';
-
-type Item = { quote: string; name: string; role: string };
-
-const testimonials: Item[] = [
-  {
-    quote:
-      'Booking took under a minute and the groomer arrived right on time. My anxious rescue actually stayed calm the whole visit.',
-    name: 'Maya R.',
-    role: 'Owner of Biscuit, Cavapoo',
-  },
-  {
-    quote:
-      'No more crate rides across town. PawPort comes to us, and the results look better than any salon we tried.',
-    name: 'Daniel K.',
-    role: 'Owner of Miso, Shiba Inu',
-  },
-  {
-    quote:
-      'As a groomer, the scheduling and client tools are effortless. I spend my time with pets, not paperwork.',
-    name: 'Priya S.',
-    role: 'Mobile groomer, 6 years',
-  },
-];
+import { landing } from '@/content/landing';
 
 /**
- * Testimonial cards. Framer owns the in-view reveal and quote stagger.
- * No GSAP is used here (D4).
+ * Testimonials (Section 7.8) — DATA-DRIVEN from `landing.testimonials`.
+ *
+ * Section 7.7/7.8 rule: never ship fake quotes. `landing.testimonials` is
+ * EMPTY on purpose, so this component renders nothing (returns null) until real
+ * quotes exist. When populated it shows a Framer-staggered card grid.
  */
 export function Testimonial() {
+  const { testimonials } = landing;
+  if (testimonials.length === 0) return null;
+
   return (
-    <section className="px-gutter py-section">
+    <section aria-labelledby="testimonials-heading" className="bg-base-100 px-gutter py-section">
       <SectionHeading
-        eyebrow="Loved by pets & people"
-        title="Real visits, real tails wagging"
+        eyebrow="Loved by groomers"
+        title="What solo groomers say"
       />
 
       <motion.div
@@ -49,17 +34,33 @@ export function Testimonial() {
       >
         {testimonials.map((t) => (
           <motion.figure
-            key={t.name}
+            key={t.author}
             variants={fadeUp}
-            className="flex flex-col rounded-box bg-base-100 p-8 shadow-card"
+            className="reveal-init flex flex-col rounded-box border border-base-content/10 bg-base-200 p-8 shadow-card"
           >
             <Quote className="h-8 w-8 text-accent" aria-hidden="true" />
             <blockquote className="mt-4 flex-1 text-base-content/80">
               &ldquo;{t.quote}&rdquo;
             </blockquote>
-            <figcaption className="mt-6">
-              <p className="font-semibold text-base-content">{t.name}</p>
-              <p className="text-sm text-base-content/60">{t.role}</p>
+            <figcaption className="mt-6 flex items-center gap-3">
+              {t.avatar && (
+                <span className="relative h-10 w-10 overflow-hidden rounded-full">
+                  <Image
+                    src={t.avatar}
+                    alt=""
+                    fill
+                    loading="lazy"
+                    sizes="40px"
+                    className="object-cover"
+                  />
+                </span>
+              )}
+              <span>
+                <p className="font-semibold text-base-content">{t.author}</p>
+                {t.role && (
+                  <p className="text-sm text-base-content/60">{t.role}</p>
+                )}
+              </span>
             </figcaption>
           </motion.figure>
         ))}
@@ -67,3 +68,5 @@ export function Testimonial() {
     </section>
   );
 }
+
+export default Testimonial;

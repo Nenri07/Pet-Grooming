@@ -1,118 +1,78 @@
 'use client';
 import * as React from 'react';
-import {
-  motion,
-  useInView,
-  useMotionValue,
-  animate,
-  useTransform,
-} from 'framer-motion';
-import { useGsapContext, useReducedMotion } from '@/lib/animation';
-
-type Stat = { value: number; suffix?: string; label: string };
-
-const stats: Stat[] = [
-  { value: 12000, suffix: '+', label: 'Happy pets groomed' },
-  { value: 98, suffix: '%', label: 'Owner satisfaction' },
-  { value: 40, suffix: '+', label: 'Cities served' },
-  { value: 15, suffix: 'min', label: 'Average booking time' },
-];
-
-const marqueeWords = [
-  'Nail trims',
-  'Full grooms',
-  'De-shedding',
-  'Bath & brush',
-  'Puppy first cut',
-  'Senior care',
-];
+import { Marquee, NumberTicker } from '@/components/motion';
+import { landing } from '@/content/landing';
 
 /**
- * Framer owns the in-view number count-up. GSAP owns the infinite marquee
- * x-loop (via useGsapContext). Under reduced motion the count-up shows the
- * final value instantly and the marquee stays static.
+ * StatsMarquee (Section 7.7) — a services marquee plus a proof row.
+ *
+ * Proof rules (Section 7.7): `landing.stats` is EMPTY on purpose, so we DO NOT
+ * invent numbers. While empty, we show the founding-groomer program line. If
+ * real stats are added later, each renders via NumberTicker (which is SSR-safe:
+ * the final number is in the server HTML and only counts up after hydration).
+ *
+ * The services marquee is owned by the GSAP `Marquee` primitive (infinite
+ * x-loop, static under reduced motion). It is decorative, so it is aria-hidden.
  */
-function CountUp({ value, suffix }: { value: number; suffix?: string }) {
-  const ref = React.useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { once: true, amount: 0.6 });
-  const reduced = useReducedMotion();
-  const count = useMotionValue(0);
-  const rounded = useTransform(count, (v) => Math.round(v).toLocaleString());
-
-  React.useEffect(() => {
-    if (!inView) return;
-    if (reduced) {
-      count.set(value);
-      return;
-    }
-    const controls = animate(count, value, { duration: 1.4, ease: [0.16, 1, 0.3, 1] });
-    return () => controls.stop();
-  }, [inView, reduced, value, count]);
-
-  return (
-    <span ref={ref} className="tabular-nums">
-      <motion.span>{rounded}</motion.span>
-      {suffix}
-    </span>
-  );
-}
-
 export function StatsMarquee() {
-  const reduced = useReducedMotion();
-
-  const marqueeScope = useGsapContext(
-    ({ gsap, reduced: r, scope }) => {
-      if (r) return; // static under reduced motion
-      const track = scope.querySelector('[data-marquee-track]');
-      if (!track) return;
-      // Loop the first half; the track renders two copies for a seamless wrap.
-      gsap.to(track, {
-        xPercent: -50,
-        ease: 'none',
-        duration: 22,
-        repeat: -1,
-      });
-    },
-    [],
-  );
+  const { stats, founding, services } = landing;
+  const hasStats = stats.length > 0;
 
   return (
-    <section className="bg-base-200 py-section">
-      {/* Stats grid — Framer count-up */}
-      <div className="mx-auto grid max-w-5xl grid-cols-2 gap-8 px-gutter md:grid-cols-4">
-        {stats.map((s) => (
-          <div key={s.label} className="text-center">
-            <div className="text-h2 font-display font-bold text-primary">
-              <CountUp value={s.value} suffix={s.suffix} />
-            </div>
-            <p className="mt-2 text-sm text-base-content/70">{s.label}</p>
+    <section aria-labelledby="proof-heading" className="bg-base-200 py-section">
+      <h2 id="proof-heading" className="sr-only">
+        Services and proof
+      </h2>
+
+      {/* Proof row: real stats if present, otherwise founding-program line. */}
+      <div className="mx-auto max-w-5xl px-gutter">
+        {hasStats ? (
+          <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
+            {stats.map((s) => (
+              <div key={s.label} className="text-center">
+                <div className="text-h2 font-display font-bold text-primary">
+                  <NumberTicker
+                    value={s.value}
+                    prefix={s.prefix}
+                    suffix={s.suffix}
+                  />
+                </div>
+                <p className="mt-2 text-sm text-base-content/70">{s.label}</p>
+              </div>
+            ))}
           </div>
-        ))}
+        ) : (
+          <div className="mx-auto max-w-2xl rounded-box border border-primary/20 bg-primary/5 px-6 py-8 text-center">
+            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-accent">
+              Founding groomer program
+            </p>
+            <p className="mt-3 font-display text-h2 font-bold text-base-content">
+              {founding.spots} spots
+            </p>
+            <p className="mt-2 text-base text-base-content/70">
+              Join the first {founding.spots} groomers and lock in founding
+              pricing for life.
+            </p>
+          </div>
+        )}
       </div>
 
-      {/* Marquee — GSAP-owned infinite x-loop */}
-      <div
-        ref={marqueeScope as React.RefObject<HTMLDivElement>}
-        className="mt-16 overflow-hidden"
-        aria-hidden
-      >
-        <div
-          data-marquee-track
-          className={`flex w-max gap-8 whitespace-nowrap ${
-            reduced ? '' : 'will-change-transform'
-          }`}
-        >
-          {[...marqueeWords, ...marqueeWords].map((word, i) => (
+      {/* Services marquee — GSAP-owned, decorative. */}
+      <div aria-hidden className="mt-16">
+        <Marquee speed={26}>
+          {services.map((word) => (
             <span
-              key={`${word}-${i}`}
+              key={word}
               className="text-h2 font-display font-semibold text-base-content/15"
             >
               {word}
               <span className="mx-8 text-accent">&bull;</span>
             </span>
           ))}
-        </div>
+        </Marquee>
       </div>
     </section>
   );
 }
+
+export default StatsMarquee;

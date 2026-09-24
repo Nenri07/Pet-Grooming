@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { heroLine, staggerParent, micro, useReducedMotion } from '@/lib/animation';
 import { Tilt } from '@/components/motion';
 import { landing } from '@/content/landing';
+import { images } from '@/content/images.generated';
 import { heroMedia } from './heroMedia';
 
 /**
@@ -67,22 +68,28 @@ export function Hero() {
       {/* Layer 0: brand gradient — always present, guarantees a non-empty hero. */}
       <div aria-hidden className="absolute inset-0 -z-30 bg-hero" />
 
-      {/* Layer 1: optional poster (LCP image). Null today -> gradient shows. */}
+      {/* Layer 1: poster (LCP image). Painted over the gradient fallback with
+          blur placeholder for CLS 0. `priority` — this is the only priority
+          image on the page. */}
       {heroMedia.poster && (
         <Image
           src={heroMedia.poster}
-          alt=""
+          alt={images.hero.alt}
           fill
           priority
           sizes="100vw"
-          className="-z-20 object-cover opacity-30"
+          placeholder="blur"
+          blurDataURL={images.hero.blurDataURL}
+          className="-z-20 object-cover"
         />
       )}
 
-      {/* Soft readability wash so foreground text stays legible on the gradient. */}
+      {/* Theme-token readability wash (image wiring #1): a stronger base-100
+          gradient so the headline keeps >= 4.5:1 contrast over the photo in
+          BOTH themes. Tokens only — no hardcoded colors. */}
       <div
         aria-hidden
-        className="absolute inset-0 -z-10 bg-gradient-to-b from-base-100/10 to-base-100/40"
+        className="absolute inset-0 -z-10 bg-gradient-to-b from-base-100/80 via-base-100/60 to-base-100/85"
       />
 
       <div className="mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-12 px-gutter py-24 lg:grid-cols-2">

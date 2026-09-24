@@ -23,10 +23,13 @@ export interface HeroMedia {
   layers?: { src: string; alt: string; depth: number }[];
 }
 
+import { images } from '@/content/images.generated';
+
 export const heroMedia: HeroMedia = {
-  // No real assets yet -> gradient fallback (intentional, no 404s).
-  // Fill these in once you add files to /public/media/.
-  poster: null,
+  // Real hero poster wired from the generated image map (KIRO_IMAGES.md #1).
+  // Rendered as the LCP image with next/image priority; the `bg-hero` gradient
+  // stays behind it as the fallback so the hero is never empty.
+  poster: images.hero.src,
   videoWebm: null,
   videoMp4: null,
   layers: [],

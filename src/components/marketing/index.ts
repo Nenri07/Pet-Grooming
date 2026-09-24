@@ -4,9 +4,17 @@ export { Hero } from './Hero';
 export { HeroObject } from './HeroObject';
 export { heroMedia } from './heroMedia';
 export type { HeroMedia } from './heroMedia';
-export { FeatureSection } from './FeatureSection';
-export { ParallaxShowcase } from './ParallaxShowcase';
+export { SectionHeading } from './SectionHeading';
+
+// Landing sections in Section 7 order.
+export { ProblemStrip } from './ProblemStrip';
+export { OrderRadarShowcase } from './OrderRadarShowcase';
+export { BentoFeatures } from './BentoFeatures';
+export { FillMyDayEta } from './FillMyDayEta';
+export { PetCardShowcase } from './PetCardShowcase';
 export { StatsMarquee } from './StatsMarquee';
 export { Testimonial } from './Testimonial';
+export { Comparison } from './Comparison';
 export { PricingCTA } from './PricingCTA';
-export { SectionHeading } from './SectionHeading';
+export { Faq } from './Faq';
+export { FinalCTA } from './FinalCTA';
