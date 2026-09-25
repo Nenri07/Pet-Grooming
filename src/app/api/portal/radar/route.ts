@@ -24,15 +24,16 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 // ---------------------------------------------------------------------------
-// Phase-7 gating seams (Master Spec §11, §13.1). These Pro endpoints do not
-// exist yet; when they are built, gate them server-side exactly like this
-// route does with orderRadar:
-//   /api/portal/fill         → await assertFeature(groomerId, 'fillMyDay');
-//   /api/portal/optimize-day → await assertFeature(groomerId, 'optimizeDay');
-//   /api/portal/track/*       → await assertFeature(groomerId, 'liveEta');
-//   rebooking nudges job      → await assertFeature(groomerId, 'rebookAutopilot');
-//   review-request sends      → await assertFeature(groomerId, 'reviewRequests');
-//   before/after share cards  → await assertFeature(groomerId, 'beforeAfter');
+// Server-side Pro gating pattern (Master Spec §11, §13.1). Every Pro entry
+// point calls assertFeature server-side exactly like this route does with
+// orderRadar. Phase-7 features now implement it directly:
+//   /api/portal/fill              → assertFeature(groomerId, 'fillMyDay')   [DONE]
+//   /api/portal/track/[id]        → assertFeature(groomerId, 'liveEta')     [DONE]
+//   /api/qstash/rebook-nudges     → assertFeature(gid, 'rebookAutopilot')   [DONE, per groomer]
+//   before/after save action      → assertFeature(groomerId, 'beforeAfter') [DONE]
+// Still-pending seams (later phases):
+//   /api/portal/optimize-day      → assertFeature(groomerId, 'optimizeDay');
+//   review-request sends          → assertFeature(groomerId, 'reviewRequests');
 // ---------------------------------------------------------------------------
 
 interface LeanRadarAppt {

@@ -60,6 +60,9 @@ interface LeanAppointment {
   status: AppointmentStatus;
   notes?: string | null;
   postGroomNotes?: string | null;
+  tracking?: { token?: string; startedAt?: Date; arrivedAt?: Date } | null;
+  beforePhotoUrl?: string | null;
+  afterPhotoUrl?: string | null;
 }
 
 /** Compose a client's address parts into a single display string. */
@@ -110,6 +113,16 @@ export default async function AppointmentDetailPage({
     notFound();
   }
 
+  // Groomer branding for the Before/After share card (§11.3).
+  const { GroomerProfile } = await import('@/lib/db/models/groomer-profile');
+  const profile = await GroomerProfile.findOne({ userId: session.user.id })
+    .select('businessName logoUrl groomerSlug')
+    .lean<{ businessName?: string; logoUrl?: string; groomerSlug?: string } | null>();
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') ?? '';
+  const bookingUrl =
+    profile?.groomerSlug && appUrl ? `${appUrl}/book/${profile.groomerSlug}` : null;
+
   const detail: AppointmentDetailData = {
     id: String(doc._id),
     status: doc.status,
@@ -133,6 +146,18 @@ export default async function AppointmentDetailPage({
     service: {
       name: doc.serviceId?.name ?? null,
       durationMinutes: doc.serviceId?.durationMinutes ?? null,
+    },
+    // Live ETA (§11.2): sharing when a trip started and hasn't arrived yet.
+    tracking: {
+      sharing: Boolean(doc.tracking?.startedAt && !doc.tracking?.arrivedAt),
+    },
+    // Before/After (§11.3).
+    beforePhotoUrl: doc.beforePhotoUrl ?? null,
+    afterPhotoUrl: doc.afterPhotoUrl ?? null,
+    branding: {
+      business: profile?.businessName ?? 'PawPort',
+      logoUrl: profile?.logoUrl ?? null,
+      bookingUrl,
     },
   };
 

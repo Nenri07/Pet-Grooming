@@ -8,6 +8,7 @@ import {
   useBookingFlow,
   TOTAL_PROGRESS_STEPS,
   type BookingStep,
+  type BookingState,
   type BookingStepServices,
 } from '@/hooks/useBookingFlow';
 import { StepPetInfo } from './StepPetInfo';
@@ -24,8 +25,26 @@ export interface BookingGroomer {
   services: BookingStepServices;
 }
 
+/**
+ * The pre-populated flow state a caller may pass in (§11.4 rebooking). Re-
+ * exported as a TYPE-ONLY alias so server components (e.g. /rebook/[token]) can
+ * type an initial-state literal WITHOUT importing the `useBookingFlow` hook
+ * module (which uses `useReducer` and would drag a client-only dependency into
+ * a Server Component).
+ */
+export type BookingInitialState = BookingState;
+
 interface BookingFlowProps {
   groomer: BookingGroomer;
+  /**
+   * Optional pre-populated flow state (Master Spec §11.4 rebooking). When
+   * provided, the flow starts from this state instead of the pristine step 1 —
+   * used by `/rebook/{token}` to prefill pet + owner and jump to the estimate/
+   * schedule steps. Omitted for the normal public booking flow.
+   */
+  initialState?: BookingState;
+  /** Optional banner shown above the flow (e.g. the rebooking welcome-back). */
+  prefillNotice?: string;
 }
 
 /** User-facing labels for the progress indicator. */
@@ -91,8 +110,8 @@ function ProgressIndicator({
  *
  * _Requirements: 3.1, 3.5, 18.7_
  */
-export function BookingFlow({ groomer }: BookingFlowProps) {
-  const { state, dispatch } = useBookingFlow();
+export function BookingFlow({ groomer, initialState, prefillNotice }: BookingFlowProps) {
+  const { state, dispatch } = useBookingFlow(initialState);
 
   const stepProps = {
     state,
@@ -122,6 +141,11 @@ export function BookingFlow({ groomer }: BookingFlowProps) {
 
   return (
     <div className="mx-auto w-full max-w-xl">
+      {prefillNotice && (
+        <div className="mb-4 rounded-box border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-base-content">
+          {prefillNotice}
+        </div>
+      )}
       <ProgressIndicator step={state.currentStep} stepIndex={state.stepIndex} />
       <Card>
         <motion.div

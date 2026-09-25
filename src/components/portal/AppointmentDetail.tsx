@@ -16,6 +16,8 @@ import {
 import { Card } from '@/components/ui/Card';
 import { updateAppointmentStatus } from '@/actions/appointments';
 import { canTransition } from '@/lib/appointments/status';
+import { LiveEtaControl } from '@/components/portal/LiveEtaControl';
+import { BeforeAfterPanel } from '@/components/portal/BeforeAfterPanel';
 import type { AppointmentStatus, WeightUnit } from '@/types';
 
 /**
@@ -62,6 +64,20 @@ export interface AppointmentDetailData {
   service: {
     name: string | null;
     durationMinutes: number | null;
+  };
+  /** Live ETA state (§11.2). */
+  tracking?: {
+    /** Whether a trip is currently active (started, not arrived). */
+    sharing: boolean;
+  };
+  /** Before/After photo URLs (§11.3). */
+  beforePhotoUrl?: string | null;
+  afterPhotoUrl?: string | null;
+  /** Groomer branding for the Before/After share card (§11.3). */
+  branding?: {
+    business: string;
+    logoUrl: string | null;
+    bookingUrl: string | null;
   };
 }
 
@@ -401,6 +417,25 @@ export function AppointmentDetail({ appointment }: AppointmentDetailProps) {
             </>
           )}
         </Card>
+
+        {/* Live ETA (§11.2): "On my way" + Sharing banner. Hidden when the
+            appointment is completed / cancelled. */}
+        <LiveEtaControl
+          appointmentId={appointment.id}
+          initialSharing={Boolean(appointment.tracking?.sharing)}
+          disabled={isTerminal}
+        />
+
+        {/* Before/After (§11.3): upload photos + generate a branded share card. */}
+        <BeforeAfterPanel
+          appointmentId={appointment.id}
+          petName={pet.name}
+          beforePhotoUrl={appointment.beforePhotoUrl ?? null}
+          afterPhotoUrl={appointment.afterPhotoUrl ?? null}
+          business={appointment.branding?.business ?? 'PawPort'}
+          logoUrl={appointment.branding?.logoUrl ?? null}
+          bookingUrl={appointment.branding?.bookingUrl ?? null}
+        />
       </div>
 
       {/* Post-groom notes modal (12.2). Optional — completing is allowed with

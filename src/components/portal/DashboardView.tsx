@@ -16,7 +16,9 @@ import {
   MessageSquare,
   RefreshCw,
   Lock,
+  Sparkles,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Card } from '@/components/ui/Card';
 import { Reveal, NumberTicker } from '@/components/motion';
 import { updateAppointmentStatus } from '@/actions/appointments';
@@ -93,6 +95,12 @@ export interface DashboardData {
   smsUsed: number;
   /** UI hint: the plan lacks Order Radar (server gate is authoritative, §13.1). */
   radarLocked: boolean;
+  /** The first fillable gap today, or null when there is none (§11.1). */
+  fillGap: { startMs: number; endMs: number; label: string } | null;
+  /** Fill My Day recovered revenue this month (selling metric, §11.1). */
+  fillRecoveredThisMonth: number;
+  /** UI hint: the plan lacks Fill My Day (server gate is authoritative, §13.1). */
+  fillLocked: boolean;
 }
 
 interface DashboardViewProps {
@@ -568,6 +576,106 @@ function ThisMonthCard({ summary }: { summary: MonthSummary }) {
 
 /* ------------------------------- Placeholders ------------------------------- */
 
+/**
+ * Fill My Day card (§11.1). Shows the month's recovered revenue and, when a
+ * gap exists today, a "Fill this gap" button that triggers /api/portal/fill.
+ * The button is a UI affordance; the server route re-checks the Pro gate.
+ */
+function FillMyDayCard({
+  gap,
+  recovered,
+  locked,
+  onFilled,
+}: {
+  gap: DashboardData['fillGap'];
+  recovered: number;
+  locked: boolean;
+  onFilled: () => void;
+}) {
+  const [pending, setPending] = React.useState(false);
+
+  const fill = React.useCallback(async () => {
+    if (!gap) return;
+    setPending(true);
+    try {
+      const res = await fetch('/api/portal/fill', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ gapStartMs: gap.startMs, gapEndMs: gap.endMs }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        offered?: number;
+        reason?: string;
+      };
+      if (res.status === 403) {
+        toast.error('Fill My Day is a Pro feature. Upgrade to unlock it.');
+      } else if (res.ok) {
+        if (data.offered && data.offered > 0) {
+          toast.success(`Offered this gap to ${data.offered} nearby client${data.offered === 1 ? '' : 's'}.`);
+        } else {
+          toast.info('No matching clients to offer this gap right now.');
+        }
+        onFilled();
+      } else {
+        toast.error('Could not start Fill My Day. Please try again.');
+      }
+    } catch {
+      toast.error('Could not start Fill My Day. Please try again.');
+    } finally {
+      setPending(false);
+    }
+  }, [gap, onFilled]);
+
+  return (
+    <Card>
+      <div className="mb-3 flex items-center gap-2">
+        <Sparkles className="h-5 w-5 text-primary" aria-hidden="true" />
+        <h2 className="font-display text-lg font-semibold text-base-content">
+          Fill My Day
+        </h2>
+        {locked && <Lock className="ml-auto h-4 w-4 text-base-content/40" aria-hidden="true" />}
+      </div>
+
+      {recovered > 0 && (
+        <p className="mb-3 text-sm text-base-content/70">
+          Recovered{' '}
+          <span className="font-semibold text-success">${recovered}</span> this month.
+        </p>
+      )}
+
+      {locked ? (
+        <>
+          <p className="text-sm text-base-content/60">
+            Auto-offer a cancelled slot to nearby waitlisted and overdue clients.
+          </p>
+          <Link href="/billing" className="btn btn-primary btn-sm mt-3 min-h-[44px]">
+            Upgrade to Pro
+          </Link>
+        </>
+      ) : gap ? (
+        <>
+          <p className="text-sm text-base-content/60">
+            You have an open gap today ({gap.label}). Offer it to nearby clients.
+          </p>
+          <button
+            type="button"
+            onClick={() => void fill()}
+            disabled={pending}
+            className="btn btn-primary btn-sm mt-3 min-h-[44px]"
+          >
+            {pending ? 'Sending offers…' : 'Fill this gap'}
+          </button>
+        </>
+      ) : (
+        <p className="text-sm text-base-content/60">
+          No open gaps today. When a slot opens up, offer it here to nearby
+          clients in a tap.
+        </p>
+      )}
+    </Card>
+  );
+}
+
 function RebookingCard() {
   return (
     <Card>
@@ -578,11 +686,11 @@ function RebookingCard() {
         </h2>
       </div>
       <p className="text-sm text-base-content/60">
-        Rebooking autopilot nudges clients when their pet is due for another
-        groom.
+        Rebooking autopilot texts clients a prefilled booking link when their
+        pet is due for another groom — on a daily schedule, hands-free.
       </p>
-      <span className="mt-3 inline-flex items-center rounded-badge bg-base-200 px-3 py-1 text-xs font-medium text-base-content/60">
-        Coming in Phase 7
+      <span className="mt-3 inline-flex items-center rounded-badge bg-success/10 px-3 py-1 text-xs font-medium text-success">
+        Running daily
       </span>
     </Card>
   );
@@ -629,8 +737,18 @@ function SmsCreditsCard({ used, included }: { used: number; included: number }) 
 
 export function DashboardView({ data }: DashboardViewProps) {
   const router = useRouter();
-  const { stops, radar, bookingMode, monthSummary, smsIncluded, smsUsed, radarLocked } =
-    data;
+  const {
+    stops,
+    radar,
+    bookingMode,
+    monthSummary,
+    smsIncluded,
+    smsUsed,
+    radarLocked,
+    fillGap,
+    fillRecoveredThisMonth,
+    fillLocked,
+  } = data;
 
   const handleOpen = React.useCallback(
     (id: string) => {
@@ -683,10 +801,19 @@ export function DashboardView({ data }: DashboardViewProps) {
         </Reveal>
 
         <Reveal y={12} duration={0.28} delay={0.12}>
-          <RebookingCard />
+          <FillMyDayCard
+            gap={fillGap}
+            recovered={fillRecoveredThisMonth}
+            locked={fillLocked}
+            onFilled={handleChanged}
+          />
         </Reveal>
 
         <Reveal y={12} duration={0.28} delay={0.16}>
+          <RebookingCard />
+        </Reveal>
+
+        <Reveal y={12} duration={0.28} delay={0.2}>
           <SmsCreditsCard used={smsUsed} included={smsIncluded} />
         </Reveal>
       </div>

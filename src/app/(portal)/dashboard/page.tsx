@@ -32,7 +32,11 @@ import {
 } from '@/components/portal/DashboardView';
 import { getEntitlements } from '@/lib/billing/entitlements';
 import { getUsage } from '@/lib/sms/quota';
+import { FillEvent } from '@/lib/db/models/fill-event';
 import type { AppointmentStatus } from '@/types';
+
+/** Smallest gap between two of today's stops we surface as fillable, ms. */
+const MIN_FILLABLE_GAP_MS = 60 * 60 * 1000;
 
 /**
  * Dashboard page (server component) — Master Spec §8 bento dashboard.
@@ -79,6 +83,7 @@ interface LeanAppointment {
   serviceId?: PopulatedService | null;
   serviceAddress?: string | null;
   scheduledDate: Date;
+  scheduledEndDate?: Date;
   status: AppointmentStatus;
   notes?: string | null;
   location?: LatLng | null;
@@ -285,6 +290,37 @@ export default async function DashboardPage() {
     noShowRateDiff: Number((thisMetrics.noShowRate - lastMetrics.noShowRate).toFixed(1)),
   };
 
+  // ---- Fill My Day (§11.1): the first fillable gap today + recovered $ ----
+  // A gap is the open interval between one stop's end and the next stop's
+  // start, in the future, at least MIN_FILLABLE_GAP_MS long.
+  let fillGap: DashboardData['fillGap'] = null;
+  for (let i = 0; i < todayDocs.length - 1 && !fillGap; i += 1) {
+    const endMs = todayDocs[i].scheduledEndDate
+      ? new Date(todayDocs[i].scheduledEndDate as Date).getTime()
+      : new Date(todayDocs[i].scheduledDate).getTime();
+    const nextStartMs = new Date(todayDocs[i + 1].scheduledDate).getTime();
+    if (nextStartMs - endMs >= MIN_FILLABLE_GAP_MS && endMs > now.getTime()) {
+      fillGap = {
+        startMs: endMs,
+        endMs: nextStartMs,
+        label: `${timeLabel(new Date(endMs))} – ${timeLabel(new Date(nextStartMs))}`,
+      };
+    }
+  }
+
+  // Fill My Day recovered revenue this month (dashboard selling metric, §11.1).
+  const filledThisMonth = await FillEvent.find({
+    groomerId,
+    filledBy: { $exists: true },
+    createdAt: { $gte: thisMonthStart, $lte: thisMonthEnd },
+  })
+    .select('revenueRecovered')
+    .lean<Array<{ revenueRecovered?: number }>>();
+  const fillRecoveredThisMonth = filledThisMonth.reduce(
+    (sum, e) => sum + (typeof e.revenueRecovered === 'number' ? e.revenueRecovered : 0),
+    0
+  );
+
   // Entitlements drive the SMS meter (real allowance/usage) and the Order Radar
   // lock hint (Master Spec §13.1, §13.4). Best-effort: getEntitlements falls
   // back to a Pro-trial view and getUsage returns 0 when Redis is unconfigured,
@@ -301,6 +337,10 @@ export default async function DashboardPage() {
     smsUsed,
     // UI hint only — the server gate on /api/portal/radar is authoritative.
     radarLocked: !entitlements.features.includes('orderRadar'),
+    // Fill My Day (§11.1). UI hint; the /api/portal/fill gate is authoritative.
+    fillGap,
+    fillRecoveredThisMonth,
+    fillLocked: !entitlements.features.includes('fillMyDay'),
   };
 
   return <DashboardView data={data} />;

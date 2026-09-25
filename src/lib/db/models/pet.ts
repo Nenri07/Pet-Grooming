@@ -19,6 +19,15 @@ export interface IPet {
   specialFlags: string[];
   notes?: string;
   digitalCardId?: string;
+  // --- PawPort rebooking autopilot (additive; Master Spec §11.4, §14) ---
+  /** Override for the coat-based rebooking interval, in weeks. */
+  rebookIntervalWeeks?: number;
+  /** When this pet was last groomed (set when an appointment completes). */
+  lastGroomAt?: Date;
+  /** When this pet is next due for a groom (lastGroomAt + interval). */
+  nextDueAt?: Date;
+  /** When a rebooking nudge was last sent (throttles the daily job). */
+  lastNudgedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -46,12 +55,19 @@ const petSchema = new Schema<IPet>(
     specialFlags: [{ type: String }],
     notes: { type: String, maxlength: 500 },
     digitalCardId: { type: String, unique: true, sparse: true },
+    // --- PawPort rebooking autopilot (additive; §11.4, §14) ---
+    rebookIntervalWeeks: { type: Number, min: 1, max: 52 },
+    lastGroomAt: { type: Date },
+    nextDueAt: { type: Date },
+    lastNudgedAt: { type: Date },
   },
   { timestamps: true }
 );
 
 petSchema.index({ clientId: 1 });
 petSchema.index({ groomerId: 1 });
+// Rebooking-autopilot query: pets due within a window (§11.4).
+petSchema.index({ groomerId: 1, nextDueAt: 1 });
 // `digitalCardId` already declares `unique: true, sparse: true`, which creates
 // its index. A separate `petSchema.index({ digitalCardId: 1 })` duplicated it
 // (Mongoose "Duplicate schema index" warning) and has been removed.

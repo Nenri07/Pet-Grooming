@@ -16,6 +16,16 @@ export interface RouteMeta {
 /** Where a booking originated (Master Spec §14). */
 export type AppointmentSource = 'public' | 'manual' | 'claim' | 'rebook';
 
+/** Live-ETA tracking state attached to an appointment (Master Spec §11.2, §14). */
+export interface AppointmentTracking {
+  /** Public tracker token; resolves the `track:{token}` Redis position (§15). */
+  token?: string;
+  /** When the groomer tapped "On my way". */
+  startedAt?: Date;
+  /** When the groomer marked "Arrived" (stops sharing). */
+  arrivedAt?: Date;
+}
+
 export interface IAppointment extends Document {
   groomerId: Types.ObjectId;
   clientId: Types.ObjectId;
@@ -40,6 +50,13 @@ export interface IAppointment extends Document {
    * (reminder_24h, reminder_2h). Stored so reschedule/cancel can cancel them.
    */
   reminderJobIds?: string[];
+  // --- PawPort Live ETA + Before/After (additive; §11.2, §11.3, §14) ---
+  /** Live "van is on the way" tracking state (§11.2). */
+  tracking?: AppointmentTracking;
+  /** Cloudinary URL of the before photo (§11.3). */
+  beforePhotoUrl?: string;
+  /** Cloudinary URL of the after photo (§11.3). */
+  afterPhotoUrl?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -93,6 +110,20 @@ const appointmentSchema = new Schema<IAppointment>(
     },
     // Additive (§12.3): scheduled reminder job ids (QStash) for cancel/replace.
     reminderJobIds: { type: [String], default: undefined },
+    // --- PawPort Live ETA + Before/After (additive; §11.2, §11.3, §14) ---
+    tracking: {
+      type: new Schema<AppointmentTracking>(
+        {
+          token: { type: String },
+          startedAt: { type: Date },
+          arrivedAt: { type: Date },
+        },
+        { _id: false }
+      ),
+      required: false,
+    },
+    beforePhotoUrl: { type: String },
+    afterPhotoUrl: { type: String },
   },
   { timestamps: true }
 );

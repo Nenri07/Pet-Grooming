@@ -136,6 +136,34 @@ export async function updateAppointmentStatus(
     }
     await appointment.save();
 
+    // Best-effort: completing an appointment sets the pet's rebooking due date
+    // (§11.4). lastGroomAt = now; nextDueAt = now + coat/override interval. A
+    // failure here must never fail the status change.
+    if (newStatus === 'completed') {
+      try {
+        const { Pet } = await import('@/lib/db/models/pet');
+        const { computeNextDueAt } = await import('@/lib/rebooking');
+        const pet = await Pet.findById(appointment.petId)
+          .select('coatCondition rebookIntervalWeeks')
+          .lean();
+        if (pet) {
+          const p = pet as { coatCondition?: string; rebookIntervalWeeks?: number };
+          const groomedAt = new Date();
+          const nextDueAt = computeNextDueAt(
+            groomedAt,
+            p.coatCondition,
+            p.rebookIntervalWeeks
+          );
+          await Pet.updateOne(
+            { _id: appointment.petId },
+            { $set: { lastGroomAt: groomedAt, nextDueAt } }
+          );
+        }
+      } catch (err) {
+        console.error('[status] setting pet nextDueAt failed (non-fatal):', err);
+      }
+    }
+
     // Best-effort: cancelling an appointment cancels its pending reminders
     // (§12.3) so a client is never reminded about a cancelled booking. Never
     // fails the status change.

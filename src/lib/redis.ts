@@ -84,6 +84,14 @@ export const TTL = {
   GEOCODE: 30 * 24 * 60 * 60, // geo:{sha1(address)} EX 30d (§10.1)
   TRAVEL: 7 * 24 * 60 * 60, // tt:{hash(a)}:{hash(b)} EX 7d (§10.2)
   ENTITLEMENTS: 60, // ent:{gid}                   EX 60 (§13.2)
+  // --- PawPort Phase 7 hook features (§11, §15) ---
+  CLAIM: 1800, // claim:{token}               EX 1800 (30 min) (§11.1)
+  CLAIM_WON: 1800, // claimwon:{gid}:{startMs}     EX 1800 (§11.1)
+  TRACK: 7200, // track:{token}               EX 7200 (2 h) (§11.2)
+  // Rebook link token. Not in the §15 map (which predates the token approach);
+  // §11.4 uses `/rebook/{token}` — give it a generous 30-day life so a nudge
+  // link stays valid across the reminder cycle.
+  REBOOK: 30 * 24 * 60 * 60, // rebook:{token}          EX 30d (§11.4)
 } as const;
 
 export const keys = {
@@ -98,7 +106,110 @@ export const keys = {
   travelTime: (hashA: string, hashB: string) => `tt:${hashA}:${hashB}`,
   // §13.2 resolved entitlements cache, keyed by groomer id, EX 60.
   entitlements: (gid: string) => `ent:${gid}`,
+  // §11.1 Fill My Day claim token → {gid,startMs,endMs,clientId}, EX 1800.
+  claim: (token: string) => `claim:${token}`,
+  // §11.1 first-to-win marker for a filled slot (SET NX), EX 1800.
+  claimWon: (gid: string, startMs: number) => `claimwon:${gid}:${startMs}`,
+  // §11.2 Live ETA van position token → {lat,lng,ts}, EX 7200.
+  track: (token: string) => `track:${token}`,
+  // §11.4 rebook link token → {gid,clientId,petId}, EX 30d.
+  rebook: (token: string) => `rebook:${token}`,
 } as const;
+
+/** The value stored under a `claim:{token}` key (§11.1). */
+export interface ClaimRecord {
+  gid: string;
+  startMs: number;
+  endMs: number;
+  clientId: string;
+}
+
+/** The value stored under a `track:{token}` key (§11.2). */
+export interface TrackRecord {
+  lat: number;
+  lng: number;
+  ts: number;
+}
+
+/** The value stored under a `rebook:{token}` key (§11.4). */
+export interface RebookRecord {
+  gid: string;
+  clientId: string;
+  petId: string;
+}
+
+// ---------------------------------------------------------------------------
+// Fill My Day claim helpers (§11.1). A claim token is offered to the top
+// candidates; the FIRST to confirm wins via `SET claimwon:{gid}:{startMs} NX`.
+// ---------------------------------------------------------------------------
+
+/** Store a claim token → slot mapping. `claim:{token}` EX 1800. */
+export async function setClaim(token: string, record: ClaimRecord): Promise<void> {
+  const r = getRedis();
+  await r.set(keys.claim(token), JSON.stringify(record), { ex: TTL.CLAIM });
+}
+
+/** Read a claim token's slot mapping, or `null` if missing/expired. */
+export async function getClaim(token: string): Promise<ClaimRecord | null> {
+  return cacheGet<ClaimRecord>(keys.claim(token));
+}
+
+/**
+ * Attempt to win a claimed slot, first-to-confirm-wins (§11.1). Uses
+ * `SET claimwon:{gid}:{startMs} {clientId} NX EX 1800`.
+ *
+ * @returns `true` if THIS client won the slot; `false` if someone already did.
+ */
+export async function tryWinClaim(
+  gid: string,
+  startMs: number,
+  clientId: string
+): Promise<boolean> {
+  const r = getRedis();
+  const res = await r.set(keys.claimWon(gid, startMs), clientId, {
+    nx: true,
+    ex: TTL.CLAIM_WON,
+  });
+  return res === 'OK';
+}
+
+// ---------------------------------------------------------------------------
+// Live ETA tracking helpers (§11.2). The groomer's device posts its position
+// every ~20s; the public tracker page reads it every ~10s.
+// ---------------------------------------------------------------------------
+
+/** Store the current van position for a tracking token. `track:{token}` EX 7200. */
+export async function setTrack(token: string, record: TrackRecord): Promise<void> {
+  const r = getRedis();
+  await r.set(keys.track(token), JSON.stringify(record), { ex: TTL.TRACK });
+}
+
+/** Read the current van position for a tracking token, or `null`. */
+export async function getTrack(token: string): Promise<TrackRecord | null> {
+  return cacheGet<TrackRecord>(keys.track(token));
+}
+
+/** Stop sharing: delete the tracking position key. */
+export async function clearTrack(token: string): Promise<void> {
+  const r = getRedis();
+  await r.del(keys.track(token));
+}
+
+// ---------------------------------------------------------------------------
+// Rebooking-autopilot link tokens (§11.4). A nudge SMS carries `/rebook/{token}`
+// which resolves to a prefilled booking (pet + owner known).
+// ---------------------------------------------------------------------------
+
+/** Store a rebook token → {gid,clientId,petId}. `rebook:{token}` EX 30d. */
+export async function setRebook(token: string, record: RebookRecord): Promise<void> {
+  const r = getRedis();
+  await r.set(keys.rebook(token), JSON.stringify(record), { ex: TTL.REBOOK });
+}
+
+/** Read a rebook token's mapping, or `null` if missing/expired. */
+export async function getRebook(token: string): Promise<RebookRecord | null> {
+  return cacheGet<RebookRecord>(keys.rebook(token));
+}
 
 /** The value stored under a `hold:{gid}:{holdId}` key. */
 export interface HoldRecord {
