@@ -8,6 +8,8 @@ type Props = {
   subtitle?: string;
   align?: 'left' | 'center';
   className?: string;
+  /** Optional id for the <h2>, so a section's aria-labelledby can point at it. */
+  titleId?: string;
 };
 
 /**
@@ -20,6 +22,7 @@ export function SectionHeading({
   subtitle,
   align = 'center',
   className = '',
+  titleId,
 }: Props) {
   const alignment = align === 'center' ? 'mx-auto text-center' : 'text-left';
 
@@ -30,7 +33,9 @@ export function SectionHeading({
           {eyebrow}
         </p>
       )}
-      <h2 className="text-h2 font-display font-bold text-base-content">{title}</h2>
+      <h2 id={titleId} className="text-h2 font-display font-bold text-base-content">
+        {title}
+      </h2>
       {subtitle && (
         <p className="mt-4 text-lg text-base-content/70">{subtitle}</p>
       )}

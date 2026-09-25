@@ -164,6 +164,58 @@ export interface FaqItem {
 }
 
 // ---------------------------------------------------------------------------
+// How it works (3-step stepper)
+// ---------------------------------------------------------------------------
+
+/** A single step in the "how it works" sequence. */
+export interface HowItWorksStep {
+  /** Step label, e.g. "Book". */
+  title: string;
+  /** One line explaining what happens at this step. */
+  body: string;
+}
+
+export interface HowItWorksContent {
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+  steps: HowItWorksStep[];
+}
+
+// ---------------------------------------------------------------------------
+// Receipt showcase (branded booking receipt / slip)
+// ---------------------------------------------------------------------------
+
+/** Sample fields shown on the stylized booking-receipt ticket mockup. */
+export interface ReceiptSample {
+  /** Booking reference, e.g. "PP-XK4T9M". */
+  reference: string;
+  /** Numeric amount used by the NumberTicker (deposit paid). */
+  amount: number;
+  /** Currency prefix for the amount, e.g. "$". */
+  currency: string;
+  /** Human date label, e.g. "Thu 12 Jun". */
+  date: string;
+  /** Human time label, e.g. "2:30 PM". */
+  time: string;
+  /** Pet name shown on the ticket. */
+  pet: string;
+  /** Service name shown on the ticket. */
+  service: string;
+  /** Deposit pill label, e.g. "Deposit paid". */
+  depositLabel: string;
+}
+
+export interface ReceiptContent {
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+  /** Label for the download micro-interaction button. */
+  downloadLabel: string;
+  sample: ReceiptSample;
+}
+
+// ---------------------------------------------------------------------------
 // Final CTA (Section 7.12)
 // ---------------------------------------------------------------------------
 
@@ -193,6 +245,10 @@ export interface Landing {
   testimonials: Testimonial[];
   /** Founding program, shown in place of real stats/testimonials for now. */
   founding: Founding;
+  /** 3-step "how it works" sequence. */
+  howItWorks: HowItWorksContent;
+  /** Branded booking-receipt showcase. */
+  receipt: ReceiptContent;
   /** Comparison table (Section 7.9). */
   comparison: Comparison;
   /** Pricing plans + toggle copy (Section 7.10). */
@@ -278,6 +334,45 @@ export const landing: Landing = {
   testimonials: [],
 
   founding: { spots: 20, soloMonth: 19, proMonth: 39 },
+
+  howItWorks: {
+    eyebrow: 'How it works',
+    title: 'From booking to doorstep in three steps',
+    subtitle:
+      'No app for your clients, no zig-zag driving for you — just a booking page that works with your route.',
+    steps: [
+      {
+        title: 'Client books',
+        body: 'They pick a service and a time on your branded page and pay a deposit — no back-and-forth texts.',
+      },
+      {
+        title: 'PawPort routes it',
+        body: 'Order Radar ranks the booking against your day, so you only say yes to the stops that fit.',
+      },
+      {
+        title: 'Receipt & reminders',
+        body: 'Everyone gets a branded receipt to download, plus reminders that quietly cut no-shows.',
+      },
+    ],
+  },
+
+  receipt: {
+    eyebrow: 'Branded receipts',
+    title: 'Every booking comes with a receipt clients can keep',
+    subtitle:
+      'The moment a deposit is paid, PawPort generates a branded booking receipt clients can download and show on arrival.',
+    downloadLabel: 'Download receipt',
+    sample: {
+      reference: 'PP-XK4T9M',
+      amount: 15,
+      currency: '$',
+      date: 'Thu 12 Jun',
+      time: '2:30 PM',
+      pet: 'Bella',
+      service: 'Full groom',
+      depositLabel: 'Deposit paid',
+    },
+  },
 
   comparison: {
     otherLabel: 'Typical grooming software',

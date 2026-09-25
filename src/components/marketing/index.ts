@@ -8,10 +8,12 @@ export { SectionHeading } from './SectionHeading';
 
 // Landing sections in Section 7 order.
 export { ProblemStrip } from './ProblemStrip';
+export { HowItWorks } from './HowItWorks';
 export { OrderRadarShowcase } from './OrderRadarShowcase';
 export { BentoFeatures } from './BentoFeatures';
 export { FillMyDayEta } from './FillMyDayEta';
 export { PetCardShowcase } from './PetCardShowcase';
+export { ReceiptShowcase } from './ReceiptShowcase';
 export { StatsMarquee } from './StatsMarquee';
 export { Testimonial } from './Testimonial';
 export { Comparison } from './Comparison';

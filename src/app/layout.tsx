@@ -18,19 +18,46 @@ const metadataBase = new URL(
 
 export const metadata: Metadata = {
   metadataBase,
-  title: 'PawPort',
+  title: {
+    default: 'PawPort — Mobile pet grooming booking software',
+    template: '%s · PawPort',
+  },
   description,
+  keywords: [
+    'mobile pet grooming booking software',
+    'mobile dog groomer software',
+    'pet grooming scheduling',
+    'route optimization for groomers',
+    'no-show protection',
+    'grooming deposits',
+    'booking page for groomers',
+    'solo mobile groomer',
+  ],
+  applicationName: 'PawPort',
+  alternates: { canonical: '/' },
   openGraph: {
     title: 'PawPort — Groom more dogs. Drive less.',
     description,
     type: 'website',
-    images: [{ url: '/og.jpg', width: 1200, height: 630 }],
+    siteName: 'PawPort',
+    url: '/',
+    images: [{ url: '/og.jpg', width: 1200, height: 630, alt: 'PawPort' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'PawPort — Groom more dogs. Drive less.',
     description,
     images: ['/og.jpg'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
 };
 
