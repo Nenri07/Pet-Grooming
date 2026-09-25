@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Users,
   CalendarDays,
+  CalendarRange,
   Scissors,
   Clock,
   BarChart3,
@@ -50,6 +51,7 @@ interface NavItem {
 /** Full destination set for the desktop sidebar. */
 const SIDEBAR_ITEMS: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { label: 'Calendar', href: '/calendar', icon: CalendarRange },
   { label: 'Appointments', href: '/appointments', icon: CalendarDays },
   { label: 'Inbox', href: '/inbox', icon: MessageSquare },
   { label: 'Clients', href: '/clients', icon: Users },
@@ -62,13 +64,14 @@ const SIDEBAR_ITEMS: NavItem[] = [
 /** Five primary destinations for the mobile bottom tab bar. */
 const BOTTOM_TABS: NavItem[] = [
   { label: 'Today', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Calendar', href: '/appointments', icon: CalendarDays },
+  { label: 'Calendar', href: '/calendar', icon: CalendarRange },
   { label: 'Inbox', href: '/inbox', icon: MessageSquare },
   { label: 'Clients', href: '/clients', icon: Users },
 ];
 
 /** Secondary destinations surfaced through the mobile "More" sheet. */
 const MORE_ITEMS: NavItem[] = [
+  { label: 'Appointments', href: '/appointments', icon: CalendarDays },
   { label: 'Services', href: '/services', icon: Scissors },
   { label: 'Availability', href: '/availability', icon: Clock },
   { label: 'Analytics', href: '/analytics', icon: BarChart3 },
