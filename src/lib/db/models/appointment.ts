@@ -39,6 +39,14 @@ export interface IAppointment extends Document {
   serviceAddress?: string;
   notes?: string;
   postGroomNotes?: string;
+  /**
+   * Additive: a short human-friendly booking reference (e.g. `PP-7K3QW9`)
+   * shown on the client's confirmation ticket / receipt PDF and quoted to the
+   * groomer. Generated at checkout (reused from the PendingBooking) or at
+   * fulfilment if absent. Not unique-indexed — it is a display aid, the
+   * authoritative key remains the Transaction's stripePaymentId.
+   */
+  bookingRef?: string;
   // --- PawPort native calendar & routing (additive; §10.5, §14) ---
   /** Geocoded coordinates for this appointment's service address (§10.1). */
   location?: { lat: number; lng: number };
@@ -78,6 +86,8 @@ const appointmentSchema = new Schema<IAppointment>(
     serviceAddress: { type: String, maxlength: 500 },
     notes: { type: String, maxlength: 500 },
     postGroomNotes: { type: String, maxlength: 2000 },
+    // Additive human-friendly booking reference (display aid; see interface).
+    bookingRef: { type: String, maxlength: 32 },
     // --- PawPort native calendar & routing (additive; §10.5, §14) ---
     location: {
       type: new Schema<{ lat: number; lng: number }>(

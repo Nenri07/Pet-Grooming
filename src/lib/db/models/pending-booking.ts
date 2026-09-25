@@ -42,6 +42,12 @@ export interface IPendingBooking {
   holdId?: string;
   /** SMS consent (§12.3) captured at booking step 2; stamped on the Client. */
   smsConsent?: boolean;
+  /**
+   * Additive: the human-friendly booking reference (e.g. `PP-7K3QW9`) minted
+   * at checkout so the SAME reference is reused on fulfilment and shown on the
+   * client's confirmation ticket. Absent for older records / no-Stripe flows.
+   */
+  bookingRef?: string;
   createdAt: Date;
 }
 
@@ -59,6 +65,7 @@ const pendingBookingSchema = new Schema<IPendingBooking>({
   serviceId: { type: String },
   holdId: { type: String },
   smsConsent: { type: Boolean },
+  bookingRef: { type: String, maxlength: 32 },
   createdAt: { type: Date, default: Date.now },
 });
 

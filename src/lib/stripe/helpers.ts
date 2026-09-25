@@ -34,6 +34,7 @@ import { PendingBooking } from '@/lib/db/models/pending-booking';
 import { getStripe, isStripeConfigured } from '@/lib/stripe/client';
 import { createHold, SlotHeldError } from '@/lib/calendar/holds';
 import { isRedisConfigured } from '@/lib/redis';
+import { generateBookingRef } from '@/lib/booking/reference';
 import type { OwnerDetailsInput, PetInfoInput } from '@/types';
 
 /** Hard fallback deposit if neither the profile nor the env configure one. */
@@ -74,6 +75,12 @@ export type CreateDepositResult =
       amount: number;
       /** ISO 4217 currency code (lowercase, e.g. "usd"). */
       currency: string;
+      /**
+       * The human-friendly booking reference (e.g. `PP-7K3QW9`) minted here and
+       * stored on the PendingBooking so the SAME reference is reused when the
+       * booking is fulfilled and shown on the client's confirmation ticket.
+       */
+      bookingRef: string;
     }
   | { ok: false; error: string };
 
@@ -148,6 +155,11 @@ export async function createDepositPaymentIntent(
     const amount = resolveDepositAmount(profile.depositAmount);
     const currency = 'usd';
 
+    // Mint the human-friendly booking reference now so the SAME code is reused
+    // on fulfilment (webhook OR client fallback) and shown on the confirmation
+    // ticket. Persisted on the PendingBooking below.
+    const bookingRef = generateBookingRef();
+
     const groomerId = profile.userId.toString();
 
     // Best-effort: place a 10-minute Redis hold on the selected slot BEFORE
@@ -219,7 +231,7 @@ export async function createDepositPaymentIntent(
     // id, so the webhook can reconstruct the booking on success without relying
     // on (size-limited) Stripe metadata. Upsert keeps this idempotent if the
     // client retries intent creation for the same payment.
-    await PendingBooking.findOneAndUpdate(
+    const pending = await PendingBooking.findOneAndUpdate(
       { paymentIntentId: paymentIntent.id },
       {
         $set: {
@@ -237,9 +249,18 @@ export async function createDepositPaymentIntent(
           // slot cache after fulfilment. Absent when no hold was placed.
           holdId,
         },
-        $setOnInsert: { paymentIntentId: paymentIntent.id, createdAt: new Date() },
+        $setOnInsert: {
+          paymentIntentId: paymentIntent.id,
+          createdAt: new Date(),
+          // Set the reference only on INSERT so a retried intent-creation for
+          // the same payment keeps the reference minted on the first call.
+          bookingRef,
+        },
       },
-      { upsert: true }
+      // Return the (possibly pre-existing) stored document so we can echo back
+      // the reference actually persisted — on a retry this is the first call's
+      // reference, not the fresh one we generated this time.
+      { upsert: true, new: true }
     );
 
     // Record the PaymentIntent id on the intent's own metadata too, so the
@@ -253,6 +274,7 @@ export async function createDepositPaymentIntent(
       clientSecret: paymentIntent.client_secret,
       amount,
       currency,
+      bookingRef: pending?.bookingRef ?? bookingRef,
     };
   } catch (error) {
     console.error('createDepositPaymentIntent failed:', error);
