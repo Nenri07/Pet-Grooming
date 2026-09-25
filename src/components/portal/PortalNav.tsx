@@ -21,6 +21,7 @@ import {
   X,
 } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
+import { ThemeMenu } from './ThemeMenu';
 import { SmsCreditsPill } from './SmsCreditsPill';
 
 /**
@@ -180,6 +181,7 @@ export function PortalNav() {
         </Link>
         <div className="ml-auto flex items-center gap-2">
           <SmsCreditsPill />
+          <ThemeMenu />
           <ThemeToggle />
           <AvatarMenu />
         </div>
@@ -255,6 +257,7 @@ export function PortalNav() {
         >
           {!collapsed && <SmsCreditsPill />}
           <div className={cx('flex items-center gap-1', collapsed && 'flex-col')}>
+            <ThemeMenu align={collapsed ? 'start' : 'end'} />
             <ThemeToggle />
             <AvatarMenu />
           </div>
@@ -359,7 +362,10 @@ export function PortalNav() {
             </div>
             <div className="mt-4 flex items-center justify-between border-t border-base-content/10 pt-4">
               <SmsCreditsPill />
-              <ThemeToggle />
+              <div className="flex items-center gap-1">
+                <ThemeMenu />
+                <ThemeToggle />
+              </div>
             </div>
           </div>
         </div>

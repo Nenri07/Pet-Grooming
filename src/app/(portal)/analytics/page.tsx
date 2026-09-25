@@ -1,8 +1,9 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth/config';
-import { getMonthlyAnalytics } from '@/actions/analytics';
+import { getMonthlyAnalytics, getAnalyticsSeries } from '@/actions/analytics';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
+import { AnalyticsCharts } from '@/components/portal/AnalyticsCharts';
 
 /**
  * Analytics dashboard page (server component).
@@ -97,7 +98,10 @@ export default async function AnalyticsPage() {
     redirect('/login');
   }
 
-  const result = await getMonthlyAnalytics();
+  const [result, seriesResult] = await Promise.all([
+    getMonthlyAnalytics(),
+    getAnalyticsSeries(),
+  ]);
 
   if (!result.ok) {
     return (
@@ -136,6 +140,16 @@ export default async function AnalyticsPage() {
           title="No-show rate"
           value={formatPercent(current.noShowRate)}
         />
+      </div>
+
+      <div className="mt-6">
+        {seriesResult.ok ? (
+          <AnalyticsCharts series={seriesResult.series} />
+        ) : (
+          <div role="alert" className="alert alert-error">
+            <span>{seriesResult.error}</span>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -49,6 +49,106 @@
   --pp-glass: oklch(var(--b1) / 0.6);
 }
 
+/* MEADOW — "Fresh Meadow": sage + fern greens, clean & natural */
+[data-theme="pawport_meadow"] {
+  color-scheme: light;
+  --p: 52% 0.12 150;  --pc: 98% 0.01 150;
+  --s: 68% 0.09 130;  --sc: 22% 0.05 130;
+  --a: 78% 0.11 75;   --ac: 26% 0.06 75;
+  --n: 30% 0.03 150;  --nc: 96% 0.01 150;
+  --b1: 98.5% 0.012 130; --b2: 96% 0.018 130; --b3: 92% 0.024 130;
+  --bc: 26% 0.04 155;
+  --in: 68% 0.11 200; --inc: 20% 0.04 200;
+  --su: 70% 0.15 150; --suc: 18% 0.05 150;
+  --wa: 82% 0.14 85;  --wac: 25% 0.05 85;
+  --er: 62% 0.20 25;  --erc: 98% 0.01 25;
+  --pp-hero-gradient: radial-gradient(120% 90% at 20% 10%, oklch(90% 0.07 150) 0%, oklch(97% 0.02 130) 55%, oklch(92% 0.08 75) 100%);
+  --pp-glow: 0 20px 60px -20px oklch(var(--p) / 0.35);
+  --pp-shadow-card: 0 10px 30px -12px oklch(30% 0.04 150 / 0.12);
+  --pp-border: oklch(var(--bc) / 0.10);
+  --pp-glass: oklch(var(--b1) / 0.7);
+}
+
+/* SAND — "Golden Sand": warm terracotta + cream (golden-retriever tones) */
+[data-theme="pawport_sand"] {
+  color-scheme: light;
+  --p: 58% 0.13 55;   --pc: 98% 0.01 55;
+  --s: 72% 0.10 40;   --sc: 26% 0.06 40;
+  --a: 66% 0.14 25;   --ac: 98% 0.01 25;
+  --n: 32% 0.04 50;   --nc: 96% 0.01 50;
+  --b1: 98% 0.016 75; --b2: 95% 0.022 70; --b3: 90% 0.03 65;
+  --bc: 28% 0.05 50;
+  --in: 68% 0.11 235; --inc: 20% 0.04 235;
+  --su: 70% 0.14 150; --suc: 18% 0.05 150;
+  --wa: 80% 0.14 80;  --wac: 26% 0.05 80;
+  --er: 60% 0.20 28;  --erc: 98% 0.01 28;
+  --pp-hero-gradient: radial-gradient(120% 90% at 20% 10%, oklch(90% 0.08 60) 0%, oklch(97% 0.03 75) 55%, oklch(88% 0.10 30) 100%);
+  --pp-glow: 0 20px 60px -20px oklch(var(--p) / 0.35);
+  --pp-shadow-card: 0 10px 30px -12px oklch(32% 0.05 50 / 0.14);
+  --pp-border: oklch(var(--bc) / 0.10);
+  --pp-glass: oklch(var(--b1) / 0.7);
+}
+
+/* BLOSSOM — "Soft Blossom": rose + blush pinks over cream (gentle spa) */
+[data-theme="pawport_blossom"] {
+  color-scheme: light;
+  --p: 60% 0.15 355;  --pc: 98% 0.01 355;
+  --s: 74% 0.09 330;  --sc: 26% 0.05 330;
+  --a: 80% 0.09 30;   --ac: 28% 0.05 30;
+  --n: 32% 0.04 350;  --nc: 96% 0.01 350;
+  --b1: 99% 0.01 350; --b2: 96.5% 0.018 350; --b3: 93% 0.026 350;
+  --bc: 28% 0.05 350;
+  --in: 68% 0.11 300; --inc: 20% 0.04 300;
+  --su: 70% 0.14 150; --suc: 18% 0.05 150;
+  --wa: 82% 0.14 85;  --wac: 25% 0.05 85;
+  --er: 62% 0.20 20;  --erc: 98% 0.01 20;
+  --pp-hero-gradient: radial-gradient(120% 90% at 20% 10%, oklch(92% 0.07 350) 0%, oklch(98% 0.02 350) 55%, oklch(93% 0.06 30) 100%);
+  --pp-glow: 0 20px 60px -20px oklch(var(--p) / 0.35);
+  --pp-shadow-card: 0 10px 30px -12px oklch(32% 0.05 350 / 0.12);
+  --pp-border: oklch(var(--bc) / 0.10);
+  --pp-glass: oklch(var(--b1) / 0.7);
+}
+
+/* OCEAN — "Fresh Bath": calm teal/aqua + warm sand (watery bath vibe) */
+[data-theme="pawport_ocean"] {
+  color-scheme: light;
+  --p: 56% 0.11 210;  --pc: 98% 0.01 210;
+  --s: 72% 0.10 185;  --sc: 22% 0.05 185;
+  --a: 80% 0.09 70;   --ac: 28% 0.05 70;
+  --n: 30% 0.04 220;  --nc: 96% 0.01 220;
+  --b1: 98.5% 0.012 200; --b2: 96% 0.018 200; --b3: 91% 0.026 200;
+  --bc: 26% 0.04 220;
+  --in: 66% 0.12 220; --inc: 20% 0.04 220;
+  --su: 70% 0.14 165; --suc: 18% 0.05 165;
+  --wa: 82% 0.14 85;  --wac: 25% 0.05 85;
+  --er: 62% 0.20 25;  --erc: 98% 0.01 25;
+  --pp-hero-gradient: radial-gradient(120% 90% at 20% 10%, oklch(88% 0.08 205) 0%, oklch(97% 0.02 195) 55%, oklch(92% 0.06 70) 100%);
+  --pp-glow: 0 20px 60px -20px oklch(var(--p) / 0.35);
+  --pp-shadow-card: 0 10px 30px -12px oklch(30% 0.04 210 / 0.12);
+  --pp-border: oklch(var(--bc) / 0.10);
+  --pp-glass: oklch(var(--b1) / 0.7);
+}
+
+/* CHARCOAL — "Luxe Charcoal": premium dark charcoal + warm amber accent */
+[data-theme="pawport_charcoal"] {
+  color-scheme: dark;
+  --p: 80% 0.13 75;   --pc: 20% 0.04 75;
+  --s: 72% 0.06 40;   --sc: 18% 0.03 40;
+  --a: 78% 0.12 55;   --ac: 20% 0.04 55;
+  --n: 28% 0.01 60;   --nc: 94% 0.01 60;
+  --b1: 20% 0.006 60; --b2: 16% 0.006 60; --b3: 13% 0.006 60;
+  --bc: 92% 0.012 75;
+  --in: 72% 0.11 235; --inc: 16% 0.04 235;
+  --su: 76% 0.14 155; --suc: 16% 0.05 155;
+  --wa: 84% 0.14 85;  --wac: 20% 0.05 85;
+  --er: 68% 0.19 25;  --erc: 16% 0.05 25;
+  --pp-hero-gradient: radial-gradient(120% 90% at 20% 10%, oklch(34% 0.06 70) 0%, oklch(18% 0.006 60) 55%, oklch(28% 0.08 45) 100%);
+  --pp-glow: 0 20px 80px -20px oklch(var(--p) / 0.40);
+  --pp-shadow-card: 0 12px 40px -12px oklch(0% 0 0 / 0.55);
+  --pp-border: oklch(var(--bc) / 0.10);
+  --pp-glass: oklch(var(--b1) / 0.6);
+}
+
 html { font-family: var(--font-body-stack); font-size: 16px; line-height: 1.6; }
 h1, h2, h3, .font-display { font-family: var(--font-display-stack); letter-spacing: -0.02em; }
 

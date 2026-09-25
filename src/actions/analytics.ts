@@ -27,9 +27,13 @@ import { Appointment } from '@/lib/db/models/appointment';
 import { Transaction } from '@/lib/db/models/transaction';
 import {
   computeMonthlyMetrics,
+  buildMonthlySeries,
   type AppointmentLike,
   type TransactionLike,
   type MonthlyMetrics,
+  type MonthlySeriesPoint,
+  type DatedAppointment,
+  type DatedTransaction,
 } from '@/lib/analytics/metrics';
 import type { AppointmentStatus, TransactionStatus } from '@/types';
 
@@ -167,6 +171,91 @@ export async function getMonthlyAnalytics(): Promise<MonthlyAnalyticsResult> {
     return { ok: true, current, previous, diff, hasData };
   } catch (error) {
     console.error('getMonthlyAnalytics failed:', error);
+    return {
+      ok: false,
+      error: "We couldn't load your analytics right now. Please try again.",
+    };
+  }
+}
+
+/** Result envelope returned by {@link getAnalyticsSeries}. */
+export type AnalyticsSeriesResult =
+  | { ok: true; series: MonthlySeriesPoint[] }
+  | { ok: false; error: string };
+
+/** Number of trailing months in the analytics series. */
+const SERIES_MONTHS = 12;
+
+/** Lean shape for series appointments (bucketed by scheduledDate). */
+interface LeanSeriesAppointment {
+  status: AppointmentStatus;
+  scheduledDate: Date;
+}
+/** Lean shape for series transactions (bucketed by createdAt). */
+interface LeanSeriesTransaction {
+  amount: number;
+  status: TransactionStatus;
+  createdAt: Date;
+}
+
+/**
+ * Load a trailing 12-month monthly series for the authenticated groomer:
+ * `{ month, label, bookings, revenue, noShowRate }` per month, oldest → newest.
+ *
+ * Appointments are bucketed by `scheduledDate`, revenue by succeeded
+ * transactions' `createdAt`. All bucketing/metric math is delegated to the pure
+ * {@link buildMonthlySeries}. Degrades to a full zero-valued series (never an
+ * empty array) on no data, so the chart always has a continuous x-axis.
+ *
+ * _Requirements: 16.1, 16.2, 16.3_
+ */
+export async function getAnalyticsSeries(): Promise<AnalyticsSeriesResult> {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return { ok: false, error: 'You must be signed in to view analytics.' };
+  }
+
+  try {
+    await connectDB();
+
+    const now = new Date();
+    const groomerId = session.user.id;
+
+    // Window: from the start of the oldest bucket month to the end of this month.
+    const windowStart = startOfMonth(subMonths(now, SERIES_MONTHS - 1));
+    const windowEnd = endOfMonth(now);
+
+    const [apptDocs, txnDocs] = await Promise.all([
+      Appointment.find({
+        groomerId,
+        scheduledDate: { $gte: windowStart, $lte: windowEnd },
+      })
+        .select('status scheduledDate')
+        .lean<LeanSeriesAppointment[]>(),
+      Transaction.find({
+        groomerId,
+        status: 'succeeded',
+        createdAt: { $gte: windowStart, $lte: windowEnd },
+      })
+        .select('amount status createdAt')
+        .lean<LeanSeriesTransaction[]>(),
+    ]);
+
+    const appointments: DatedAppointment[] = apptDocs.map((a) => ({
+      status: a.status,
+      scheduledDate: new Date(a.scheduledDate),
+    }));
+    const transactions: DatedTransaction[] = txnDocs.map((t) => ({
+      amount: t.amount,
+      status: t.status,
+      createdAt: new Date(t.createdAt),
+    }));
+
+    const series = buildMonthlySeries(appointments, transactions, now, SERIES_MONTHS);
+
+    return { ok: true, series };
+  } catch (error) {
+    console.error('getAnalyticsSeries failed:', error);
     return {
       ok: false,
       error: "We couldn't load your analytics right now. Please try again.",

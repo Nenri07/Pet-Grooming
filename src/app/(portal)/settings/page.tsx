@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth/config';
 import { getBusinessSettings } from '@/actions/settings';
 import { BusinessSettings } from '@/components/portal/BusinessSettings';
+import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
+import { ThemePicker } from '@/components/portal/ThemePicker';
 
 /**
  * Business settings page (server component shell).
@@ -42,5 +44,20 @@ export default async function SettingsPage() {
     );
   }
 
-  return <BusinessSettings initialSettings={result.settings} />;
+  return (
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
+      <BusinessSettings initialSettings={result.settings} />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Appearance</CardTitle>
+          <p className="text-sm text-base-content/60">
+            Pick a color theme. It applies instantly across your whole PawPort
+            site — dashboard, booking pages, and everything in between.
+          </p>
+        </CardHeader>
+        <ThemePicker />
+      </Card>
+    </div>
+  );
 }

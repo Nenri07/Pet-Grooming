@@ -164,3 +164,102 @@ export function computeMonthlyMetrics(
     noShowRate: computeNoShowRate(appointments, now),
   };
 }
+
+/* ---------------------------------------------------------------------------
+ * 12-month series (Analytics charts).
+ *
+ * `buildMonthlySeries` buckets appointments (by `scheduledDate`) and
+ * transactions (by `createdAt`) into calendar months and computes the three
+ * headline metrics per bucket, for the trailing `months` window ending in the
+ * month of `now` (inclusive). Pure and DB-free so the bucketing is directly
+ * testable; the server action just loads records and calls this.
+ * ------------------------------------------------------------------------- */
+
+/** An appointment carrying the timestamp used for month bucketing. */
+export interface DatedAppointment extends AppointmentLike {
+  /** When the appointment is scheduled (used both for bucketing and no-show). */
+  scheduledDate: Date;
+}
+
+/** A transaction carrying the timestamp used for month bucketing. */
+export interface DatedTransaction extends TransactionLike {
+  /** When the transaction was created (revenue is bucketed by this). */
+  createdAt: Date;
+}
+
+/** One month in the series. */
+export interface MonthlySeriesPoint extends MonthlyMetrics {
+  /** Bucket key, `YYYY-MM` (zero-padded). */
+  month: string;
+  /** Short month label for chart axes, e.g. `Jan`. */
+  label: string;
+}
+
+/** Short English month labels, indexed 0–11. */
+const MONTH_LABELS = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+] as const;
+
+/** Zero-pad a month index (0–11) to a `YYYY-MM` key. */
+function monthKey(year: number, monthIndex: number): string {
+  const mm = String(monthIndex + 1).padStart(2, '0');
+  return `${year}-${mm}`;
+}
+
+/**
+ * Build a trailing `months`-month series (default 12) ending in the month of
+ * `now`, inclusive. Each bucket's `bookings`/`noShowRate` come from that
+ * month's appointments and `revenue` from that month's succeeded transactions.
+ *
+ * Records outside the window are ignored. Months with no records still appear
+ * as zero-valued points so the chart has a continuous 12-month x-axis.
+ *
+ * _Requirements: 16.1, 16.2_
+ */
+export function buildMonthlySeries(
+  appointments: ReadonlyArray<DatedAppointment>,
+  transactions: ReadonlyArray<DatedTransaction>,
+  now: Date,
+  months = 12
+): MonthlySeriesPoint[] {
+  // Ordered list of the buckets we will emit (oldest → newest).
+  const buckets: Array<{ key: string; year: number; monthIndex: number }> = [];
+  const bucketIndex = new Map<string, number>();
+
+  const anchorYear = now.getFullYear();
+  const anchorMonth = now.getMonth();
+  for (let offset = months - 1; offset >= 0; offset -= 1) {
+    // Normalize (year, month - offset) into a valid year/month pair.
+    const d = new Date(anchorYear, anchorMonth - offset, 1);
+    const key = monthKey(d.getFullYear(), d.getMonth());
+    bucketIndex.set(key, buckets.length);
+    buckets.push({ key, year: d.getFullYear(), monthIndex: d.getMonth() });
+  }
+
+  // Per-bucket accumulators.
+  const apptsByBucket: AppointmentLike[][] = buckets.map(() => []);
+  const txnsByBucket: TransactionLike[][] = buckets.map(() => []);
+
+  for (const appt of appointments) {
+    const key = monthKey(appt.scheduledDate.getFullYear(), appt.scheduledDate.getMonth());
+    const idx = bucketIndex.get(key);
+    if (idx !== undefined) apptsByBucket[idx].push(appt);
+  }
+  for (const txn of transactions) {
+    const key = monthKey(txn.createdAt.getFullYear(), txn.createdAt.getMonth());
+    const idx = bucketIndex.get(key);
+    if (idx !== undefined) txnsByBucket[idx].push(txn);
+  }
+
+  return buckets.map((b, i) => {
+    const metrics = computeMonthlyMetrics(apptsByBucket[i], txnsByBucket[i], now);
+    return {
+      month: b.key,
+      label: MONTH_LABELS[b.monthIndex],
+      bookings: metrics.bookings,
+      revenue: metrics.revenue,
+      noShowRate: metrics.noShowRate,
+    };
+  });
+}

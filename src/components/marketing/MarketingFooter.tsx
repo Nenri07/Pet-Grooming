@@ -3,6 +3,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import { Moon, Sun, Github, Twitter, Instagram } from 'lucide-react';
+import { ThemeMenu } from '@/components/portal/ThemeMenu';
 
 /**
  * Marketing footer: nav links, social links, and a theme toggle that uses the
@@ -91,25 +92,28 @@ export function MarketingFooter() {
                 <Github className="h-5 w-5" aria-hidden="true" />
               </Link>
             </div>
-            <button
-              type="button"
-              onClick={toggleTheme}
-              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-              title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-              className="btn btn-ghost btn-sm min-h-[44px] justify-start gap-2"
-            >
-              {mounted && isDark ? (
-                <>
-                  <Sun className="h-5 w-5" aria-hidden="true" />
-                  <span>Light mode</span>
-                </>
-              ) : (
-                <>
-                  <Moon className="h-5 w-5" aria-hidden="true" />
-                  <span>Dark mode</span>
-                </>
-              )}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={toggleTheme}
+                aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+                title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+                className="btn btn-ghost btn-sm min-h-[44px] justify-start gap-2"
+              >
+                {mounted && isDark ? (
+                  <>
+                    <Sun className="h-5 w-5" aria-hidden="true" />
+                    <span>Light mode</span>
+                  </>
+                ) : (
+                  <>
+                    <Moon className="h-5 w-5" aria-hidden="true" />
+                    <span>Dark mode</span>
+                  </>
+                )}
+              </button>
+              <ThemeMenu align="start" />
+            </div>
           </div>
         </div>
 

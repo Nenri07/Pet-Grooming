@@ -2,7 +2,7 @@
 
 import { ThemeProvider as NextThemeProvider } from 'next-themes';
 import type { ReactNode } from 'react';
-import { themes, defaultTheme } from '@/styles/themes';
+import { themeIds, defaultTheme } from '@/styles/themes';
 
 /**
  * ThemeProvider wraps the app with next-themes, applying the selected theme via
@@ -16,7 +16,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   return (
     <NextThemeProvider
       attribute="data-theme"
-      themes={[...themes]}
+      themes={[...themeIds]}
       defaultTheme={defaultTheme}
       enableSystem={false}
       storageKey="pawport-theme"
