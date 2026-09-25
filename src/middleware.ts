@@ -57,31 +57,69 @@ function isAuthRoute(pathname: string): boolean {
   );
 }
 
+/** True when `pathname` is (or is nested under) the onboarding wizard. */
+function isOnboardingRoute(pathname: string): boolean {
+  return pathname === '/onboarding' || pathname.startsWith('/onboarding/');
+}
+
+/**
+ * Pure redirect-resolution for the middleware.
+ *
+ * Returns the absolute path to redirect to, or `null` to let the request
+ * through. Kept free of `NextResponse`/request objects so it can be unit-tested
+ * directly and reasoned about in isolation.
+ *
+ * A hard invariant guards against the blank-page / redirect loop that trapped
+ * Google sign-ins: this NEVER returns a path equal to the current one, so a
+ * request can never be redirected to itself (e.g. /onboarding -> /onboarding or
+ * /login -> /login). `onboardingComplete` is treated as false when undefined,
+ * so a not-yet-loaded flag sends the user to onboarding rather than looping.
+ */
+export function resolveRedirect(params: {
+  pathname: string;
+  isAuthenticated: boolean;
+  onboardingComplete: boolean | undefined;
+}): string | null {
+  const { pathname, isAuthenticated } = params;
+  // Undefined onboarding status is treated as incomplete (defensive default).
+  const onboardingComplete = params.onboardingComplete === true;
+
+  // Unauthenticated on a portal route -> login.
+  if (!isAuthenticated && isPortalRoute(pathname)) {
+    return pathname === '/login' ? null : '/login';
+  }
+
+  // Signed-in users must NOT sit on the login/register pages. Send them to
+  // onboarding when incomplete, otherwise the dashboard.
+  if (isAuthenticated && isAuthRoute(pathname)) {
+    const dest = onboardingComplete ? '/dashboard' : '/onboarding';
+    // Loop-guard: never redirect a path to itself.
+    return pathname === dest ? null : dest;
+  }
+
+  // Signed-in groomers with incomplete onboarding -> the wizard, unless they
+  // are already on it. The explicit onboarding-route check makes the
+  // no-self-redirect guarantee obvious even as the route set evolves.
+  if (isAuthenticated && !onboardingComplete && !isOnboardingRoute(pathname)) {
+    return '/onboarding';
+  }
+
+  return null;
+}
+
 export default withAuth(
   function middleware(req) {
     const { pathname } = req.nextUrl;
     const token = req.nextauth.token;
 
-    // Unauthenticated on a portal route -> login (explicit redirect target).
-    if (!token && isPortalRoute(pathname)) {
-      return NextResponse.redirect(new URL('/login', req.url));
-    }
+    const dest = resolveRedirect({
+      pathname,
+      isAuthenticated: !!token,
+      onboardingComplete: token?.onboardingComplete,
+    });
 
-    // Signed-in users must NOT see the login/register pages again. Send them
-    // to onboarding when incomplete, otherwise the dashboard.
-    if (token && isAuthRoute(pathname)) {
-      const dest = token.onboardingComplete ? '/dashboard' : '/onboarding';
+    if (dest) {
       return NextResponse.redirect(new URL(dest, req.url));
-    }
-
-    // Signed-in groomers with incomplete onboarding -> the wizard, unless they
-    // are already there (auth pages were handled above).
-    if (
-      token &&
-      !token.onboardingComplete &&
-      !pathname.startsWith('/onboarding')
-    ) {
-      return NextResponse.redirect(new URL('/onboarding', req.url));
     }
 
     return NextResponse.next();
