@@ -45,7 +45,10 @@ const userSchema = new Schema<IUser>(
   { timestamps: true }
 );
 
-userSchema.index({ email: 1 });
+// NOTE: `email` already declares `unique: true` (which creates its index) and
+// `googleId` declares `unique: true, sparse: true`. A separate
+// `userSchema.index({ email: 1 })` here duplicated the email index and made
+// Mongoose emit a "Duplicate schema index" warning, so it has been removed.
 
 export const User: Model<IUser> =
   (models.User as Model<IUser>) || model<IUser>('User', userSchema);

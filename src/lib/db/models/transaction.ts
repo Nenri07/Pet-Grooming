@@ -37,7 +37,9 @@ const transactionSchema = new Schema<ITransaction>(
 
 transactionSchema.index({ appointmentId: 1 });
 transactionSchema.index({ groomerId: 1, createdAt: -1 });
-transactionSchema.index({ stripePaymentId: 1 });
+// `stripePaymentId` already declares `unique: true`, which creates its index.
+// A separate `transactionSchema.index({ stripePaymentId: 1 })` duplicated it
+// (Mongoose "Duplicate schema index" warning) and has been removed.
 
 export const Transaction =
   models.Transaction || model<ITransaction>('Transaction', transactionSchema);

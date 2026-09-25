@@ -9,7 +9,15 @@ import { AnimationProvider } from '@/lib/animation';
 const description =
   'The booking, routing and no-show shield built for solo mobile pet groomers. Groom more dogs. Drive less.';
 
+// Base URL for resolving relative OG/Twitter image paths (fixes the Next.js
+// build warning about metadataBase being unset). Uses the public app URL when
+// configured, else a sane localhost default for dev/build.
+const metadataBase = new URL(
+  process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+);
+
 export const metadata: Metadata = {
+  metadataBase,
   title: 'PawPort',
   description,
   openGraph: {

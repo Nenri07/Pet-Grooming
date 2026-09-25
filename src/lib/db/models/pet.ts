@@ -52,7 +52,9 @@ const petSchema = new Schema<IPet>(
 
 petSchema.index({ clientId: 1 });
 petSchema.index({ groomerId: 1 });
-petSchema.index({ digitalCardId: 1 });
+// `digitalCardId` already declares `unique: true, sparse: true`, which creates
+// its index. A separate `petSchema.index({ digitalCardId: 1 })` duplicated it
+// (Mongoose "Duplicate schema index" warning) and has been removed.
 
 export const Pet: Model<IPet> =
   (models.Pet as Model<IPet>) || model<IPet>('Pet', petSchema);

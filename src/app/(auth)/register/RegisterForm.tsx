@@ -29,15 +29,34 @@ import { GoogleButton } from '@/components/ui/GoogleButton';
  *
  * The "Continue with Google" button renders only when `googleEnabled` is true
  * (Requirement 1.3).
+ *
+ * When arriving from a personalized prospect demo (`/register?claim={slug}`,
+ * Master Spec §17), the resolved demo's business name is prefilled into the
+ * Name field and a short notice is shown. The claim slug is carried through the
+ * Google sign-in `callbackUrl` so onboarding can pick it up later; the
+ * credentials path lands on `/onboarding` unchanged.
  */
 interface RegisterFormProps {
   /** True when Google OAuth is configured server-side. */
   googleEnabled: boolean;
+  /** Resolved demo slug from `?claim=` (only set when it matched a seeded demo). */
+  claimSlug?: string;
+  /** Business name of the claimed demo, used to prefill and greet. */
+  claimBusinessName?: string;
 }
 
-export function RegisterForm({ googleEnabled }: RegisterFormProps) {
+export function RegisterForm({
+  googleEnabled,
+  claimSlug,
+  claimBusinessName,
+}: RegisterFormProps) {
   const router = useRouter();
   const [formError, setFormError] = React.useState<string | null>(null);
+
+  // Preserve the claim slug through onboarding so it can be consumed later.
+  const onboardingUrl = claimSlug
+    ? `/onboarding?claim=${encodeURIComponent(claimSlug)}`
+    : '/onboarding';
 
   const {
     register,
@@ -48,7 +67,7 @@ export function RegisterForm({ googleEnabled }: RegisterFormProps) {
     resolver: zodResolver(registerSchema),
     mode: 'onBlur',
     reValidateMode: 'onChange',
-    defaultValues: { name: '', email: '', password: '' },
+    defaultValues: { name: claimBusinessName ?? '', email: '', password: '' },
   });
 
   async function onSubmit(values: RegisterInput) {
@@ -84,7 +103,7 @@ export function RegisterForm({ googleEnabled }: RegisterFormProps) {
       return;
     }
 
-    router.push('/onboarding');
+    router.push(onboardingUrl);
   }
 
   return (
@@ -95,6 +114,14 @@ export function RegisterForm({ googleEnabled }: RegisterFormProps) {
       </CardHeader>
 
       <CardContent>
+        {claimBusinessName && (
+          <div className="mb-4 rounded-box border border-primary/20 bg-primary/5 p-3 text-sm text-base-content">
+            You&apos;re claiming the preview built for{' '}
+            <span className="font-semibold">{claimBusinessName}</span>. Finish
+            signing up to make it yours.
+          </div>
+        )}
+
         {formError && (
           <div role="alert" className="alert alert-error mb-4 text-sm">
             <span>{formError}</span>
@@ -185,7 +212,7 @@ export function RegisterForm({ googleEnabled }: RegisterFormProps) {
         {googleEnabled && (
           <>
             <div className="divider text-xs text-base-content/50">OR</div>
-            <GoogleButton callbackUrl="/onboarding" disabled={isSubmitting} />
+            <GoogleButton callbackUrl={onboardingUrl} disabled={isSubmitting} />
           </>
         )}
 
