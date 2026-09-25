@@ -29,7 +29,6 @@ export interface IAppointment extends Document {
   serviceAddress?: string;
   notes?: string;
   postGroomNotes?: string;
-  googleEventId?: string;
   // --- PawPort native calendar & routing (additive; §10.5, §14) ---
   routeMeta?: RouteMeta;
   flexible?: boolean;
@@ -55,7 +54,6 @@ const appointmentSchema = new Schema<IAppointment>(
     serviceAddress: { type: String, maxlength: 500 },
     notes: { type: String, maxlength: 500 },
     postGroomNotes: { type: String, maxlength: 2000 },
-    googleEventId: { type: String },
     // --- PawPort native calendar & routing (additive; §10.5, §14) ---
     routeMeta: {
       type: new Schema<RouteMeta>(

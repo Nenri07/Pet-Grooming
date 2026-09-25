@@ -12,11 +12,12 @@
  *    transition logic pure lets the Property 5 test exercise it directly.
  *  - Every query is scoped to `{ _id, groomerId: session.user.id }` so a
  *    groomer can only ever mutate their own appointments.
- *  - Actions RETURN a typed result envelope ({ ok, error?, syncWarning? })
- *    rather than throwing, so the UI can render inline errors and surface a
- *    non-fatal calendar-sync warning without failing the whole action.
+ *  - Actions RETURN a typed result envelope ({ ok, error? }) rather than
+ *    throwing, so the UI can render inline errors. Status changes are immediate
+ *    in Mongo only — the native calendar is the source of truth and the ICS
+ *    feed reflects the change (Master Spec §9; Google Calendar sync removed).
  *
- * _Requirements: 12.1, 12.2, 12.3, 12.5_
+ * _Requirements: 12.1, 12.2_
  */
 import { revalidatePath } from 'next/cache';
 import { getServerSession } from 'next-auth';
@@ -25,7 +26,6 @@ import { authOptions } from '@/lib/auth/config';
 import { connectDB } from '@/lib/db/connect';
 import { Appointment } from '@/lib/db/models/appointment';
 import { canTransition } from '@/lib/appointments/status';
-import { updateCalendarEventStatus } from '@/lib/calendar/google-sync';
 import type { AppointmentStatus } from '@/types';
 
 /** All appointment statuses, used to validate incoming values. */
@@ -56,13 +56,12 @@ export interface UpdateAppointmentStatusInput {
 /**
  * Typed result envelope for appointment mutations.
  *
- * - On success: `ok` is true. `syncWarning` MAY be present when the local
- *   status change persisted but the best-effort Google Calendar sync failed
- *   (Requirement 12.5) — the local status is authoritative and retained.
+ * - On success: `ok` is true. The status change is immediate and authoritative
+ *   in Mongo (Master Spec §9).
  * - On failure: `ok` is false and `error` holds a user-facing message.
  */
 export type AppointmentActionResult =
-  | { ok: true; syncWarning?: string }
+  | { ok: true }
   | { ok: false; error: string };
 
 const updateStatusSchema = z.object({
@@ -80,9 +79,8 @@ const updateStatusSchema = z.object({
  *  3. Load the appointment scoped to the authed groomer.
  *  4. Reject illegal transitions using the pure state machine (Requirement 12.1).
  *  5. Persist the new status; when completing, persist optional notes but
- *     never require them (Requirement 12.2).
- *  6. Fire a best-effort Google Calendar sync (see TODO hook). On failure the
- *     local status is retained and a `syncWarning` is returned (Requirement 12.5).
+ *     never require them (Requirement 12.2). The change is immediate in Mongo
+ *     and reflected in the native calendar / ICS feed (Master Spec §9).
  *
  * Returns a result envelope rather than throwing.
  */
@@ -137,40 +135,15 @@ export async function updateAppointmentStatus(
     }
     await appointment.save();
 
-    // 6. Best-effort Google Calendar sync (Requirement 12.3 / 12.5).
-    //
-    // The local status change is already persisted above and is authoritative.
-    // If the appointment has a mirrored Google Calendar event, reflect the new
-    // status on it by patching the event summary. `updateCalendarEventStatus`
-    // is best-effort: it retries up to 3 times, targets completion within 30s
-    // (Requirement 12.3), and NEVER throws — it returns `false` when the
-    // integration is unconfigured or the call ultimately fails. On failure we
-    // retain the local status and surface a non-fatal warning (Requirement 12.5).
-    let syncWarning: string | undefined;
-    if (appointment.googleEventId) {
-      try {
-        const synced = await updateCalendarEventStatus(
-          appointment.googleEventId,
-          newStatus
-        );
-        if (!synced) {
-          syncWarning =
-            'The status was updated, but syncing to your Google Calendar failed. We will keep retrying.';
-        }
-      } catch (syncError) {
-        // Defensive: updateCalendarEventStatus is best-effort and should not
-        // throw, but guard anyway so the local change is never lost.
-        console.error('Calendar sync failed after status change:', syncError);
-        syncWarning =
-          'The status was updated, but syncing to your Google Calendar failed. We will keep retrying.';
-      }
-    }
+    // The status change is now immediate and authoritative in Mongo. The
+    // native calendar and the read-only ICS feed reflect it directly — there
+    // is no external calendar to sync (Master Spec §9).
 
     // Refresh the dashboard and appointments list views.
     revalidatePath('/dashboard');
     revalidatePath('/appointments');
 
-    return syncWarning ? { ok: true, syncWarning } : { ok: true };
+    return { ok: true };
   } catch (error) {
     console.error('updateAppointmentStatus failed:', error);
     return {

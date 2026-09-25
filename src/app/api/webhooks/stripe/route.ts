@@ -36,7 +36,6 @@ import {
   sendClientConfirmationEmail,
   sendGroomerNotificationEmail,
 } from '@/lib/email/send';
-import { createCalendarEventForAppointment } from '@/lib/calendar/google-sync';
 import { idempotencyOnce, isRedisConfigured } from '@/lib/redis';
 import { releaseHold } from '@/lib/calendar/holds';
 import { invalidateSlotsCache } from '@/lib/calendar/slots';
@@ -342,35 +341,9 @@ async function fulfilBooking(paymentIntent: Stripe.PaymentIntent): Promise<void>
     }
   }
 
-  // Best-effort: mirror this booking onto the shared Google Calendar and
-  // persist the returned event id so later status changes can patch it. This
-  // helper never throws and returns null on failure/unconfigured, so a
-  // calendar problem cannot fail the completed booking (Req 8.4 / 8.6).
-  try {
-    const googleEventId = await createCalendarEventForAppointment({
-      serviceName: service.name,
-      petName: booking.pet.name,
-      clientName: booking.owner.name,
-      clientPhone: booking.owner.phone,
-      startISO: scheduledDate.toISOString(),
-      endISO: scheduledEndDate.toISOString(),
-      location: formatServiceAddress(booking.owner.address),
-      notes: booking.pet.notes,
-    });
-    if (googleEventId) {
-      await Appointment.updateOne(
-        { _id: appointment._id },
-        { $set: { googleEventId } }
-      );
-    }
-  } catch (calendarErr) {
-    // Defensive: createCalendarEventForAppointment is best-effort and should
-    // not throw, but guard anyway so nothing downstream of fulfilment breaks.
-    console.error(
-      `Stripe webhook: calendar event creation failed for payment ${stripePaymentId}:`,
-      calendarErr
-    );
-  }
+  // The booking is written to the native PawPort calendar (the Appointment
+  // record above) and surfaces in the groomer's read-only ICS feed
+  // (Master Spec §9 — Google Calendar mirroring removed).
 
   // Best-effort notifications AFTER records are created (Req 8.2 / 8.3). These
   // helpers never throw and return a boolean, so a delivery failure never

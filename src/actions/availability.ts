@@ -9,8 +9,8 @@
  * another groomer's availability.
  *
  *  - `getAvailabilityConfig` returns the groomer's recurring weekly windows and
- *    manually blocked dates, plus whether the shared Google service-account
- *    calendar is configured for booking sync (Requirement 14.1 / 14.4 / 14.5).
+ *    manually blocked dates, plus the read-only ICS feed URL when a feed token
+ *    exists (Master Spec §9; Google Calendar removed).
  *  - `updateAvailabilityWindows` validates EACH window with the pure
  *    `validateWindow` helper and BLOCKS persistence when any window is invalid
  *    (bad increment, invalid day-of-week, or end <= start), returning the first
@@ -23,15 +23,13 @@
  * can surface inline validation errors and toasts. Mutations revalidate the
  * availability page so the editor reflects persisted state.
  *
- * The Google Calendar integration for PawPort uses a SHARED service-account
- * calendar (there is no per-groomer OAuth connect step): bookings sync to the
- * business calendar when the service account is configured. We read that
- * configuration lazily from `src/lib/calendar/client.ts` (via `isCalendarConfigured`)
- * only if that module exists; otherwise we report it as not configured without
- * importing it, so this action compiles before the calendar client lands
- * (task 8.x).
+ * PawPort has no external calendar dependency (Master Spec §9). Availability is
+ * native (weekly windows + manual blocks) and a one-way, read-only ICS feed
+ * lets groomers subscribe from Apple/Google/Outlook. `getAvailabilityConfig`
+ * returns the feed URL when a token already exists; the UI offers a "generate
+ * feed" action (`getOrCreateIcsFeedToken`) when it does not.
  *
- * _Requirements: 14.1, 14.4, 14.5, 14.6_
+ * _Requirements: 14.1, 14.4, 14.6_
  */
 import { revalidatePath } from 'next/cache';
 import { getServerSession } from 'next-auth';
@@ -70,10 +68,11 @@ export interface AvailabilityConfig {
   windows: AvailabilityWindowDTO[];
   blockedDates: BlockedDateDTO[];
   /**
-   * Whether the shared Google service-account calendar is configured so that
-   * bookings sync to the business calendar (Requirement 14.5).
+   * The absolute URL of the groomer's read-only ICS feed, or `null` when no
+   * feed token has been generated yet. When null, the UI offers a "generate
+   * feed" action that calls `getOrCreateIcsFeedToken` (Master Spec §9.6).
    */
-  googleCalendarConfigured: boolean;
+  feedUrl: string | null;
 }
 
 /** Result envelope returned by {@link getAvailabilityConfig}. */
@@ -96,25 +95,17 @@ export type BlockedDatesResult =
 // ---------------------------------------------------------------------------
 
 /**
- * Whether the shared Google service-account calendar is configured. Reads
- * `isCalendarConfigured` from the calendar client lazily and only if that
- * module exists; any import/resolution failure is treated as "not configured"
- * so this action never crashes before the calendar client is implemented.
+ * Build the absolute ICS feed URL for a stored token, or `null` when no token
+ * exists yet. Read-only, one-way export (Master Spec §9.6). Mirrors the URL
+ * shape produced by `getOrCreateIcsFeedToken` so the UI can display a stable
+ * subscribe link. We only READ the token here — generation is an explicit UI
+ * action so a token is never minted just by viewing the page.
  */
-async function isGoogleCalendarConfigured(): Promise<boolean> {
-  try {
-    // Dynamic import so a missing module (task 8.x) degrades gracefully rather
-    // than failing to compile/resolve at load time.
-    const mod = (await import('@/lib/calendar/client').catch(() => null)) as
-      | { isCalendarConfigured?: (() => boolean) | boolean }
-      | null;
-    if (!mod) return false;
-    const flag = mod.isCalendarConfigured;
-    if (typeof flag === 'function') return Boolean(flag());
-    return Boolean(flag);
-  } catch {
-    return false;
-  }
+function feedUrlFromToken(token: string | undefined | null): string | null {
+  if (typeof token !== 'string' || token.length === 0) return null;
+  const base = (process.env.NEXT_PUBLIC_APP_URL ?? '').replace(/\/+$/, '');
+  const path = `/api/ics/${token}.ics`;
+  return base ? `${base}${path}` : path;
 }
 
 /** Project a stored window (lean or hydrated) into the serializable DTO. */
@@ -147,8 +138,8 @@ function toBlockedDTO(b: {
 
 /**
  * Load the authenticated groomer's recurring availability windows and blocked
- * dates, along with whether the shared Google calendar is configured for sync
- * (Requirement 14.1 / 14.4 / 14.5).
+ * dates, along with the read-only ICS feed URL when a feed token exists
+ * (Requirement 14.1 / 14.4; Master Spec §9.6).
  */
 export async function getAvailabilityConfig(): Promise<GetAvailabilityResult> {
   const session = await getServerSession(authOptions);
@@ -160,17 +151,15 @@ export async function getAvailabilityConfig(): Promise<GetAvailabilityResult> {
     await connectDB();
 
     const profile = await GroomerProfile.findOne({ userId: session.user.id })
-      .select('availabilityWindows blockedDates')
+      .select('availabilityWindows blockedDates icsFeedToken')
       .lean();
-
-    const googleCalendarConfigured = await isGoogleCalendarConfigured();
 
     if (!profile) {
       // No profile yet (e.g. mid-onboarding) — return empty config so the page
       // still renders an editable, empty state.
       return {
         ok: true,
-        config: { windows: [], blockedDates: [], googleCalendarConfigured },
+        config: { windows: [], blockedDates: [], feedUrl: null },
       };
     }
 
@@ -179,7 +168,7 @@ export async function getAvailabilityConfig(): Promise<GetAvailabilityResult> {
       config: {
         windows: (profile.availabilityWindows ?? []).map(toWindowDTO),
         blockedDates: (profile.blockedDates ?? []).map(toBlockedDTO),
-        googleCalendarConfigured,
+        feedUrl: feedUrlFromToken(profile.icsFeedToken),
       },
     };
   } catch (error) {

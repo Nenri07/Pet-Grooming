@@ -63,7 +63,7 @@ export default async function OnboardingPage() {
       initialAvailability={
         availabilityResult.ok
           ? availabilityResult.config
-          : { windows: [], blockedDates: [], googleCalendarConfigured: false }
+          : { windows: [], blockedDates: [], feedUrl: null }
       }
     />
   );

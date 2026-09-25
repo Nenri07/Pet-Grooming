@@ -47,12 +47,14 @@ PawPort is a production-ready, mobile-first SaaS application designed for solo m
 #### Acceptance Criteria
 
 1. WHEN a Groomer completes registration, THE Onboarding_Wizard SHALL present a multi-step setup flow in the following order: business information, services and pricing, logo upload, Google Calendar connection, first availability configuration
+   > **Superseded (Master Spec §3):** The "Google Calendar connection" step is replaced by native calendar / service-area setup. There is no external calendar to connect.
 2. WHEN the Groomer submits a wizard step with all required fields populated and passing validation, THE System SHALL persist the data and allow the Groomer to proceed to the next step
 3. WHEN the Groomer completes all Onboarding_Wizard steps, THE System SHALL mark the Groomer profile as active and redirect to the Groomer_Portal dashboard
 4. WHILE the Groomer is on any Onboarding_Wizard step, THE System SHALL display a progress indicator showing the current step number out of the total number of steps
 5. IF the Groomer navigates away from the Onboarding_Wizard or the session expires while the Onboarding_Wizard is incomplete, THEN THE System SHALL save all data from completed steps and resume from the last incomplete step on next login, and WHERE the Groomer has completed all Onboarding_Wizard steps, THE System SHALL NOT re-trigger save-and-resume on subsequent navigation
 6. IF the Groomer submits a wizard step with missing required fields or invalid data, THEN THE System SHALL display an error message indicating which fields require correction and remain on the current step without losing entered data
 7. IF the Google Calendar connection fails during the onboarding step, THEN THE System SHALL display an error message indicating the connection failure and allow the Groomer to retry or skip the Google Calendar step
+   > **Superseded (Master Spec §3):** Removed — there is no Google Calendar connection. The native calendar needs no connection step.
 8. WHEN the Groomer uploads a logo, THE System SHALL accept image files in PNG, JPG, or SVG format with a maximum file size of 5 MB and reject files that do not meet these constraints with an error message indicating the accepted formats and size limit
 
 ---
@@ -109,6 +111,7 @@ PawPort is a production-ready, mobile-first SaaS application designed for solo m
 
 1. WHEN the Client reaches step 4, THE Booking_Flow SHALL display available time slots from the Groomer's Availability_Calendar for the next 14 calendar days, derived from the Groomer's configured availability windows and the estimated service duration
 2. THE Availability_Calendar SHALL reflect availability synced from the Groomer's connected Google Calendar within 5 minutes of external changes
+   > **Superseded (Master Spec §3, §9):** Removed — availability comes from PawPort's native calendar (weekly windows + manual blocks), not Google Calendar sync.
 3. WHEN the Client selects an available time slot, THE Booking_Flow SHALL mark it as tentatively reserved for 10 minutes and transition to step 5
 4. IF a Client attempts to select a time slot that has been booked by another Client since page load, THEN THE Booking_Flow SHALL display only the conflict error message indicating the slot is no longer available and refresh the available time slots, without simultaneously displaying the contact-groomer message
 5. IF no available time slots exist within the displayed 14-day period, THEN THE Booking_Flow SHALL display a message indicating no availability and suggest the Client contact the Groomer directly
@@ -141,8 +144,10 @@ PawPort is a production-ready, mobile-first SaaS application designed for solo m
 2. WHEN a booking is completed successfully, THE System SHALL send a confirmation email to the Client within 5 minutes containing the appointment date, time, selected services, service address, groomer name, and deposit amount paid, and IF the confirmation email fails, THEN THE System SHALL keep the booking complete and allow the success page and other notifications to proceed independently
 3. WHEN a booking is completed successfully, THE System SHALL send a notification email to the Groomer within 5 minutes containing the appointment date, time, selected services, service address, client name, client phone number, pet name, pet breed, pet size, and any special handling notes
 4. WHEN a booking is completed successfully, THE System SHALL create an event on the Groomer's connected Google Calendar containing the appointment date, time, duration, service address, client name, and selected services
+   > **Superseded (Master Spec §3, §9):** Removed — the appointment is written to the native calendar and appears in the read-only ICS feed instead of a Google Calendar event.
 5. IF the confirmation email to the Client fails to send, THEN THE System SHALL retry sending the email up to 3 times and log the failure for administrative review
 6. IF the Google Calendar event creation fails, THEN THE System SHALL log the failure for administrative review and still display the success page to the Client
+   > **Superseded (Master Spec §3, §9):** Removed — there is no Google Calendar event creation. Requirement 8.1's Google Calendar warning clause no longer applies.
 
 ---
 
@@ -199,8 +204,10 @@ PawPort is a production-ready, mobile-first SaaS application designed for solo m
 1. THE Groomer_Portal SHALL allow the Groomer to update appointment status to one of: upcoming, in-progress, completed, or cancelled, where valid transitions are: upcoming → in-progress, upcoming → cancelled, in-progress → completed, and in-progress → cancelled
 2. WHEN a Groomer marks an Appointment as completed, THE Groomer_Portal SHALL prompt for optional post-groom notes with a maximum length of 2000 characters and persist them to the Appointment record, and IF the post-groom notes prompt mechanism fails, THEN THE Groomer_Portal SHALL allow the status change to complete
 3. WHEN an Appointment status changes, THE System SHALL complete a successful sync of the change to the Groomer's connected Google Calendar event within 30 seconds
+   > **Superseded (Master Spec §3, §9):** Removed — status changes are immediate in Mongo (the source of truth) and reflected in the ICS feed; there is no Google Calendar to sync.
 4. THE Groomer_Portal SHALL display all Appointments in a list view sorted by date in ascending order, with filtering by status and date range
 5. IF a Google Calendar sync fails after an Appointment status change, THEN THE System SHALL retain the updated status locally, display an error message indicating the sync failure to the Groomer, and retry the sync up to 3 times
+   > **Superseded (Master Spec §3, §9):** Removed — there is no Google Calendar sync, so no sync-failure handling is needed.
 
 ---
 
@@ -222,13 +229,18 @@ PawPort is a production-ready, mobile-first SaaS application designed for solo m
 
 **User Story:** As a Groomer, I want to configure my availability and sync with Google Calendar, so that Clients only see times I'm free.
 
+> **Superseded (Master Spec §3, §9):** Google Calendar sync is replaced by native availability windows, manual blocks, and a one-way read-only ICS export. The Google-specific criteria below (14.2, 14.3, 14.5) no longer apply.
+
 #### Acceptance Criteria
 
 1. THE Groomer_Portal SHALL allow the Groomer to configure recurring weekly availability windows specifying: start time (in 15-minute increments from 00:00 to 23:45), end time (in 15-minute increments, must be after start time), and days of week (one or more from Monday through Sunday)
 2. WHEN a Groomer connects their Google Calendar, THE Availability_Calendar SHALL perform bidirectional sync: existing Google Calendar events block time slots, and PawPort bookings create Google Calendar events
+   > **Superseded (Master Spec §3, §9):** Removed — no bidirectional Google sync. Availability is native; bookings live in PawPort and surface via the read-only ICS feed.
 3. WHEN a new event is added to the Groomer's Google Calendar externally, THE Availability_Calendar SHALL mark that time slot as unavailable within 5 minutes
+   > **Superseded (Master Spec §3, §9):** Removed — external Google Calendar events are no longer read. Groomers block time via native manual blocks.
 4. THE Groomer_Portal SHALL allow the Groomer to block specific dates or time ranges manually by selecting a start date/time and end date/time
 5. IF the Google Calendar sync encounters a connection failure, THEN THE System SHALL display an error notification to the Groomer and retry the sync up to 3 times at 1-minute intervals
+   > **Superseded (Master Spec §3, §9):** Removed — there is no Google Calendar sync, so no connection-failure handling is needed. The one-way ICS export replaces it.
 6. IF a Groomer attempts to configure an availability window where the end time is before or equal to the start time, THEN THE System SHALL display a validation error and prevent saving
 
 ---

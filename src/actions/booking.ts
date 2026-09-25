@@ -22,8 +22,7 @@ import { connectDB } from '@/lib/db/connect';
 import { GroomerProfile } from '@/lib/db/models/groomer-profile';
 import { Service } from '@/lib/db/models/service';
 import { calculateEstimate } from '@/lib/estimate/engine';
-import { reserveSlot } from '@/lib/calendar/reservation';
-import type { CoatCondition, EstimateResult, TimeSlot } from '@/types';
+import type { CoatCondition, EstimateResult } from '@/types';
 
 /** The set of valid coat conditions the estimate engine understands. */
 const COAT_CONDITIONS: readonly CoatCondition[] = [
@@ -174,55 +173,8 @@ export async function computeEstimate(
   }
 }
 
-/** Input accepted by {@link reserveSelectedSlot}. */
-export interface ReserveSlotInput {
-  /** The groomer's user id (owner of the slot). */
-  groomerId: string;
-  /** The selected slot to hold. */
-  slot: TimeSlot;
-  /** The client's browser session id that will own the hold. */
-  sessionId: string;
-}
-
-/**
- * Result envelope returned by {@link reserveSelectedSlot}.
- *
- * - On success: `ok` is true and the slot is now tentatively held for this
- *   session for 10 minutes (Requirement 6.3).
- * - On conflict: `ok` is false with a user-facing message; the slot is held by
- *   another client (Requirement 6.4) and the UI should refresh availability.
- */
-export type ReserveSlotResult =
-  | { ok: true }
-  | { ok: false; error: string };
-
-/**
- * Step 4 → 5 transition action: place a tentative 10-minute hold on the slot
- * the client selected. The payment step re-checks the hold before charging, so
- * this is a best-effort early guard against double-booking.
- *
- * _Requirements: 6.3, 6.4_
- */
-export async function reserveSelectedSlot(
-  input: ReserveSlotInput
-): Promise<ReserveSlotResult> {
-  const { groomerId, slot, sessionId } = input;
-
-  if (!groomerId || !sessionId || !slot?.start || !slot?.end) {
-    return { ok: false, error: "We couldn't reserve that slot. Please try again." };
-  }
-
-  try {
-    const reserved = await reserveSlot(groomerId, slot, sessionId);
-    if (!reserved) {
-      return {
-        ok: false,
-        error: 'That time slot is no longer available. Please choose another.',
-      };
-    }
-    return { ok: true };
-  } catch (error) {
-    console.error('reserveSelectedSlot failed:', error);
-    return { ok: false, error: "We couldn't reserve that slot right now. Please try again." };
-  }
-}
+// NOTE: The legacy `reserveSelectedSlot` action (Mongo-backed tentative hold)
+// has been removed. Tentative holds are now Redis-backed via
+// `POST /api/booking/hold` (Master Spec §9.4). The old
+// `lib/calendar/reservation.ts` primitive is retained only for its property
+// test and is no longer wired into the booking flow.

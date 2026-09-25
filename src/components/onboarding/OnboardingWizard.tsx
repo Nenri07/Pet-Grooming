@@ -10,7 +10,6 @@ import {
   Scissors,
   ImageIcon,
   CalendarCheck,
-  CalendarX,
   Clock3,
   Plus,
   Trash2,
@@ -651,53 +650,42 @@ function StepLogo({
 }
 
 // ---------------------------------------------------------------------------
-// Step 4 — Google Calendar (service-account model; skippable per Req 2.7)
+// Step 4 — Calendar feed (native calendar; read-only ICS export — Master Spec §9)
 // ---------------------------------------------------------------------------
 
 function StepCalendar({
-  configured,
   onContinue,
   onSkip,
 }: {
-  configured: boolean;
   onContinue: () => void;
   onSkip: () => void;
 }) {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-2">
-        {configured ? (
-          <CalendarCheck className="h-5 w-5 text-success" aria-hidden="true" />
-        ) : (
-          <CalendarX className="h-5 w-5 text-base-content/50" aria-hidden="true" />
-        )}
-        <h3 className="text-lg font-semibold text-base-content">Google Calendar</h3>
-        <span className={cx('badge', configured ? 'badge-success' : 'badge-ghost')}>
-          {configured ? 'Connected' : 'Not configured'}
+        <CalendarCheck className="h-5 w-5 text-primary" aria-hidden="true" />
+        <h3 className="text-lg font-semibold text-base-content">Your calendar</h3>
+      </div>
+
+      <p className="text-sm text-base-content/70">
+        PawPort has its own built-in calendar — no external calendar to connect.
+        Every booking lands here automatically. When you&apos;re set up, you can
+        subscribe to a read-only feed of your appointments in Apple, Google, or
+        Outlook calendar from your Availability settings.
+      </p>
+
+      <div className="alert alert-info flex items-start gap-2 text-sm" role="status">
+        <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+        <span>
+          Nothing to do here. You&apos;ll set your weekly hours next, then grab
+          your calendar feed link anytime from Availability.
         </span>
       </div>
 
-      {configured ? (
-        <p className="text-sm text-base-content/70">
-          Bookings will sync automatically to your business Google Calendar, and
-          existing calendar events will block those time slots from being booked.
-        </p>
-      ) : (
-        <div className="alert alert-info flex items-start gap-2 text-sm" role="status">
-          <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-          <span>
-            Calendar sync isn&apos;t configured yet. You can skip this for now and
-            connect your calendar later from Availability settings.
-          </span>
-        </div>
-      )}
-
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        {!configured && (
-          <button type="button" onClick={onSkip} className="btn btn-ghost min-h-[44px]">
-            Skip for now
-          </button>
-        )}
+        <button type="button" onClick={onSkip} className="btn btn-ghost min-h-[44px]">
+          Skip for now
+        </button>
         <button type="button" onClick={onContinue} className="btn btn-primary min-h-[44px]">
           Continue
         </button>
@@ -1031,7 +1019,6 @@ export function OnboardingWizard({
 
           {step === 3 && (
             <StepCalendar
-              configured={initialAvailability.googleCalendarConfigured}
               onContinue={() => void advanceTo(4)}
               onSkip={() => void advanceTo(4)}
             />

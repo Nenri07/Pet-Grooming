@@ -8,13 +8,13 @@ import { AvailabilityConfig } from '@/components/portal/AvailabilityConfig';
  * Availability configuration page (server component shell).
  *
  * Authenticates the groomer, loads their recurring weekly windows, blocked
- * dates, and Google Calendar configuration status via `getAvailabilityConfig`
- * (which scopes the query to the authenticated groomer's profile), and hands
- * the serializable config to the {@link AvailabilityConfig} client component,
- * which owns the weekly hours editor, blocked-dates editor, and the calendar
- * status card.
+ * dates, and the read-only ICS feed URL via `getAvailabilityConfig` (which
+ * scopes the query to the authenticated groomer's profile), and hands the
+ * serializable config to the {@link AvailabilityConfig} client component, which
+ * owns the weekly hours editor, blocked-dates editor, and the calendar feed
+ * card.
  *
- * _Requirements: 14.1, 14.4, 14.5, 14.6_
+ * _Requirements: 14.1, 14.4, 14.6; Master Spec §9.6_
  */
 
 // Availability changes as the groomer edits it; always render fresh.
@@ -34,7 +34,7 @@ export default async function AvailabilityPage() {
 
   const config = result.ok
     ? result.config
-    : { windows: [], blockedDates: [], googleCalendarConfigured: false };
+    : { windows: [], blockedDates: [], feedUrl: null };
 
   return <AvailabilityConfig initialConfig={config} />;
 }

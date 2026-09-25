@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { toast } from 'sonner';
-import { CalendarCheck, CalendarX, Plus, Trash2, Info } from 'lucide-react';
+import { Calendar, Copy, Check, Plus, Trash2, Info } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import {
   updateAvailabilityWindows,
@@ -12,6 +12,7 @@ import {
   type AvailabilityWindowDTO,
   type BlockedDateDTO,
 } from '@/actions/availability';
+import { getOrCreateIcsFeedToken } from '@/actions/calendar-feed';
 import {
   validateWindow,
   isEndAfterStart,
@@ -29,15 +30,15 @@ import {
  *     (Requirement 14.1 / 14.6).
  *  2. Blocked dates: add a start/end via datetime-local inputs (end must be
  *     after start) and remove existing ranges (Requirement 14.4).
- *  3. Google Calendar status: because PawPort syncs via a shared service-account
- *     calendar, we show "Connected" when the calendar is configured, otherwise a
- *     notice. Sync errors are surfaced here per Requirement 14.5 (the actual
- *     sync runs in task 8.x).
+ *  3. Calendar feed: a read-only, one-way ICS export (Master Spec §9). When a
+ *     feed URL exists we show the subscribe link with a copy button and setup
+ *     instructions; otherwise a button generates one via
+ *     `getOrCreateIcsFeedToken`. PawPort has no Google Calendar dependency.
  *
  * All server calls return typed envelopes; failures surface as sonner toasts.
  * Every interactive control meets the 44px minimum touch target.
  *
- * _Requirements: 14.1, 14.4, 14.5, 14.6_
+ * _Requirements: 14.1, 14.4, 14.6; Master Spec §9.6_
  */
 
 interface AvailabilityConfigProps {
@@ -498,42 +499,118 @@ function BlockedDatesEditor({
 }
 
 // ---------------------------------------------------------------------------
-// Google Calendar status card
+// Calendar feed card (read-only, one-way ICS export — Master Spec §9.6)
 // ---------------------------------------------------------------------------
 
-function GoogleCalendarStatus({ configured }: { configured: boolean }) {
+function CalendarFeedCard({ initialFeedUrl }: { initialFeedUrl: string | null }) {
+  const [feedUrl, setFeedUrl] = React.useState<string | null>(initialFeedUrl);
+  const [generating, setGenerating] = React.useState(false);
+  const [copied, setCopied] = React.useState(false);
+
+  const handleGenerate = async () => {
+    setGenerating(true);
+    try {
+      const result = await getOrCreateIcsFeedToken();
+      if (result.ok) {
+        setFeedUrl(result.feedUrl);
+        toast.success('Calendar feed ready.');
+      } else {
+        toast.error(result.error, { duration: Infinity });
+      }
+    } catch {
+      toast.error("We couldn't set up your calendar feed. Please try again.", {
+        duration: Infinity,
+      });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleCopy = async () => {
+    if (!feedUrl) return;
+    try {
+      await navigator.clipboard.writeText(feedUrl);
+      setCopied(true);
+      toast.success('Feed URL copied.');
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("We couldn't copy the URL. Please copy it manually.");
+    }
+  };
+
   return (
     <Card>
       <div className="mb-2 flex items-center gap-2">
-        {configured ? (
-          <CalendarCheck className="h-5 w-5 text-success" aria-hidden="true" />
-        ) : (
-          <CalendarX className="h-5 w-5 text-base-content/50" aria-hidden="true" />
-        )}
-        <h2 className="text-lg font-semibold text-base-content">Google Calendar</h2>
-        <span
-          className={cx('badge', configured ? 'badge-success' : 'badge-ghost')}
-        >
-          {configured ? 'Connected' : 'Not configured'}
-        </span>
+        <Calendar className="h-5 w-5 text-primary" aria-hidden="true" />
+        <h2 className="text-lg font-semibold text-base-content">Calendar feed</h2>
       </div>
 
-      {configured ? (
-        <p className="text-sm text-base-content/70">
-          Bookings sync automatically to your business Google Calendar, and
-          existing calendar events block those time slots from being booked.
-        </p>
+      <p className="text-sm text-base-content/70">
+        Subscribe to a read-only feed of your appointments in Apple Calendar,
+        Google Calendar, or Outlook. It updates automatically — this is a
+        one-way export, so nothing you do in that calendar changes PawPort.
+      </p>
+
+      {feedUrl ? (
+        <div className="mt-4 flex flex-col gap-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <input
+              type="text"
+              readOnly
+              value={feedUrl}
+              aria-label="Calendar feed subscribe URL"
+              onFocus={(e) => e.currentTarget.select()}
+              className="input input-bordered min-h-[44px] w-full font-mono text-sm"
+            />
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="btn btn-primary min-h-[44px] gap-1 sm:w-auto"
+              aria-label="Copy calendar feed URL"
+            >
+              {copied ? (
+                <>
+                  <Check className="h-4 w-4" aria-hidden="true" />
+                  Copied
+                </>
+              ) : (
+                <>
+                  <Copy className="h-4 w-4" aria-hidden="true" />
+                  Copy
+                </>
+              )}
+            </button>
+          </div>
+          <div
+            className="alert alert-info flex items-start gap-2 text-sm"
+            role="status"
+          >
+            <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+            <span>
+              In Apple, Google, or Outlook calendar, add a calendar
+              &ldquo;from URL&rdquo; (or &ldquo;by URL&rdquo;) and paste this
+              link. Keep it private — anyone with the link can view your
+              schedule.
+            </span>
+          </div>
+        </div>
       ) : (
-        <div
-          className="alert alert-info mt-2 flex items-start gap-2 text-sm"
-          role="status"
-        >
-          <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-          <span>
-            Calendar sync isn&apos;t configured yet. Once the business calendar is
-            connected, bookings will sync automatically and busy times will block
-            new bookings.
-          </span>
+        <div className="mt-4">
+          <button
+            type="button"
+            onClick={handleGenerate}
+            disabled={generating}
+            className="btn btn-primary min-h-[44px] gap-1"
+          >
+            {generating ? (
+              <span className="loading loading-spinner loading-sm" aria-hidden="true" />
+            ) : (
+              <>
+                <Calendar className="h-4 w-4" aria-hidden="true" />
+                Generate calendar feed
+              </>
+            )}
+          </button>
         </div>
       )}
     </Card>
@@ -557,11 +634,12 @@ export function AvailabilityConfig({ initialConfig }: AvailabilityConfigProps) {
       <div>
         <h1 className="text-2xl font-bold text-base-content">Availability</h1>
         <p className="text-sm text-base-content/60">
-          Configure your weekly hours, block off dates, and manage calendar sync.
+          Configure your weekly hours, block off dates, and subscribe to your
+          calendar feed.
         </p>
       </div>
 
-      <GoogleCalendarStatus configured={initialConfig.googleCalendarConfigured} />
+      <CalendarFeedCard initialFeedUrl={initialConfig.feedUrl} />
 
       <WeeklyWindowsEditor windows={windows} setWindows={setWindows} />
 

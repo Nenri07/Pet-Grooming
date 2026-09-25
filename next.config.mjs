@@ -12,7 +12,6 @@ const nextConfig = {
     // internal named exports (e.g. Stripe's './utils.js' exports).
     serverComponentsExternalPackages: [
       'stripe',
-      'googleapis',
       'mongoose',
       '@react-pdf/renderer',
       'cloudinary',

@@ -27,10 +27,9 @@ import type { AppointmentStatus, WeightUnit } from '@/types';
  * the current status, decided by the pure {@link canTransition} state machine
  * (Requirement 12.1). Marking an appointment "completed" opens an inline modal
  * that prompts for optional post-groom notes (max 2000 chars) before calling
- * the action (Requirement 12.2). On success we show a toast and refresh; when
- * the action returns a non-fatal `syncWarning` (a failed Google Calendar sync)
- * we surface it as a warning toast while keeping the local status
- * (Requirement 12.5).
+ * the action (Requirement 12.2). On success we show a toast and refresh. Status
+ * changes are immediate in Mongo and reflected in the native calendar / ICS
+ * feed (Master Spec §9 — Google Calendar sync removed).
  *
  * Requirements: 12.1, 12.2, 12.4, 12.5.
  */
@@ -191,11 +190,6 @@ export function AppointmentDetail({ appointment }: AppointmentDetailProps) {
 
         setStatus(newStatus);
         toast.success(`Appointment marked ${STATUS_LABEL[newStatus]}.`);
-
-        // Non-fatal: local status was saved but the calendar sync failed (12.5).
-        if (result.syncWarning) {
-          toast.warning(result.syncWarning, { duration: Infinity });
-        }
 
         setShowNotesModal(false);
         router.refresh();

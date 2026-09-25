@@ -2,9 +2,10 @@
  * GroomerProfile (Business) Mongoose model.
  *
  * Holds a groomer's business configuration: branding, booking slug, deposit,
- * estimate rules, recurring availability windows, blocked dates, Google
- * Calendar linkage, onboarding progress, and theme preference. One profile
- * exists per User.
+ * estimate rules, recurring availability windows, blocked dates, native
+ * calendar + routing settings, the read-only ICS feed token, onboarding
+ * progress, and theme preference. One profile exists per User.
+ * (Master Spec §9 — Google Calendar removed.)
  *
  * _Requirements: 22.1, 22.4, 22.5, 22.6, 15.5, 15.6_
  */
@@ -49,15 +50,11 @@ export interface IGroomerProfile {
   estimateRules: EstimateRule[];
   availabilityWindows: AvailabilityWindow[];
   blockedDates: BlockedDate[];
-  googleCalendarId?: string;
-  googleRefreshToken?: string;
-  googleCalendarConnected: boolean;
   onboardingComplete: boolean;
   onboardingStep: number;
   themePreference: 'light' | 'dark';
   serviceIntervalDays: number;
   // --- PawPort native calendar & routing (Master Spec §9.2, §10.1, §14) ---
-  // All additive; existing google* fields retained for now.
   timezone?: string;
   baseAddress?: string;
   baseLocation?: GeoPoint;
@@ -136,9 +133,6 @@ const groomerProfileSchema = new Schema<IGroomerProfile>(
     estimateRules: [estimateRuleSchema],
     availabilityWindows: [availabilityWindowSchema],
     blockedDates: [blockedDateSchema],
-    googleCalendarId: { type: String },
-    googleRefreshToken: { type: String },
-    googleCalendarConnected: { type: Boolean, default: false },
     onboardingComplete: { type: Boolean, default: false },
     onboardingStep: { type: Number, default: 0 },
     themePreference: { type: String, enum: ['light', 'dark'], default: 'light' },
