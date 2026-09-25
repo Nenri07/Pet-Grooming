@@ -296,3 +296,66 @@ export async function sendGroomerNotificationEmail(
     return false;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Trial-ending reminder (Master Spec §13.2 — email 3 days before trial ends)
+// ---------------------------------------------------------------------------
+
+/** Details rendered into the trial-ending reminder email (§13.2). */
+export interface TrialEndingDetails {
+  /** Human-readable date the trial ends, e.g. "Monday, June 3". */
+  trialEndsOn: string;
+  /** Absolute URL to the billing page where they can subscribe. */
+  billingUrl: string;
+}
+
+/**
+ * Send the "your trial ends soon" reminder to a groomer (Master Spec §13.2 —
+ * `customer.subscription.trial_will_end`, ~3 days before). Best-effort: never
+ * throws, returns a boolean, and no-ops when Resend / the from address are not
+ * configured, so a webhook can call it safely.
+ *
+ * @param to The groomer's email address.
+ * @param details The trial-end date + billing link.
+ */
+export async function sendTrialEndingEmail(
+  to: string,
+  details: TrialEndingDetails
+): Promise<boolean> {
+  const resend = getResend();
+  const from = getFromAddress();
+  if (!resend || !from || !to) return false;
+
+  const businessName = process.env.NEXT_PUBLIC_BUSINESS_NAME?.trim() || 'PawPort';
+  const body = `
+    <p style="margin:0 0 16px;font-size:14px;line-height:1.5;">
+      Your PawPort Pro trial ends on <strong>${escapeHtml(details.trialEndsOn)}</strong>.
+      Add a payment method to keep Order Radar, Fill My Day, live ETA, rebooking
+      autopilot and the rest of Pro without interruption.
+    </p>
+    <p style="margin:0 0 16px;font-size:14px;line-height:1.5;">
+      Nothing is charged automatically until you choose a plan.
+    </p>
+    <p style="margin:24px 0;">
+      <a href="${escapeHtml(details.billingUrl)}"
+         style="display:inline-block;padding:12px 20px;border-radius:999px;background:#4338ca;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;">
+        Choose your plan
+      </a>
+    </p>`;
+
+  try {
+    await withRetry(async () => {
+      const { error } = await resend.emails.send({
+        from,
+        to,
+        subject: `Your PawPort trial ends ${details.trialEndsOn}`,
+        html: emailShell(businessName, 'Your trial ends soon', body),
+      });
+      if (error) throw error;
+    });
+    return true;
+  } catch (err) {
+    console.error('[email] Failed to send trial-ending email:', err);
+    return false;
+  }
+}

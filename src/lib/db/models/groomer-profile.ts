@@ -71,6 +71,10 @@ export interface IGroomerProfile {
   bookingMode?: BookingMode;
   icsFeedToken?: string;
   depositPolicy?: string;
+  /** Stripe Connect Express account id for client deposit payouts (§13.3). */
+  stripeConnectAccountId?: string;
+  /** Whether the Connect account has finished onboarding (charges enabled). */
+  stripeConnectChargesEnabled?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -154,6 +158,9 @@ const groomerProfileSchema = new Schema<IGroomerProfile>(
     bookingMode: { type: String, enum: ['instant', 'request'], default: 'instant' },
     icsFeedToken: { type: String },
     depositPolicy: { type: String, maxlength: 1000 },
+    // --- Stripe Connect (client deposits, §13.3; additive) ---
+    stripeConnectAccountId: { type: String },
+    stripeConnectChargesEnabled: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

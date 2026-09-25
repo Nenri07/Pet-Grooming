@@ -30,6 +30,8 @@ import {
   type RadarItem,
   type MonthSummary,
 } from '@/components/portal/DashboardView';
+import { getEntitlements } from '@/lib/billing/entitlements';
+import { getUsage } from '@/lib/sms/quota';
 import type { AppointmentStatus } from '@/types';
 
 /**
@@ -283,11 +285,22 @@ export default async function DashboardPage() {
     noShowRateDiff: Number((thisMetrics.noShowRate - lastMetrics.noShowRate).toFixed(1)),
   };
 
+  // Entitlements drive the SMS meter (real allowance/usage) and the Order Radar
+  // lock hint (Master Spec §13.1, §13.4). Best-effort: getEntitlements falls
+  // back to a Pro-trial view and getUsage returns 0 when Redis is unconfigured,
+  // so the dashboard always renders even in a credential-free environment.
+  const entitlements = await getEntitlements(groomerId);
+  const smsUsed = await getUsage(groomerId);
+
   const data: DashboardData = {
     stops,
     radar,
     bookingMode,
     monthSummary,
+    smsIncluded: entitlements.smsIncluded,
+    smsUsed,
+    // UI hint only — the server gate on /api/portal/radar is authoritative.
+    radarLocked: !entitlements.features.includes('orderRadar'),
   };
 
   return <DashboardView data={data} />;

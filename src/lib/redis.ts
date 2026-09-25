@@ -83,6 +83,7 @@ export const TTL = {
   IDEM: 7 * 24 * 60 * 60, // idem:stripe:{eventId}   EX 7d
   GEOCODE: 30 * 24 * 60 * 60, // geo:{sha1(address)} EX 30d (§10.1)
   TRAVEL: 7 * 24 * 60 * 60, // tt:{hash(a)}:{hash(b)} EX 7d (§10.2)
+  ENTITLEMENTS: 60, // ent:{gid}                   EX 60 (§13.2)
 } as const;
 
 export const keys = {
@@ -95,6 +96,8 @@ export const keys = {
   geocode: (addressHash: string) => `geo:${addressHash}`,
   // §10.2 travel-time matrix cache (Mapbox seam): pair of point hashes, 7d.
   travelTime: (hashA: string, hashB: string) => `tt:${hashA}:${hashB}`,
+  // §13.2 resolved entitlements cache, keyed by groomer id, EX 60.
+  entitlements: (gid: string) => `ent:${gid}`,
 } as const;
 
 /** The value stored under a `hold:{gid}:{holdId}` key. */

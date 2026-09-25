@@ -1,125 +1,124 @@
 /**
- * Order Radar feed for the portal dashboard (Master Spec §10.5 step 3–4).
+ * Order Radar endpoint (GET /api/portal/radar) — Master Spec §10.5.
  *
- * GET, auth-scoped to the signed-in groomer. Returns the latest pending /
- * upcoming appointment(s) with their `routeMeta` formatted for the Order Radar
- * card:
- *   "New booking · {fromPrevKm} km from your {prevTime} stop · +{extraDriveMin}
- *    min driving · {label}"
+ * Returns the groomer's latest upcoming bookings carrying route metadata
+ * (distance / extra drive / best-fit label) for the dashboard's Order Radar
+ * card, which polls this every ~15s (§10.5).
  *
- * When an appointment has no `routeMeta` (e.g. the client's location was
- * unknown at commit time), it is still returned — just without routing text.
+ * PRO-GATED SERVER-SIDE (§13.1: "Never gate only in the UI"): this is an
+ * `orderRadar` Pro feature, so we call `assertFeature(groomerId, 'orderRadar')`
+ * and respond 403 when the groomer's plan lacks it or their subscription is
+ * inactive. The UI hint on the dashboard is advisory; THIS gate is authoritative.
  *
- * NOTE (SWR wiring is a later phase): the dashboard is intended to poll this
- * endpoint every ~15s (`ROUTING.radarPollSeconds`). This route only provides
- * the data; the client-side SWR hook lands in a follow-up phase.
- *
- * _Master Spec: §10.5_
+ * _Master Spec: §10.5, §13.1, §16_
  */
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
-import { labelForScore } from '@/lib/routing';
+import { connectDB } from '@/lib/db/connect';
+import { Appointment } from '@/lib/db/models/appointment';
+import { assertFeature, FeatureLockedError } from '@/lib/billing/entitlements';
+import type { AppointmentStatus } from '@/types';
 
-// Mongoose needs Node APIs; the Edge runtime lacks them.
 export const runtime = 'nodejs';
-// The radar reflects live appointment data and must never be cached.
 export const dynamic = 'force-dynamic';
 
-/** How many upcoming appointments the card shows at once. */
-const RADAR_LIMIT = 5;
+// ---------------------------------------------------------------------------
+// Phase-7 gating seams (Master Spec §11, §13.1). These Pro endpoints do not
+// exist yet; when they are built, gate them server-side exactly like this
+// route does with orderRadar:
+//   /api/portal/fill         → await assertFeature(groomerId, 'fillMyDay');
+//   /api/portal/optimize-day → await assertFeature(groomerId, 'optimizeDay');
+//   /api/portal/track/*       → await assertFeature(groomerId, 'liveEta');
+//   rebooking nudges job      → await assertFeature(groomerId, 'rebookAutopilot');
+//   review-request sends      → await assertFeature(groomerId, 'reviewRequests');
+//   before/after share cards  → await assertFeature(groomerId, 'beforeAfter');
+// ---------------------------------------------------------------------------
 
-export async function GET(): Promise<NextResponse> {
+interface LeanRadarAppt {
+  _id: unknown;
+  clientId?: { name?: string } | null;
+  petId?: { name?: string } | null;
+  scheduledDate: Date;
+  status: AppointmentStatus;
+  routeMeta?: {
+    extraDriveMin?: number;
+    fromPrevKm?: number;
+    score?: number;
+  } | null;
+}
+
+/** "Best fit" / "Nearby stop" label from a routeMeta score (§10.4). */
+function routeLabel(meta: LeanRadarAppt['routeMeta']): string | null {
+  if (!meta) return null;
+  if (typeof meta.score === 'number' && meta.score >= 80) return 'Best fit';
+  if (typeof meta.extraDriveMin === 'number' && meta.extraDriveMin <= 8) {
+    return 'Nearby stop';
+  }
+  return null;
+}
+
+export async function GET(): Promise<Response> {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  const groomerId = session.user.id;
+
+  // PRO GATE (§13.1). Throws FeatureLockedError → 403 when locked.
+  try {
+    await assertFeature(groomerId, 'orderRadar');
+  } catch (err) {
+    if (err instanceof FeatureLockedError) {
+      return NextResponse.json(
+        { error: err.message, code: err.code, feature: err.feature },
+        { status: 403 }
+      );
+    }
+    console.error('[radar] entitlement check failed:', err);
+    return NextResponse.json({ error: 'Could not verify access.' }, { status: 500 });
   }
 
   try {
-    const { connectDB } = await import('@/lib/db/connect');
-    const { Appointment } = await import('@/lib/db/models/appointment');
-    const { Client } = await import('@/lib/db/models/client');
-    const { Pet } = await import('@/lib/db/models/pet');
-
     await connectDB();
 
-    const groomerId = session.user.id;
     const now = new Date();
+    const in7d = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-    // Latest pending/upcoming appointments (most imminent first).
-    const appts = await Appointment.find({
+    const docs = await Appointment.find({
       groomerId,
-      status: { $in: ['upcoming', 'in-progress'] },
-      scheduledEndDate: { $gte: now },
+      scheduledDate: { $gte: now, $lte: in7d },
+      status: 'upcoming',
+      'routeMeta.extraDriveMin': { $exists: true },
     })
-      .sort({ scheduledDate: 1 })
-      .limit(RADAR_LIMIT)
-      .lean();
+      .populate('clientId', 'name')
+      .populate('petId', 'name')
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .lean<LeanRadarAppt[]>();
 
-    // Resolve prev-stop times (for "from your {prevTime} stop") and names.
-    const prevIds = appts
-      .map((a) => a.routeMeta?.prevId)
-      .filter((id): id is NonNullable<typeof id> => Boolean(id))
-      .map((id) => String(id));
-
-    const prevAppts = prevIds.length
-      ? await Appointment.find({ _id: { $in: prevIds } })
-          .select({ scheduledDate: 1 })
-          .lean()
-      : [];
-    const prevTimeById = new Map<string, Date>(
-      prevAppts.map((p) => [String(p._id), new Date(p.scheduledDate)])
-    );
-
-    const clientIds = appts.map((a) => a.clientId).filter(Boolean);
-    const petIds = appts.map((a) => a.petId).filter(Boolean);
-    const [clients, pets] = await Promise.all([
-      Client.find({ _id: { $in: clientIds } }).select({ name: 1 }).lean(),
-      Pet.find({ _id: { $in: petIds } }).select({ name: 1 }).lean(),
-    ]);
-    const clientNameById = new Map(clients.map((c) => [String(c._id), c.name]));
-    const petNameById = new Map(pets.map((p) => [String(p._id), (p as { name?: string }).name]));
-
-    const fmtTime = (d: Date) =>
-      d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-
-    const items = appts.map((a) => {
-      const rm = a.routeMeta;
-      const prevTime =
-        rm?.prevId != null ? prevTimeById.get(String(rm.prevId)) ?? null : null;
-
-      const hasRouting =
-        rm != null && typeof rm.extraDriveMin === 'number' && typeof rm.fromPrevKm === 'number';
-
-      const label = hasRouting
-        ? labelForScore(rm.score ?? 0, rm.extraDriveMin as number)
-        : null;
-
+    const items = docs.map((doc) => {
+      const start = new Date(doc.scheduledDate);
       return {
-        appointmentId: String(a._id),
-        status: a.status,
-        scheduledDate: new Date(a.scheduledDate).toISOString(),
-        scheduledEndDate: new Date(a.scheduledEndDate).toISOString(),
-        clientName: clientNameById.get(String(a.clientId)) ?? null,
-        petName: petNameById.get(String(a.petId)) ?? null,
-        serviceAddress: a.serviceAddress ?? null,
-        // Routing block — null-ish fields when routeMeta is absent.
-        fromPrevKm: hasRouting ? (rm!.fromPrevKm as number) : null,
-        extraDriveMin: hasRouting ? (rm!.extraDriveMin as number) : null,
-        prevTime: prevTime ? fmtTime(prevTime) : null,
-        score: rm?.score ?? null,
-        label,
-        // Pre-formatted card text (§10.5) — null when no routing data.
-        radarText:
-          hasRouting && prevTime
-            ? `New booking · ${rm!.fromPrevKm} km from your ${fmtTime(prevTime)} stop · +${rm!.extraDriveMin} min driving${label ? ` · ${label}` : ''}`
+        id: String(doc._id),
+        petName: doc.petId?.name ?? null,
+        clientName: doc.clientId?.name ?? null,
+        scheduledDate: start.toISOString(),
+        fromPrevKm:
+          typeof doc.routeMeta?.fromPrevKm === 'number'
+            ? Number(doc.routeMeta.fromPrevKm.toFixed(1))
             : null,
+        extraDriveMin:
+          typeof doc.routeMeta?.extraDriveMin === 'number'
+            ? Math.max(0, Math.round(doc.routeMeta.extraDriveMin))
+            : null,
+        label: routeLabel(doc.routeMeta),
       };
     });
 
-    return NextResponse.json({ ok: true, count: items.length, items });
+    return NextResponse.json({ items }, { status: 200 });
   } catch (err) {
-    console.error('GET /api/portal/radar failed:', err);
-    return NextResponse.json({ error: 'radar_failed' }, { status: 500 });
+    console.error('[radar] query failed:', err);
+    return NextResponse.json({ error: 'Could not load Order Radar.' }, { status: 500 });
   }
 }

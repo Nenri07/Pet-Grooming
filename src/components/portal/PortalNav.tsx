@@ -12,6 +12,7 @@ import {
   Clock,
   BarChart3,
   Settings,
+  CreditCard,
   MessageSquare,
   Search,
   PanelLeftClose,
@@ -58,6 +59,7 @@ const SIDEBAR_ITEMS: NavItem[] = [
   { label: 'Services', href: '/services', icon: Scissors },
   { label: 'Availability', href: '/availability', icon: Clock },
   { label: 'Analytics', href: '/analytics', icon: BarChart3 },
+  { label: 'Billing', href: '/billing', icon: CreditCard },
   { label: 'Settings', href: '/settings', icon: Settings },
 ];
 
@@ -75,6 +77,7 @@ const MORE_ITEMS: NavItem[] = [
   { label: 'Services', href: '/services', icon: Scissors },
   { label: 'Availability', href: '/availability', icon: Clock },
   { label: 'Analytics', href: '/analytics', icon: BarChart3 },
+  { label: 'Billing', href: '/billing', icon: CreditCard },
   { label: 'Settings', href: '/settings', icon: Settings },
 ];
 

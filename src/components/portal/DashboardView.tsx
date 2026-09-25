@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   CalendarClock,
@@ -14,6 +15,7 @@ import {
   Minus,
   MessageSquare,
   RefreshCw,
+  Lock,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Reveal, NumberTicker } from '@/components/motion';
@@ -85,6 +87,12 @@ export interface DashboardData {
   radar: RadarItem[];
   bookingMode: 'instant' | 'request';
   monthSummary: MonthSummary;
+  /** Real SMS allowance from entitlements (§13.4). */
+  smsIncluded: number;
+  /** SMS used this cycle (0 when Redis is unconfigured). */
+  smsUsed: number;
+  /** UI hint: the plan lacks Order Radar (server gate is authoritative, §13.1). */
+  radarLocked: boolean;
 }
 
 interface DashboardViewProps {
@@ -402,6 +410,34 @@ function RadarRow({
   );
 }
 
+/**
+ * Locked Order Radar cell shown when the plan lacks `orderRadar` (§13.1). This
+ * is a UI hint only — the server gate on /api/portal/radar is authoritative.
+ */
+function OrderRadarLocked() {
+  return (
+    <Card className="flex flex-col">
+      <div className="mb-4 flex items-center gap-2">
+        <Radar className="h-5 w-5 text-base-content/40" aria-hidden="true" />
+        <h2 className="font-display text-lg font-semibold text-base-content">
+          Order Radar
+        </h2>
+        <Lock className="ml-auto h-4 w-4 text-base-content/40" aria-hidden="true" />
+      </div>
+      <div className="flex flex-1 flex-col items-center justify-center rounded-box bg-base-200 px-4 py-8 text-center">
+        <p className="font-medium text-base-content">A Pro feature</p>
+        <p className="mt-1 text-sm text-base-content/60">
+          See how far each new booking is from your route and how much driving it
+          adds.
+        </p>
+        <Link href="/billing" className="btn btn-primary btn-sm mt-4 min-h-[44px]">
+          Upgrade to Pro
+        </Link>
+      </div>
+    </Card>
+  );
+}
+
 function OrderRadarCard({
   radar,
   bookingMode,
@@ -552,7 +588,8 @@ function RebookingCard() {
   );
 }
 
-function SmsCreditsCard() {
+function SmsCreditsCard({ used, included }: { used: number; included: number }) {
+  const pct = included > 0 ? Math.min(100, Math.round((used / included) * 100)) : 0;
   return (
     <Card>
       <div className="mb-3 flex items-center gap-2">
@@ -561,20 +598,29 @@ function SmsCreditsCard() {
           SMS credits
         </h2>
       </div>
-      {/* TODO(phase-4/5): read used/included from the live SMS quota counter. */}
+      {/* Live allowance/usage from entitlements + the SMS quota counter (§13.4). */}
       <p className="text-2xl font-bold text-base-content">
-        0<span className="text-base font-medium text-base-content/50">/300 used</span>
+        {used}
+        <span className="text-base font-medium text-base-content/50">
+          /{included} used
+        </span>
       </p>
-      <button
-        type="button"
-        disabled
-        className="btn btn-outline btn-sm mt-3 min-h-[40px]"
+      <div
+        className="mt-3 h-2 w-full overflow-hidden rounded-full bg-base-200"
+        role="progressbar"
+        aria-valuenow={pct}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label="SMS usage this cycle"
       >
+        <div
+          className={cx('h-full rounded-full', pct >= 100 ? 'bg-error' : 'bg-primary')}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <Link href="/billing" className="btn btn-outline btn-sm mt-3 min-h-[40px]">
         Top up
-      </button>
-      <p className="mt-2 text-xs text-base-content/50">
-        Live usage and top-ups arrive with two-way texting.
-      </p>
+      </Link>
     </Card>
   );
 }
@@ -583,7 +629,8 @@ function SmsCreditsCard() {
 
 export function DashboardView({ data }: DashboardViewProps) {
   const router = useRouter();
-  const { stops, radar, bookingMode, monthSummary } = data;
+  const { stops, radar, bookingMode, monthSummary, smsIncluded, smsUsed, radarLocked } =
+    data;
 
   const handleOpen = React.useCallback(
     (id: string) => {
@@ -620,11 +667,15 @@ export function DashboardView({ data }: DashboardViewProps) {
         </Reveal>
 
         <Reveal y={12} duration={0.28} delay={0.04}>
-          <OrderRadarCard
-            radar={radar}
-            bookingMode={bookingMode}
-            onOpen={handleOpen}
-          />
+          {radarLocked ? (
+            <OrderRadarLocked />
+          ) : (
+            <OrderRadarCard
+              radar={radar}
+              bookingMode={bookingMode}
+              onOpen={handleOpen}
+            />
+          )}
         </Reveal>
 
         <Reveal y={12} duration={0.28} delay={0.08}>
@@ -636,7 +687,7 @@ export function DashboardView({ data }: DashboardViewProps) {
         </Reveal>
 
         <Reveal y={12} duration={0.28} delay={0.16}>
-          <SmsCreditsCard />
+          <SmsCreditsCard used={smsUsed} included={smsIncluded} />
         </Reveal>
       </div>
     </div>
