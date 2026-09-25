@@ -100,6 +100,9 @@ function buildBookingContext(
     owner,
     slotStart: new Date(slot.start).toISOString(),
     slotEnd: new Date(slot.end).toISOString(),
+    // SMS consent captured at step 2 (Master Spec §12.3), threaded to the
+    // deposit intent → webhook so Client.smsConsentAt is stamped on fulfilment.
+    smsConsent: state.smsConsent === true,
   };
 }
 

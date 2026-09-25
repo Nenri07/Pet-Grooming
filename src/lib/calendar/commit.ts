@@ -304,6 +304,16 @@ export async function commitBooking(input: CommitBookingInput): Promise<CommitRe
       serviceAddress,
     }).catch(() => {});
 
+    // Best-effort reminder scheduling (§12.3). Schedule the 24h + 2h reminders
+    // via QStash; degrades to a logged no-op when QStash is unconfigured. This
+    // must NEVER fail the commit — a scheduling hiccup cannot lose a paid slot.
+    try {
+      const { scheduleReminders } = await import('@/lib/sms/reminders');
+      await scheduleReminders({ groomerId, appointmentId, startAtMs: startAt }).catch(() => {});
+    } catch (err) {
+      console.error('[commit] scheduleReminders failed (non-fatal):', err);
+    }
+
     return { committed: true, appointmentId };
   } finally {
     // Step 5: release the lock only if we still own it (token compare).

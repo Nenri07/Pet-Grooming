@@ -64,6 +64,12 @@ export interface BookingState {
   stepIndex: number;
   petInfo: PetInfoInput | null;
   ownerDetails: OwnerDetailsInput | null;
+  /**
+   * Whether the client consented to appointment-update SMS at step 2
+   * (Master Spec §12.3). Unchecked by default; threaded to the deposit intent →
+   * webhook so `Client.smsConsentAt` is stamped on fulfilment.
+   */
+  smsConsent: boolean;
   estimate: EstimateResult | null;
   selectedSlot: TimeSlot | null;
   paymentResult: PaymentResult | null;
@@ -71,7 +77,7 @@ export interface BookingState {
 
 export type BookingAction =
   | { type: 'SUBMIT_PET_INFO'; payload: PetInfoInput }
-  | { type: 'SUBMIT_OWNER_DETAILS'; payload: OwnerDetailsInput }
+  | { type: 'SUBMIT_OWNER_DETAILS'; payload: OwnerDetailsInput; smsConsent?: boolean }
   | { type: 'CONFIRM_ESTIMATE'; payload: EstimateResult }
   | { type: 'SELECT_SLOT'; payload: TimeSlot }
   | { type: 'PAYMENT_SUCCESS'; payload: PaymentResult }
@@ -84,6 +90,7 @@ export const initialBookingState: BookingState = {
   stepIndex: 0,
   petInfo: null,
   ownerDetails: null,
+  smsConsent: false,
   estimate: null,
   selectedSlot: null,
   paymentResult: null,
@@ -119,6 +126,9 @@ export function bookingReducer(
       return {
         ...state,
         ownerDetails: action.payload,
+        // Persist the consent checkbox alongside the owner details so back/
+        // forward navigation stays lossless (Property 6). Defaults false.
+        smsConsent: action.smsConsent ?? state.smsConsent,
         currentStep: 'estimate',
         stepIndex: 2,
       };

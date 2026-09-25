@@ -35,6 +35,11 @@ export interface IAppointment extends Document {
   routeMeta?: RouteMeta;
   flexible?: boolean;
   source?: AppointmentSource;
+  /**
+   * Additive (§12.3): QStash message ids for the scheduled reminder jobs
+   * (reminder_24h, reminder_2h). Stored so reschedule/cancel can cancel them.
+   */
+  reminderJobIds?: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -86,6 +91,8 @@ const appointmentSchema = new Schema<IAppointment>(
       enum: ['public', 'manual', 'claim', 'rebook'],
       default: 'public',
     },
+    // Additive (§12.3): scheduled reminder job ids (QStash) for cancel/replace.
+    reminderJobIds: { type: [String], default: undefined },
   },
   { timestamps: true }
 );

@@ -40,6 +40,8 @@ export interface IPendingBooking {
    * cache once the booking is fulfilled. Absent for back-compat / no-Redis.
    */
   holdId?: string;
+  /** SMS consent (§12.3) captured at booking step 2; stamped on the Client. */
+  smsConsent?: boolean;
   createdAt: Date;
 }
 
@@ -56,6 +58,7 @@ const pendingBookingSchema = new Schema<IPendingBooking>({
   slotEnd: { type: String },
   serviceId: { type: String },
   holdId: { type: String },
+  smsConsent: { type: Boolean },
   createdAt: { type: Date, default: Date.now },
 });
 

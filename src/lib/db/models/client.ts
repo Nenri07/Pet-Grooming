@@ -21,6 +21,13 @@ export interface IClient {
   address: IAddress;
   /** Additive: geocoded service-address coordinates, when known (§10.1). */
   location?: IGeoLocation;
+  /**
+   * Additive (§12.3): when the client consented to receive SMS. Absent means no
+   * explicit consent — only a single transactional confirmation may be sent.
+   */
+  smsConsentAt?: Date;
+  /** Additive (§12.3): set when the client replies STOP; cleared on START. */
+  smsOptOut?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -53,6 +60,9 @@ const clientSchema = new Schema<IClient>(
     // Additive: geocoded coordinates (§10.1). Optional — routing degrades to a
     // pass-through when absent.
     location: { type: geoLocationSchema, required: false },
+    // Additive: SMS consent + opt-out (§12.3).
+    smsConsentAt: { type: Date, required: false },
+    smsOptOut: { type: Boolean, required: false },
   },
   { timestamps: true }
 );

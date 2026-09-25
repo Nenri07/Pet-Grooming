@@ -77,6 +77,12 @@ interface BookingMetadata {
    * back-compat: older pending records / no-Redis flows simply omit it.
    */
   holdId?: string;
+  /**
+   * Whether the client ticked the SMS-consent checkbox at booking step 2
+   * (Master Spec §12.3). When true we stamp `smsConsentAt` on the Client so
+   * subsequent messages are allowed. Absent/false → no explicit consent.
+   */
+  smsConsent?: boolean;
 }
 
 const COAT_CONDITIONS: readonly CoatCondition[] = [
@@ -148,6 +154,7 @@ function normalizePendingBooking(record: unknown): BookingMetadata | null {
     slotEnd: typeof b.slotEnd === 'string' ? b.slotEnd : undefined,
     serviceId: typeof b.serviceId === 'string' ? b.serviceId : undefined,
     holdId: typeof b.holdId === 'string' ? b.holdId : undefined,
+    smsConsent: b.smsConsent === true,
     pet: {
       name: pet.name,
       photoUrl: typeof pet.photoUrl === 'string' ? pet.photoUrl : undefined,
@@ -240,15 +247,20 @@ async function fulfilBooking(paymentIntent: Stripe.PaymentIntent): Promise<void>
     ? new Date(booking.slotEnd)
     : new Date(scheduledDate.getTime() + service.durationMinutes * 60 * 1000);
 
-  // Upsert the Client (unique per groomer + email).
+  // Upsert the Client (unique per groomer + email). When the client ticked the
+  // SMS consent box (§12.3) stamp `smsConsentAt` so later messages are allowed.
+  const clientSet: Record<string, unknown> = {
+    name: booking.owner.name,
+    phone: booking.owner.phone,
+    address: booking.owner.address,
+  };
+  if (booking.smsConsent) {
+    clientSet.smsConsentAt = new Date();
+  }
   const client = await Client.findOneAndUpdate(
     { groomerId, email },
     {
-      $set: {
-        name: booking.owner.name,
-        phone: booking.owner.phone,
-        address: booking.owner.address,
-      },
+      $set: clientSet,
       $setOnInsert: { groomerId, email },
     },
     { new: true, upsert: true }
@@ -353,6 +365,44 @@ async function fulfilBooking(paymentIntent: Stripe.PaymentIntent): Promise<void>
     serviceName: service.name,
     scheduledDate,
   });
+
+  // Best-effort SMS confirmation + reminder scheduling (Master Spec §12.3).
+  // sendSms and scheduleReminders never throw; guard the whole block anyway so
+  // a messaging problem can never fail a paid booking. Confirmation is allowed
+  // even without explicit consent (the "required contact" transactional
+  // exception in consent.ts); reminders + marketing require consent.
+  try {
+    const dateStr = scheduledDate.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    });
+    const timeStr = scheduledDate.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+    const { sendSms } = await import('@/lib/sms/send-sms');
+    await sendSms({
+      groomerId: String(groomerId),
+      clientId: String(client._id),
+      appointmentId: String(appointment._id),
+      to: booking.owner.phone,
+      kind: 'booking_confirmed',
+      vars: { pet: booking.pet.name, date: dateStr, time: timeStr },
+    });
+
+    const { scheduleReminders } = await import('@/lib/sms/reminders');
+    await scheduleReminders({
+      groomerId: String(groomerId),
+      appointmentId: String(appointment._id),
+      startAtMs: scheduledDate.getTime(),
+    });
+  } catch (smsErr) {
+    console.error(
+      `Stripe webhook: SMS dispatch/scheduling failed for payment ${stripePaymentId}:`,
+      smsErr
+    );
+  }
 }
 
 /**

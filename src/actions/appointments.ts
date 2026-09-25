@@ -136,6 +136,18 @@ export async function updateAppointmentStatus(
     }
     await appointment.save();
 
+    // Best-effort: cancelling an appointment cancels its pending reminders
+    // (§12.3) so a client is never reminded about a cancelled booking. Never
+    // fails the status change.
+    if (newStatus === 'cancelled') {
+      try {
+        const { cancelRemindersForAppointment } = await import('@/lib/sms/reminders');
+        await cancelRemindersForAppointment(appointmentId).catch(() => {});
+      } catch (err) {
+        console.error('[status] cancelReminders failed (non-fatal):', err);
+      }
+    }
+
     // The status change is now immediate and authoritative in Mongo. The
     // native calendar and the read-only ICS feed reflect it directly — there
     // is no external calendar to sync (Master Spec §9).
@@ -385,9 +397,24 @@ export async function rescheduleAppointment(
     }
 
     const prevDay = dayStr(new Date(appointment.scheduledDate).getTime());
+    const existingReminderIds = (appointment as { reminderJobIds?: string[] }).reminderJobIds;
     appointment.scheduledDate = new Date(newStartMs);
     appointment.scheduledEndDate = new Date(newEndMs);
     await appointment.save();
+
+    // Best-effort reminder reschedule (§12.3): cancel the old jobs and schedule
+    // fresh 24h/2h reminders against the new time. Never fails the reschedule.
+    try {
+      const { cancelReminders, scheduleReminders } = await import('@/lib/sms/reminders');
+      await cancelReminders(existingReminderIds).catch(() => {});
+      await scheduleReminders({
+        groomerId,
+        appointmentId,
+        startAtMs: newStartMs,
+      }).catch(() => {});
+    } catch (err) {
+      console.error('[reschedule] reminder reschedule failed (non-fatal):', err);
+    }
 
     // Invalidate the affected day(s) so slot generation reflects the move.
     const { invalidateSlotsCache } = await import('@/lib/calendar/slots');

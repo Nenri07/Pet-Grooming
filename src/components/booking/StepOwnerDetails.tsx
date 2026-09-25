@@ -85,10 +85,14 @@ export function StepOwnerDetails({ state, dispatch }: BookingStepProps) {
     },
   });
 
+  // SMS consent (Master Spec §12.3): UNCHECKED by default. Restored from state
+  // on back-navigation so the choice is lossless.
+  const [smsConsent, setSmsConsent] = React.useState<boolean>(state.smsConsent);
+
   const submit = handleSubmit((values) => {
     // `values` already conforms to OwnerDetailsInput (nested address, phone
     // normalized by the schema transform).
-    dispatch({ type: 'SUBMIT_OWNER_DETAILS', payload: values });
+    dispatch({ type: 'SUBMIT_OWNER_DETAILS', payload: values, smsConsent });
   });
 
   const addressErrors = errors.address;
@@ -273,6 +277,22 @@ export function StepOwnerDetails({ state, dispatch }: BookingStepProps) {
             </p>
           )}
         </div>
+      </div>
+
+      {/* SMS consent — unchecked by default (Master Spec §12.3). */}
+      <div className="form-control mt-2">
+        <label className="flex cursor-pointer items-start gap-3" htmlFor="owner-sms-consent">
+          <input
+            id="owner-sms-consent"
+            type="checkbox"
+            className="checkbox checkbox-primary mt-0.5 min-h-[24px] min-w-[24px]"
+            checked={smsConsent}
+            onChange={(e) => setSmsConsent(e.target.checked)}
+          />
+          <span className="label-text text-sm text-base-content/70">
+            Text me appointment updates. Msg &amp; data rates may apply. Reply STOP to opt out.
+          </span>
+        </label>
       </div>
 
       <div className="mt-2 flex gap-2">

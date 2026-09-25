@@ -56,6 +56,12 @@ export interface DepositMetadata {
   slotEnd?: string;
   /** Optional explicit service id the client is booking. */
   serviceId?: string;
+  /**
+   * Whether the client ticked the SMS-consent checkbox at booking step 2
+   * (Master Spec §12.3). Threaded to the webhook so it can stamp
+   * `Client.smsConsentAt`. Defaults to false (no consent) when omitted.
+   */
+  smsConsent?: boolean;
 }
 
 /** Result envelope returned by {@link createDepositPaymentIntent}. */
@@ -224,6 +230,9 @@ export async function createDepositPaymentIntent(
           slotStart: booking.slotStart,
           slotEnd: booking.slotEnd,
           serviceId: booking.serviceId,
+          // SMS consent (§12.3) captured at booking step 2, threaded to the
+          // webhook so it can stamp Client.smsConsentAt on fulfilment.
+          smsConsent: booking.smsConsent === true,
           // Thread the hold id through so the webhook can release it + bust the
           // slot cache after fulfilment. Absent when no hold was placed.
           holdId,
