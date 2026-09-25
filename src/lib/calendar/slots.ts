@@ -26,6 +26,20 @@ import {
 } from '@/lib/calendar/availability';
 import { holdsToBlocks, type ActiveHold } from '@/lib/calendar/holds';
 import { cacheGet, cacheSet, cacheDel, keys, TTL, isRedisConfigured } from '@/lib/redis';
+import {
+  evaluateInsertion,
+  scoreInsertion,
+  labelForScore,
+  exceedsMaxDetour,
+  isWithinServiceRadius,
+  getTravelProvider,
+  haversineKm,
+  ROUTING,
+  type LatLng,
+  type Stop,
+  type TravelProvider,
+  type TravelCfg,
+} from '@/lib/routing';
 import type { TimeSlot } from '@/types';
 
 const MS_PER_MINUTE = 60 * 1000;
@@ -66,16 +80,108 @@ function padBlock(block: TimeBlock, bufferMin: number): TimeBlock {
   };
 }
 
+/** Routing inputs threaded through when the client's location is known (§10.5). */
+export interface RoutingInput {
+  /** Groomer base location (start/end of day). */
+  base: LatLng;
+  /** The candidate client's geocoded location. `null` → routing is a pass-through. */
+  clientLoc: LatLng | null;
+  /** That day's existing non-cancelled appointment stops. */
+  stops: Stop[];
+  /** The working-day window in epoch ms (for feasibility + round-trip). */
+  dayWindow: { startMs: number; endMs: number };
+  /** Groomer routing config. */
+  config: {
+    bufferMin: number;
+    maxDetourMin?: number;
+    serviceRadiusKm?: number;
+    travel: TravelCfg;
+  };
+  /**
+   * Perspective: 'client' hides over-detour / out-of-radius slots; 'groomer'
+   * keeps everything (manual add) but still scores/labels. Default 'client'.
+   */
+  view?: 'client' | 'groomer';
+  /** Travel provider override (defaults to the haversine provider). */
+  travelProvider?: TravelProvider;
+}
+
+/** True when the day already has >= 2 stops within `clusterKm` of each other (§10.4). */
+function isClusterDay(stops: Stop[], clusterKm = ROUTING.clusterKm): boolean {
+  let close = 0;
+  for (let i = 0; i < stops.length; i++) {
+    for (let j = i + 1; j < stops.length; j++) {
+      if (haversineKm(stops[i].loc, stops[j].loc) <= clusterKm) {
+        close += 1;
+        if (close >= 2) return true;
+      }
+    }
+  }
+  return false;
+}
+
 /**
- * ROUTING SEAM (§10). Phase 3 will filter/rank slots by route fit (detour
- * minutes, service radius) once the client's geocoded address is known. Until
- * then this is an identity pass so the pipeline is wired end-to-end.
+ * ROUTING FILTER (§10.5). Ranks and labels slots by route fit and drops the
+ * ones a client shouldn't see.
  *
- * Do not remove — Phase 3 replaces the body, not the call site.
+ * CRITICAL: when the client location is UNKNOWN (`clientLoc == null`, e.g. no
+ * geocoder configured), routing is a PASS-THROUGH — all slots are returned
+ * unranked so booking still works. The default provider is pure haversine, so
+ * no Mapbox account is needed.
+ *
+ * For each candidate slot with a known location: runs {@link evaluateInsertion}
+ * + {@link scoreInsertion}, attaches `{ score, label, extraDriveMin, fromPrevKm }`,
+ * drops slots outside the service radius (both views) and — for the client view
+ * — slots whose detour exceeds `maxDetourMin`, then sorts by score desc
+ * ("Best fit" first).
  */
-export function applyRoutingFilter(slots: TimeSlot[]): TimeSlot[] {
-  // TODO(phase-3): drop slots whose detour > maxDetourMin; rank/label the rest.
-  return slots;
+export async function applyRoutingFilter(
+  slots: TimeSlot[],
+  routing?: RoutingInput
+): Promise<TimeSlot[]> {
+  // No routing context or unknown client location → pass-through (unranked).
+  if (!routing || !routing.clientLoc) return slots;
+
+  const { base, clientLoc, stops, dayWindow, config, view = 'client' } = routing;
+  const tp = routing.travelProvider ?? getTravelProvider(config.travel);
+  const clusterDay = isClusterDay(stops);
+
+  const annotated: TimeSlot[] = [];
+
+  for (const slot of slots) {
+    const result = await evaluateInsertion(
+      stops,
+      base,
+      { loc: clientLoc, startMs: slot.start.getTime(), endMs: slot.end.getTime() },
+      { bufferMin: config.bufferMin },
+      tp,
+      dayWindow
+    );
+
+    // Infeasible insertion → not bookable at all.
+    if (!result) continue;
+
+    // Hard filter: outside the service radius is never bookable (either view).
+    if (!isWithinServiceRadius(result.fromPrevKm, config.serviceRadiusKm)) continue;
+
+    // Client view hides over-detour slots; groomer view keeps them.
+    if (view === 'client' && exceedsMaxDetour(result.extraDriveMin, config.maxDetourMin)) continue;
+
+    const score = scoreInsertion(result, { clusterDay });
+    const label = labelForScore(score, result.extraDriveMin);
+
+    annotated.push({
+      ...slot,
+      score,
+      label,
+      extraDriveMin: result.extraDriveMin,
+      fromPrevKm: result.fromPrevKm,
+    });
+  }
+
+  // "Best fit" first: sort by score descending; unscored slots sink.
+  annotated.sort((a, b) => (b.score ?? -1) - (a.score ?? -1));
+  return annotated;
 }
 
 /**
@@ -121,8 +227,11 @@ export function computeSlotsForDate(input: ComputeSlotsInput): TimeSlot[] {
     (s) => s.available && s.start.getTime() >= noticeCutoff.getTime()
   );
 
-  // Step 5: routing seam (no-op in Phase 2).
-  return applyRoutingFilter(bookable);
+  // Step 5 (routing filter/ranking, §10) is applied by the orchestrator via the
+  // async {@link applyRoutingFilter}, since it depends on a travel provider and
+  // the client's geocoded location. The pure core stays sync + DB/Redis-free
+  // and returns the unranked bookable set.
+  return bookable;
 }
 
 /**
@@ -137,16 +246,29 @@ export async function getSlotsForDate(
   groomerId: string,
   dateStr: string,
   serviceDurationMinutes: number,
-  now: Date = new Date()
+  now: Date = new Date(),
+  /**
+   * Optional Order Radar inputs (§10.5). When `clientLoc` is provided AND the
+   * groomer has a `baseLocation`, slots are ranked/labelled and over-detour /
+   * out-of-radius slots are dropped for the client view. When omitted or the
+   * location is unknown, the base (unranked) slots are returned unchanged so
+   * booking always works.
+   */
+  routingOpts?: { clientLoc?: LatLng | null; view?: 'client' | 'groomer' }
 ): Promise<TimeSlot[]> {
   const cacheKey = keys.avail(groomerId, dateStr);
+
+  // The 60s cache holds the ROUTING-FREE base slots (routing is client-specific,
+  // so it is layered on top after retrieval). This keeps the cache reusable
+  // across clients.
+  let baseSlots: TimeSlot[] | null = null;
 
   if (isRedisConfigured()) {
     const cached = await cacheGet<Array<{ start: string; end: string; available: boolean }>>(
       cacheKey
     );
     if (cached) {
-      return cached.map((s) => ({
+      baseSlots = cached.map((s) => ({
         start: new Date(s.start),
         end: new Date(s.end),
         available: s.available,
@@ -181,52 +303,86 @@ export async function getSlotsForDate(
     end: new Date(a.scheduledEndDate),
   }));
 
-  const blockedDates: TimeBlock[] = (profile.blockedDates ?? [])
-    .filter(
-      (b) =>
-        new Date(b.startDateTime).getTime() <= dayEnd.getTime() &&
-        new Date(b.endDateTime).getTime() >= dayStart.getTime()
-    )
-    .map((b) => ({ start: new Date(b.startDateTime), end: new Date(b.endDateTime) }));
+  // Compute the routing-free base slots only when not served from cache.
+  if (!baseSlots) {
+    const blockedDates: TimeBlock[] = (profile.blockedDates ?? [])
+      .filter(
+        (b) =>
+          new Date(b.startDateTime).getTime() <= dayEnd.getTime() &&
+          new Date(b.endDateTime).getTime() >= dayStart.getTime()
+      )
+      .map((b) => ({ start: new Date(b.startDateTime), end: new Date(b.endDateTime) }));
 
-  const holds = await getActiveHolds(groomerId, dateStr);
+    const holds = await getActiveHolds(groomerId, dateStr);
 
-  const windows: AvailabilityWindowInput[] = (profile.availabilityWindows ?? []).map((w) => ({
-    dayOfWeek: w.dayOfWeek,
-    startTime: w.startTime,
-    endTime: w.endTime,
-  }));
+    const windows: AvailabilityWindowInput[] = (profile.availabilityWindows ?? []).map((w) => ({
+      dayOfWeek: w.dayOfWeek,
+      startTime: w.startTime,
+      endTime: w.endTime,
+    }));
 
-  const config: SlotConfig = {
-    bufferMin: profile.bufferMin ?? 10,
-    slotStepMin: profile.slotStepMin ?? 15,
-    minNoticeHours: profile.minNoticeHours ?? 12,
-  };
+    const config: SlotConfig = {
+      bufferMin: profile.bufferMin ?? 10,
+      slotStepMin: profile.slotStepMin ?? 15,
+      minNoticeHours: profile.minNoticeHours ?? 12,
+    };
 
-  const slots = computeSlotsForDate({
-    windows,
-    appointmentBlocks,
-    blockedDates,
-    holds,
-    date: dayStart,
-    serviceDurationMinutes,
-    config,
-    now,
-  });
+    baseSlots = computeSlotsForDate({
+      windows,
+      appointmentBlocks,
+      blockedDates,
+      holds,
+      date: dayStart,
+      serviceDurationMinutes,
+      config,
+      now,
+    });
 
-  if (isRedisConfigured()) {
-    await cacheSet(
-      cacheKey,
-      slots.map((s) => ({
-        start: s.start.toISOString(),
-        end: s.end.toISOString(),
-        available: s.available,
-      })),
-      TTL.AVAIL
-    );
+    if (isRedisConfigured()) {
+      await cacheSet(
+        cacheKey,
+        baseSlots.map((s) => ({
+          start: s.start.toISOString(),
+          end: s.end.toISOString(),
+          available: s.available,
+        })),
+        TTL.AVAIL
+      );
+    }
   }
 
-  return slots;
+  // Step 5 (§10.5): layer routing on top of the base slots when the client's
+  // location is known and the groomer has a base location. Otherwise return the
+  // base slots unchanged — booking must always work with an unknown location.
+  const clientLoc = routingOpts?.clientLoc ?? null;
+  if (clientLoc && profile.baseLocation) {
+    const stops: Stop[] = appointments.map((a) => ({
+      id: String(a._id),
+      loc: a.location ?? profile.baseLocation!, // fall back to base if a stop lacks coords
+      startMs: new Date(a.scheduledDate).getTime(),
+      endMs: new Date(a.scheduledEndDate).getTime(),
+    }));
+
+    return applyRoutingFilter(baseSlots, {
+      base: profile.baseLocation,
+      clientLoc,
+      stops,
+      dayWindow: { startMs: dayStart.getTime(), endMs: dayEnd.getTime() },
+      config: {
+        bufferMin: profile.bufferMin ?? ROUTING.bufferMin,
+        maxDetourMin: profile.maxDetourMin ?? ROUTING.maxDetourMin,
+        serviceRadiusKm: profile.serviceRadiusKm,
+        travel: {
+          roadFactor: profile.roadFactor ?? ROUTING.travel.roadFactor,
+          avgSpeedKmh: profile.avgSpeedKmh ?? ROUTING.travel.avgSpeedKmh,
+          parkingMin: profile.parkingMin ?? ROUTING.travel.parkingMin,
+        },
+      },
+      view: routingOpts?.view ?? 'client',
+    });
+  }
+
+  return baseSlots;
 }
 
 /**

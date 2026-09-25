@@ -97,6 +97,17 @@ export interface TimeSlot {
   start: Date;
   end: Date;
   available: boolean;
+  // --- Order Radar routing annotations (additive; Master Spec §10.5). ---
+  // Present only when the client's location is known and routing ran; existing
+  // consumers ignore them safely.
+  /** Route-fit score 0..100 (higher = better fit). */
+  score?: number;
+  /** Human label: "Best fit" | "Nearby stop" | undefined. */
+  label?: string | null;
+  /** Extra driving minutes this slot adds vs neighbouring stops. */
+  extraDriveMin?: number;
+  /** Distance from the previous stop (or base), km. */
+  fromPrevKm?: number;
 }
 
 // ---------------------------------------------------------------------------

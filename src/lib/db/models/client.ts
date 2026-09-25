@@ -7,12 +7,20 @@ export interface IAddress {
   postalCode: string;
 }
 
+/** Geocoded coordinates for the client's service address (Master Spec §10.1). */
+export interface IGeoLocation {
+  lat: number;
+  lng: number;
+}
+
 export interface IClient {
   groomerId: Types.ObjectId;
   name: string;
   email: string;
   phone: string;
   address: IAddress;
+  /** Additive: geocoded service-address coordinates, when known (§10.1). */
+  location?: IGeoLocation;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -27,6 +35,14 @@ const addressSchema = new Schema<IAddress>(
   { _id: false }
 );
 
+const geoLocationSchema = new Schema<IGeoLocation>(
+  {
+    lat: { type: Number, required: true, min: -90, max: 90 },
+    lng: { type: Number, required: true, min: -180, max: 180 },
+  },
+  { _id: false }
+);
+
 const clientSchema = new Schema<IClient>(
   {
     groomerId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
@@ -34,6 +50,9 @@ const clientSchema = new Schema<IClient>(
     email: { type: String, required: true, lowercase: true, maxlength: 254 },
     phone: { type: String, required: true, maxlength: 15 },
     address: { type: addressSchema, required: true },
+    // Additive: geocoded coordinates (§10.1). Optional — routing degrades to a
+    // pass-through when absent.
+    location: { type: geoLocationSchema, required: false },
   },
   { timestamps: true }
 );

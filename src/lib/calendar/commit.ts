@@ -23,6 +23,7 @@
 import { nanoid } from 'nanoid';
 import { hasConflict, type TimeBlock } from '@/lib/calendar/availability';
 import { acquireLock, releaseLock } from '@/lib/redis';
+import type { Stop } from '@/lib/routing';
 
 const MS_PER_MINUTE = 60 * 1000;
 const LOCK_RETRIES = 3;
@@ -291,9 +292,154 @@ export async function commitBooking(input: CommitBookingInput): Promise<CommitRe
     await releaseHold(groomerId, holdId, dateStr).catch(() => {});
     await invalidateSlotsCache(groomerId, dateStr).catch(() => {});
 
+    // Best-effort routing metadata (§10.5 step 2). NEVER fail the commit if the
+    // client location is unknown (no geocoder) or routing throws — just skip.
+    await computeAndStoreRouteMeta({
+      groomerId,
+      appointmentId,
+      clientData,
+      startAt,
+      endAt,
+      bufferMin,
+      serviceAddress,
+    }).catch(() => {});
+
     return { committed: true, appointmentId };
   } finally {
     // Step 5: release the lock only if we still own it (token compare).
     await releaseLock(groomerId, token).catch(() => {});
   }
+}
+
+/**
+ * Best-effort Order Radar routing metadata (Master Spec §10.5 step 2).
+ *
+ * After an appointment is inserted, geocode the client's address, evaluate the
+ * insertion against the day's OTHER non-cancelled appointments and the
+ * groomer's base location, then persist `routeMeta = { prevId, nextId,
+ * extraDriveMin, fromPrevKm, score }` (and the geocoded `location`) on the
+ * appointment. Every failure path is swallowed by the caller's `.catch()` —
+ * routing is a nice-to-have overlay, never a commit blocker. When the location
+ * is unknown (no geocoder configured), this returns without writing anything.
+ */
+async function computeAndStoreRouteMeta(args: {
+  groomerId: string;
+  appointmentId: string;
+  clientData: CommitClientData;
+  startAt: number;
+  endAt: number;
+  bufferMin: number;
+  serviceAddress?: string;
+}): Promise<void> {
+  const { groomerId, appointmentId, clientData, startAt, endAt, bufferMin } = args;
+
+  const { connectDB } = await import('@/lib/db/connect');
+  const { GroomerProfile } = await import('@/lib/db/models/groomer-profile');
+  const { Appointment } = await import('@/lib/db/models/appointment');
+  const { Client } = await import('@/lib/db/models/client');
+  const {
+    geocodeStructured,
+    evaluateInsertion,
+    scoreInsertion,
+    getTravelProvider,
+    haversineKm,
+    ROUTING,
+  } = await import('@/lib/routing');
+
+  await connectDB();
+
+  const profile = await GroomerProfile.findOne({ userId: groomerId }).lean();
+  if (!profile?.baseLocation) return; // no base → nothing to route against
+
+  // Geocode the client's service address. Unknown location → skip silently.
+  const clientLoc = await geocodeStructured(clientData.address);
+  if (!clientLoc) return;
+
+  // Persist the geocoded location on the client + this appointment for reuse.
+  await Client.updateOne(
+    { groomerId, email: clientData.email.toLowerCase() },
+    { $set: { location: clientLoc } }
+  ).catch(() => {});
+
+  // The day's other non-cancelled stops (exclude the just-created one).
+  const dayStart = new Date(startAt);
+  dayStart.setUTCHours(0, 0, 0, 0);
+  const dayEnd = new Date(startAt);
+  dayEnd.setUTCHours(23, 59, 59, 999);
+
+  const others = await Appointment.find({
+    groomerId,
+    _id: { $ne: appointmentId },
+    status: { $ne: 'cancelled' },
+    scheduledDate: { $gte: dayStart, $lte: dayEnd },
+  }).lean();
+
+  const stops: Stop[] = (
+    others as unknown as Array<{
+      _id: unknown;
+      location?: { lat: number; lng: number };
+      scheduledDate: Date;
+      scheduledEndDate: Date;
+    }>
+  ).map((a) => ({
+    id: String(a._id),
+    loc: a.location ?? profile.baseLocation!,
+    startMs: new Date(a.scheduledDate).getTime(),
+    endMs: new Date(a.scheduledEndDate).getTime(),
+  }));
+
+  const tp = getTravelProvider({
+    roadFactor: profile.roadFactor ?? ROUTING.travel.roadFactor,
+    avgSpeedKmh: profile.avgSpeedKmh ?? ROUTING.travel.avgSpeedKmh,
+    parkingMin: profile.parkingMin ?? ROUTING.travel.parkingMin,
+  });
+
+  const result = await evaluateInsertion(
+    stops,
+    profile.baseLocation,
+    { loc: clientLoc, startMs: startAt, endMs: endAt },
+    { bufferMin },
+    tp,
+    { startMs: dayStart.getTime(), endMs: dayEnd.getTime() }
+  );
+  if (!result) {
+    // Still store the location even if the insertion looked infeasible.
+    await Appointment.updateOne({ _id: appointmentId }, { $set: { location: clientLoc } }).catch(
+      () => {}
+    );
+    return;
+  }
+
+  // clusterDay: >= 2 of the day's stops within the cluster distance.
+  let close = 0;
+  let clusterDay = false;
+  for (let i = 0; i < stops.length && !clusterDay; i++) {
+    for (let j = i + 1; j < stops.length; j++) {
+      if (haversineKm(stops[i].loc, stops[j].loc) <= ROUTING.clusterKm) {
+        close += 1;
+        if (close >= 2) {
+          clusterDay = true;
+          break;
+        }
+      }
+    }
+  }
+
+  const score = scoreInsertion(result, { clusterDay });
+
+  await Appointment.updateOne(
+    { _id: appointmentId },
+    {
+      $set: {
+        location: clientLoc,
+        routeMeta: {
+          prevId: result.prevId,
+          nextId: result.nextId,
+          extraDriveMin: result.extraDriveMin,
+          fromPrevKm: result.fromPrevKm,
+          score,
+        },
+      },
+    }
+  ).catch(() => {});
 }

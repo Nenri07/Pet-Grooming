@@ -30,6 +30,8 @@ export interface IAppointment extends Document {
   notes?: string;
   postGroomNotes?: string;
   // --- PawPort native calendar & routing (additive; §10.5, §14) ---
+  /** Geocoded coordinates for this appointment's service address (§10.1). */
+  location?: { lat: number; lng: number };
   routeMeta?: RouteMeta;
   flexible?: boolean;
   source?: AppointmentSource;
@@ -55,6 +57,16 @@ const appointmentSchema = new Schema<IAppointment>(
     notes: { type: String, maxlength: 500 },
     postGroomNotes: { type: String, maxlength: 2000 },
     // --- PawPort native calendar & routing (additive; §10.5, §14) ---
+    location: {
+      type: new Schema<{ lat: number; lng: number }>(
+        {
+          lat: { type: Number, required: true, min: -90, max: 90 },
+          lng: { type: Number, required: true, min: -180, max: 180 },
+        },
+        { _id: false }
+      ),
+      required: false,
+    },
     routeMeta: {
       type: new Schema<RouteMeta>(
         {

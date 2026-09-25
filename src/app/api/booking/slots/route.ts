@@ -25,6 +25,7 @@ import { connectDB } from '@/lib/db/connect';
 import { GroomerProfile } from '@/lib/db/models/groomer-profile';
 import { Service } from '@/lib/db/models/service';
 import { getSlotsForDate } from '@/lib/calendar/slots';
+import { getGeocodeProvider, type LatLng } from '@/lib/routing';
 import { bookingRateLimit, checkRateLimit } from '@/lib/ratelimit';
 
 // Mongoose + Redis need Node APIs; the Edge runtime lacks them.
@@ -74,6 +75,11 @@ export async function GET(req: Request): Promise<Response> {
   const groomerSlug = url.searchParams.get('groomerSlug');
   const date = url.searchParams.get('date');
   const serviceId = url.searchParams.get('serviceId');
+  // Optional Order Radar inputs (§10.5): explicit coords, or an address to
+  // geocode. When neither resolves, routing is a pass-through (all slots pass).
+  const latParam = url.searchParams.get('lat');
+  const lngParam = url.searchParams.get('lng');
+  const addressParam = url.searchParams.get('address');
 
   if (!groomerId && !groomerSlug) {
     return NextResponse.json({ error: 'missing_groomer' }, { status: 400 });
@@ -105,21 +111,41 @@ export async function GET(req: Request): Promise<Response> {
       return NextResponse.json({ error: 'no_service' }, { status: 404 });
     }
 
+    // Resolve the client's location for routing, if any was supplied. Explicit
+    // lat/lng wins; otherwise try to geocode the address (returns null today,
+    // so routing stays a pass-through until a geocoder is configured).
+    let clientLoc: LatLng | null = null;
+    const lat = latParam != null ? Number(latParam) : NaN;
+    const lng = lngParam != null ? Number(lngParam) : NaN;
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+      clientLoc = { lat, lng };
+    } else if (addressParam) {
+      clientLoc = await getGeocodeProvider().geocode(addressParam).catch(() => null);
+    }
+
     const slots = await getSlotsForDate(
       resolvedGroomerId,
       date,
-      service.durationMinutes
+      service.durationMinutes,
+      new Date(),
+      { clientLoc, view: 'client' }
     );
 
-    // Serialise Dates to ISO for JSON transport.
+    // Serialise Dates to ISO for JSON transport. Routing annotations are
+    // included when present (undefined when the client's location is unknown).
     return NextResponse.json({
       groomerId: resolvedGroomerId,
       date,
       serviceDurationMinutes: service.durationMinutes,
+      routed: clientLoc != null,
       slots: slots.map((s) => ({
         start: s.start.toISOString(),
         end: s.end.toISOString(),
         available: s.available,
+        score: s.score,
+        label: s.label,
+        extraDriveMin: s.extraDriveMin,
+        fromPrevKm: s.fromPrevKm,
       })),
     });
   } catch (err) {

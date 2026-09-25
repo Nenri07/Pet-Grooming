@@ -81,6 +81,8 @@ export const TTL = {
   LOCK: 10, // lock:book:{gid}              EX 10
   AVAIL: 60, // avail:{gid}:{yyyy-mm-dd}     EX 60
   IDEM: 7 * 24 * 60 * 60, // idem:stripe:{eventId}   EX 7d
+  GEOCODE: 30 * 24 * 60 * 60, // geo:{sha1(address)} EX 30d (§10.1)
+  TRAVEL: 7 * 24 * 60 * 60, // tt:{hash(a)}:{hash(b)} EX 7d (§10.2)
 } as const;
 
 export const keys = {
@@ -89,6 +91,10 @@ export const keys = {
   lockBook: (gid: string) => `lock:book:${gid}`,
   avail: (gid: string, dateStr: string) => `avail:${gid}:${dateStr}`,
   idemStripe: (eventId: string) => `idem:stripe:${eventId}`,
+  // §10.1 geocode cache: keyed by a hash of the normalized address, 30d.
+  geocode: (addressHash: string) => `geo:${addressHash}`,
+  // §10.2 travel-time matrix cache (Mapbox seam): pair of point hashes, 7d.
+  travelTime: (hashA: string, hashB: string) => `tt:${hashA}:${hashB}`,
 } as const;
 
 /** The value stored under a `hold:{gid}:{holdId}` key. */
