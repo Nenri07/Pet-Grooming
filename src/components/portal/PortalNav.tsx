@@ -23,6 +23,7 @@ import {
 import { ThemeToggle } from './ThemeToggle';
 import { ThemeMenu } from './ThemeMenu';
 import { SmsCreditsPill } from './SmsCreditsPill';
+import { LogoutButton } from './LogoutButton';
 
 /**
  * PortalNav — the authenticated Groomer_Portal navigation shell (Master Spec §8).
@@ -183,6 +184,7 @@ export function PortalNav() {
           <SmsCreditsPill />
           <ThemeMenu />
           <ThemeToggle />
+          <LogoutButton variant="icon" />
           <AvatarMenu />
         </div>
       </header>
@@ -259,6 +261,7 @@ export function PortalNav() {
           <div className={cx('flex items-center gap-1', collapsed && 'flex-col')}>
             <ThemeMenu align={collapsed ? 'start' : 'end'} />
             <ThemeToggle />
+            <LogoutButton variant="icon" />
             <AvatarMenu />
           </div>
         </div>
@@ -359,6 +362,9 @@ export function PortalNav() {
                   </Link>
                 );
               })}
+            </div>
+            <div className="mt-4 border-t border-base-content/10 pt-4">
+              <LogoutButton variant="full" />
             </div>
             <div className="mt-4 flex items-center justify-between border-t border-base-content/10 pt-4">
               <SmsCreditsPill />

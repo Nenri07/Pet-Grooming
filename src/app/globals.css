@@ -7,3 +7,34 @@
 body {
   min-height: 100vh;
 }
+
+/* ----------------------------------------------------------------------------
+   Print: show ONLY the booking receipt ticket.
+   BookingReceipt wraps its on-screen article in #pp-receipt. When the visitor
+   uses the "Print" action we hide everything else and lay the receipt out on
+   its own, so the printout is just the ticket — not the whole page/chrome.
+   Action buttons carry .pp-no-print so they never appear in the printout.
+   ---------------------------------------------------------------------------- */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #pp-receipt,
+  #pp-receipt * {
+    visibility: visible;
+  }
+
+  #pp-receipt {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    max-width: none;
+    width: 100%;
+    box-shadow: none;
+  }
+
+  .pp-no-print {
+    display: none !important;
+  }
+}

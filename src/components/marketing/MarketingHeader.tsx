@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { LayoutDashboard } from 'lucide-react';
 import { useGsapContext } from '@/lib/animation';
+import { LogoutButton } from '@/components/portal/LogoutButton';
 
 /**
  * Marketing site header. GSAP ScrollTrigger toggles an "is-scrolled" class that
@@ -78,10 +79,11 @@ export function MarketingHeader() {
                 href="/settings"
                 aria-label={`Account: ${displayName}`}
                 title={displayName}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-sm font-bold text-primary"
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 text-sm font-bold text-primary"
               >
                 {initial}
               </Link>
+              <LogoutButton variant="icon" />
             </div>
           ) : (
             <Link href="/login" className="btn btn-sm btn-primary rounded-btn min-h-[44px]">

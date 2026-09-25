@@ -106,6 +106,15 @@ export function BookingReceipt({ data }: BookingReceiptProps) {
   const dateStr = formatDate(data.scheduledDate);
   const timeStr = formatTime(data.scheduledDate);
 
+  // When the caller supplies the full service price, surface the balance still
+  // owed on the day (price − deposit). Additive: deposit-only bookings show 0.
+  const balanceDue =
+    typeof data.servicePrice === 'number' &&
+    Number.isFinite(data.servicePrice) &&
+    data.servicePrice > data.depositAmount
+      ? data.servicePrice - data.depositAmount
+      : 0;
+
   async function handleDownloadPdf() {
     setIsGeneratingPdf(true);
     try {
@@ -144,30 +153,39 @@ export function BookingReceipt({ data }: BookingReceiptProps) {
 
   return (
     <div className="mx-auto w-full max-w-md">
-      <article className="overflow-hidden rounded-2xl bg-base-100 shadow-card">
+      <article
+        id="pp-receipt"
+        className="overflow-hidden rounded-2xl border border-base-content/10 bg-base-100 shadow-card"
+      >
         {/* Gradient / accent header */}
-        <header className="flex items-center gap-3 bg-gradient-to-r from-primary to-accent px-5 py-4 text-primary-content">
-          {data.logoUrl ? (
-            <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl bg-base-100/20">
-              <Image
-                src={data.logoUrl}
-                alt={`${data.businessName || 'Business'} logo`}
-                fill
-                className="object-cover"
-                sizes="44px"
-              />
-            </span>
-          ) : (
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-base-100/20">
-              <PawPrint aria-hidden="true" className="h-6 w-6" />
-            </span>
-          )}
-          <div className="min-w-0">
-            <h3 className="truncate text-base font-bold">
-              {data.businessName || 'Pet Grooming'}
-            </h3>
-            <p className="text-xs opacity-90">Booking Confirmation</p>
+        <header className="flex items-center justify-between gap-3 bg-gradient-to-r from-primary to-accent px-5 py-4 text-primary-content">
+          <div className="flex min-w-0 items-center gap-3">
+            {data.logoUrl ? (
+              <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl bg-base-100/20">
+                <Image
+                  src={data.logoUrl}
+                  alt={`${data.businessName || 'Business'} logo`}
+                  fill
+                  className="object-cover"
+                  sizes="44px"
+                />
+              </span>
+            ) : (
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-base-100/20">
+                <PawPrint aria-hidden="true" className="h-6 w-6" />
+              </span>
+            )}
+            <div className="min-w-0">
+              <h3 className="truncate text-base font-bold">
+                {data.businessName || 'Pet Grooming'}
+              </h3>
+              <p className="text-xs opacity-90">Pet Grooming</p>
+            </div>
           </div>
+          <span className="shrink-0 text-right text-[0.6rem] font-semibold uppercase leading-tight tracking-widest opacity-90">
+            Booking Receipt
+            <br />/ Invoice
+          </span>
         </header>
 
         {/* Prominent, boxed reference number */}
@@ -212,20 +230,33 @@ export function BookingReceipt({ data }: BookingReceiptProps) {
           />
         </div>
 
-        {/* Deposit paid + status */}
-        <div className="mx-5 mb-5 flex items-center justify-between gap-3 rounded-2xl border border-base-300 px-4 py-3">
-          <div>
-            <div className="text-lg font-bold text-base-content">
-              {formatCurrency(data.depositAmount, data.currency)}
+        {/* Totals: deposit paid + status (+ balance note when a price is known) */}
+        <div className="mx-5 mb-5 rounded-2xl border border-base-300 px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-[0.65rem] font-semibold uppercase tracking-widest text-base-content/50">
+                Paid today
+              </div>
+              <div className="text-lg font-bold text-base-content">
+                {formatCurrency(data.depositAmount, data.currency)}
+              </div>
+              <div className="text-xs text-base-content/60">
+                Deposit paid ({data.currency.toUpperCase()})
+              </div>
             </div>
-            <div className="text-xs text-base-content/60">
-              Deposit paid ({data.currency.toUpperCase()})
-            </div>
+            <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-3 py-1 text-xs font-semibold text-success">
+              <CheckCircle2 aria-hidden="true" className="h-3.5 w-3.5" />
+              Deposit received
+            </span>
           </div>
-          <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-3 py-1 text-xs font-semibold text-success">
-            <CheckCircle2 aria-hidden="true" className="h-3.5 w-3.5" />
-            Deposit received
-          </span>
+          {balanceDue > 0 && (
+            <p className="mt-2 border-t border-base-300 pt-2 text-right text-xs text-base-content/60">
+              Balance due on the day:{' '}
+              <span className="font-semibold text-base-content">
+                {formatCurrency(balanceDue, data.currency)}
+              </span>
+            </p>
+          )}
         </div>
 
         {data.paymentIntentId && (
@@ -239,8 +270,8 @@ export function BookingReceipt({ data }: BookingReceiptProps) {
         </p>
       </article>
 
-      {/* Actions */}
-      <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+      {/* Actions (hidden from the printout) */}
+      <div className="pp-no-print mt-4 flex flex-col gap-3 sm:flex-row">
         <button
           type="button"
           onClick={handleDownloadPdf}

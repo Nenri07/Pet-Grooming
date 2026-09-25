@@ -5,6 +5,7 @@ import { getBusinessSettings } from '@/actions/settings';
 import { BusinessSettings } from '@/components/portal/BusinessSettings';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { ThemePicker } from '@/components/portal/ThemePicker';
+import { LogoutButton } from '@/components/portal/LogoutButton';
 
 /**
  * Business settings page (server component shell).
@@ -57,6 +58,17 @@ export default async function SettingsPage() {
           </p>
         </CardHeader>
         <ThemePicker />
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Account</CardTitle>
+          <p className="text-sm text-base-content/60">
+            Sign out of PawPort on this device. You can log back in anytime with
+            your email and password.
+          </p>
+        </CardHeader>
+        <LogoutButton variant="full" />
       </Card>
     </div>
   );

@@ -71,26 +71,28 @@ function ThemeCard({
       aria-label={`Use the ${label} theme`}
       onClick={onSelect}
       className={[
-        'flex min-h-[44px] items-center justify-between gap-3 rounded-box border p-3 text-left transition-colors',
+        'flex min-h-[44px] min-w-0 items-center justify-between gap-3 rounded-box border p-3 text-left transition-colors',
         'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
         selected
           ? 'border-primary ring-2 ring-primary/40 bg-base-200'
           : 'border-base-content/10 bg-base-100 hover:bg-base-200',
       ].join(' ')}
     >
-      <span className="flex items-center gap-3">
+      <span className="flex min-w-0 items-center gap-3">
         <span
           aria-hidden="true"
-          className="flex overflow-hidden rounded-full border border-base-content/10"
+          className="flex h-6 shrink-0 overflow-hidden rounded-full ring-1 ring-inset ring-base-content/10"
         >
           <Swatch color={swatch.base} />
           <Swatch color={swatch.primary} />
           <Swatch color={swatch.secondary} />
           <Swatch color={swatch.accent} />
         </span>
-        <span className="flex flex-col">
-          <span className="text-sm font-medium text-base-content">{label}</span>
-          <span className="text-xs text-base-content/50">{id}</span>
+        <span className="flex min-w-0 flex-col">
+          <span className="truncate text-sm font-medium text-base-content">
+            {label}
+          </span>
+          <span className="truncate text-xs text-base-content/50">{id}</span>
         </span>
       </span>
       {selected && (
@@ -100,11 +102,16 @@ function ThemeCard({
   );
 }
 
-/** A single 22px color chip. Colors are inline (theme-independent previews). */
+/**
+ * A single square color chip inside the pill-shaped swatch row. Chips are
+ * equal-width, square, and butt against each other with no gaps; the parent
+ * clips them to a rounded pill so the edges stay crisp (no rounded-corner
+ * "bleed"). Colors are inline (theme-independent previews).
+ */
 function Swatch({ color }: { color: string }) {
   return (
     <span
-      className="block h-[22px] w-[22px]"
+      className="block h-6 w-6 shrink-0"
       style={{ backgroundColor: color }}
     />
   );

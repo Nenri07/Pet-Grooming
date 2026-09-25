@@ -93,12 +93,12 @@ export function ThemeMenu({ align = 'end' }: { align?: 'start' | 'end' }) {
               >
                 <span
                   aria-hidden="true"
-                  className="flex overflow-hidden rounded-full border border-base-content/10"
+                  className="flex h-4 shrink-0 overflow-hidden rounded-full ring-1 ring-inset ring-base-content/10"
                 >
-                  <span className="block h-4 w-4" style={{ backgroundColor: t.swatch.base }} />
-                  <span className="block h-4 w-4" style={{ backgroundColor: t.swatch.primary }} />
-                  <span className="block h-4 w-4" style={{ backgroundColor: t.swatch.secondary }} />
-                  <span className="block h-4 w-4" style={{ backgroundColor: t.swatch.accent }} />
+                  <span className="block h-4 w-4 shrink-0" style={{ backgroundColor: t.swatch.base }} />
+                  <span className="block h-4 w-4 shrink-0" style={{ backgroundColor: t.swatch.primary }} />
+                  <span className="block h-4 w-4 shrink-0" style={{ backgroundColor: t.swatch.secondary }} />
+                  <span className="block h-4 w-4 shrink-0" style={{ backgroundColor: t.swatch.accent }} />
                 </span>
                 <span className="flex-1 truncate">{t.label}</span>
                 {selected && <Check className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />}

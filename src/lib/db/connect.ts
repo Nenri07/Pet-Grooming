@@ -5,9 +5,15 @@
  * invocations, so we cache the connection promise on the Node.js `global`
  * object to avoid opening a new pool on every call.
  *
+ * We also import the central model registry (side-effect) so EVERY model
+ * schema is registered before any query runs. Without this, a cold serverless
+ * invocation that calls `.populate('serviceId')` on a page that never imported
+ * the Service model throws `MissingSchemaError` and crashes the render.
+ *
  * _Requirements: 22.1, 22.4_
  */
 import mongoose from 'mongoose';
+import '@/lib/db/models'; // registers all schemas (fixes populate MissingSchemaError)
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
