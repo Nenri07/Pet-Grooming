@@ -15,6 +15,11 @@ type Props = React.PropsWithChildren<{
   y?: number;
   /** Reveal only the first time it enters the viewport (default true). */
   once?: boolean;
+  /**
+   * Reveal duration in seconds (default 0.7 for marketing). The portal passes a
+   * shorter value to stay calm/fast (Master Spec §8: ≤300ms).
+   */
+  duration?: number;
 }>;
 
 /**
@@ -33,6 +38,7 @@ export function Reveal({
   delay = 0,
   y = 24,
   once = true,
+  duration = 0.7,
 }: Props) {
   const ref = React.useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { amount, once });
@@ -45,7 +51,7 @@ export function Reveal({
         show: {
           opacity: 1,
           y: 0,
-          transition: { duration: 0.7, ease: easeOutExpo },
+          transition: { duration, ease: easeOutExpo },
         },
       };
 
