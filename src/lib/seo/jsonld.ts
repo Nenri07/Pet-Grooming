@@ -11,6 +11,7 @@
  */
 
 import { landing, type FaqItem } from '@/content/landing';
+import { PLANS } from '@/lib/plans';
 
 /** Absolute site base URL, from env with a sane localhost fallback. */
 export function siteUrl(): string {
@@ -101,6 +102,66 @@ export function breadcrumbJsonLd(
       name: c.name,
       item: absoluteUrl(c.path),
     })),
+  } as const;
+}
+
+/**
+ * Product schema for the `/for-groomers` bundle ("branded website + booking
+ * system"). Uses the REAL Solo/Pro monthly prices from the plan catalog
+ * (`@/lib/plans`) as an AggregateOffer price range. No invented ratings or
+ * review counts — only prices we actually charge.
+ */
+export function bundleProductJsonLd() {
+  const url = absoluteUrl('/for-groomers');
+  const solo = PLANS.solo.priceMonth;
+  const pro = PLANS.pro.priceMonth;
+  const low = Math.min(solo, pro);
+  const high = Math.max(solo, pro);
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: 'PawPort — pet grooming website + booking system',
+    url,
+    category: 'BusinessApplication',
+    description:
+      'A bundle for solo mobile pet groomers: your own branded website plus the booking, deposits, routing, two-way SMS and digital pet records behind it — one subscription.',
+    brand: { '@type': 'Brand', name: 'PawPort' },
+    offers: {
+      '@type': 'AggregateOffer',
+      priceCurrency: 'USD',
+      lowPrice: low,
+      highPrice: high,
+      offerCount: 2,
+      offers: [
+        {
+          '@type': 'Offer',
+          name: 'Solo',
+          price: solo,
+          priceCurrency: 'USD',
+          url: absoluteUrl('/register'),
+          priceSpecification: {
+            '@type': 'UnitPriceSpecification',
+            price: solo,
+            priceCurrency: 'USD',
+            unitText: 'MONTH',
+          },
+        },
+        {
+          '@type': 'Offer',
+          name: 'Pro',
+          price: pro,
+          priceCurrency: 'USD',
+          url: absoluteUrl('/register'),
+          priceSpecification: {
+            '@type': 'UnitPriceSpecification',
+            price: pro,
+            priceCurrency: 'USD',
+            unitText: 'MONTH',
+          },
+        },
+      ],
+    },
   } as const;
 }
 

@@ -47,6 +47,12 @@ export function MarketingHeader() {
         </Link>
 
         <nav className="flex items-center gap-4 md:gap-6">
+          <Link
+            href="/for-groomers"
+            className="hidden text-base-content hover:text-primary md:inline"
+          >
+            For groomers
+          </Link>
           <Link href="#features" className="hidden text-base-content hover:text-primary md:inline">
             Features
           </Link>
