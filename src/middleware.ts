@@ -1,19 +1,21 @@
 /**
  * PawPort route-protection middleware.
  *
- * Runs on every request that isn't an API route or a Next.js internal asset
- * (see `config.matcher` below) and enforces two rules using the NextAuth JWT:
+ * Runs on every page request (see `config.matcher`) and enforces:
  *
  *  1. Unauthenticated users are redirected away from the private Groomer_Portal
  *     routes to `/login` (Requirement 1.5).
- *  2. Authenticated groomers whose onboarding is still incomplete are redirected
- *     to `/onboarding`, except when they're already on `/onboarding`.
+ *  2. Authenticated users who hit an auth page (`/login`, `/register`) are
+ *     redirected to their proper destination (dashboard, or the onboarding
+ *     wizard if incomplete) — you can't sit on the login page while signed in.
+ *  3. Authenticated groomers whose onboarding is incomplete are redirected to
+ *     `/onboarding`, except when already there or on an auth page.
  *
- * Public routes (marketing home, the public booking flow, shared pet cards, and
- * the auth pages) are always allowed through without a session. The
- * `onboardingComplete` / `groomerSlug` flags are read straight off the token —
- * they are stamped there by the jwt callback in `src/lib/auth/config.ts`, so no
- * database call happens here.
+ * Public routes (marketing home, public booking, shared pet cards, demo pages,
+ * claim/rebook/track token pages, credits) are allowed through without a
+ * session. The `onboardingComplete` / `groomerSlug` flags are read straight off
+ * the JWT (stamped by the jwt callback in `src/lib/auth/config.ts`), so no DB
+ * call happens here.
  *
  * _Requirements: 1.5_
  */
@@ -31,13 +33,26 @@ const PORTAL_ROUTES = [
   '/appointments',
   '/services',
   '/availability',
-  '/settings',
   '/analytics',
+  '/settings',
+  '/calendar',
+  '/inbox',
+  '/billing',
 ] as const;
+
+/** The auth pages a signed-in user should be redirected AWAY from. */
+const AUTH_ROUTES = ['/login', '/register'] as const;
 
 /** True when `pathname` is (or is nested under) one of the portal routes. */
 function isPortalRoute(pathname: string): boolean {
   return PORTAL_ROUTES.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  );
+}
+
+/** True when `pathname` is one of the auth pages. */
+function isAuthRoute(pathname: string): boolean {
+  return AUTH_ROUTES.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)
   );
 }
@@ -47,16 +62,20 @@ export default withAuth(
     const { pathname } = req.nextUrl;
     const token = req.nextauth.token;
 
-    // Redirect unauthenticated users away from portal routes to /login.
-    // (The `authorized` callback below also blocks these, but this keeps the
-    // redirect target explicit for portal paths.)
+    // Unauthenticated on a portal route -> login (explicit redirect target).
     if (!token && isPortalRoute(pathname)) {
-      const loginUrl = new URL('/login', req.url);
-      return NextResponse.redirect(loginUrl);
+      return NextResponse.redirect(new URL('/login', req.url));
     }
 
-    // Redirect authenticated groomers with incomplete onboarding to the wizard,
-    // unless they're already there.
+    // Signed-in users must NOT see the login/register pages again. Send them
+    // to onboarding when incomplete, otherwise the dashboard.
+    if (token && isAuthRoute(pathname)) {
+      const dest = token.onboardingComplete ? '/dashboard' : '/onboarding';
+      return NextResponse.redirect(new URL(dest, req.url));
+    }
+
+    // Signed-in groomers with incomplete onboarding -> the wizard, unless they
+    // are already there (auth pages were handled above).
     if (
       token &&
       !token.onboardingComplete &&
@@ -70,39 +89,24 @@ export default withAuth(
   {
     callbacks: {
       /**
-       * Decides whether the request is allowed to reach the middleware function
-       * above. Returning `true` lets it through (public routes, or an
-       * authenticated portal request); returning `false` triggers the NextAuth
-       * redirect to the configured sign-in page (`/login`).
+       * Gate for whether the request reaches the middleware above. `true` lets
+       * it through; `false` triggers NextAuth's redirect to `/login`.
        */
       authorized: ({ token, req }) => {
         const { pathname } = req.nextUrl;
 
-        // Public, always-allowed routes.
-        if (pathname === '/') return true;
-        if (
-          pathname.startsWith('/book/') ||
-          pathname.startsWith('/pet-card/')
-        ) {
-          return true;
-        }
-        if (
-          pathname === '/login' ||
-          pathname === '/register' ||
-          pathname.startsWith('/login/') ||
-          pathname.startsWith('/register/')
-        ) {
-          return true;
-        }
+        // Auth pages are reachable without a session (the middleware function
+        // above redirects signed-in users away from them).
+        if (isAuthRoute(pathname)) return true;
 
-        // The onboarding wizard is reachable by any signed-in groomer.
+        // The onboarding wizard requires a signed-in groomer.
         if (pathname.startsWith('/onboarding')) return !!token;
 
         // Portal routes require an authenticated session.
         if (isPortalRoute(pathname)) return !!token;
 
-        // Anything else that reached the matcher (e.g. other public pages) is
-        // allowed without auth.
+        // Everything else that reaches the matcher is public (marketing home,
+        // /book, /pet-card, /demo, /claim, /rebook, /t, /credits, etc.).
         return true;
       },
     },
