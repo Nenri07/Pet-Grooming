@@ -35,10 +35,11 @@ import {
 } from '@/lib/plans';
 import type { ISubscription, SubscriptionStatus } from '@/lib/db/models/subscription';
 
-/** The 7-day grace window for `past_due` subscriptions (Master Spec §13.2). */
-export const GRACE_PERIOD_DAYS = 7;
-/** Default trial length in days (Master Spec §13.1, §13.2). */
-export const TRIAL_DAYS = PLANS.trial.days;
+// Re-exported from the Edge-safe constants module so middleware → access.ts can
+// import these without pulling Mongoose into the Edge bundle, while every
+// existing importer of these from entitlements.ts keeps working unchanged.
+export { GRACE_PERIOD_DAYS, TRIAL_DAYS } from './constants';
+import { GRACE_PERIOD_DAYS, TRIAL_DAYS } from './constants';
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /**

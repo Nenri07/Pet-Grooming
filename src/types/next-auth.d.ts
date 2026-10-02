@@ -8,6 +8,7 @@
  * _Requirements: 1.1, 1.2, 1.6_
  */
 import type { DefaultSession } from 'next-auth';
+import type { AccessClaim } from '@/lib/billing/access';
 
 declare module 'next-auth' {
   /** The session object returned to the client and server. */
@@ -36,5 +37,24 @@ declare module 'next-auth/jwt' {
     onboardingComplete?: boolean;
     /** The groomer's public booking slug, or null if not yet set. */
     groomerSlug?: string | null;
+    /**
+     * Compact billing access claim (status + trial deadline + pastDueSince as
+     * epoch ms), stamped by the jwt callback so the Edge middleware can decide
+     * the hard lockout via `accessFromClaim` without a per-request DB/Stripe
+     * call. Absent when billing state has not yet been stamped (fail-open: the
+     * middleware treats a missing claim as "allow").
+     *
+     * _Requirements: 3.1, 3.4_
+     */
+    access?: AccessClaim;
+    /**
+     * Epoch-ms timestamp of when {@link access} was last stamped by the jwt
+     * callback. Drives the short time-based TTL (~5 min) so the access claim is
+     * re-derived from the Subscription row periodically without a DB read on
+     * every token refresh. Absent until the first stamp.
+     *
+     * _Requirements: 3.1, 3.4_
+     */
+    accessStampedAt?: number;
   }
 }

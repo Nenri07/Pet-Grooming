@@ -24,6 +24,9 @@ import bcrypt from 'bcryptjs';
 import { connectDB } from '@/lib/db/connect';
 import { User } from '@/lib/db/models/user';
 import { GroomerProfile } from '@/lib/db/models/groomer-profile';
+import { toAccessClaim, type AccessState } from '@/lib/billing/access';
+import { defaultTrialSubscription } from '@/lib/billing/entitlements';
+import type { SubscriptionStatus } from '@/lib/db/models/subscription';
 
 /** Number of consecutive failed logins that trips the account lock. */
 const MAX_FAILED_ATTEMPTS = 5;
@@ -31,6 +34,38 @@ const MAX_FAILED_ATTEMPTS = 5;
 const LOCK_DURATION_MS = 30 * 60 * 1000;
 /** Session lifetime: 7 days, expressed in seconds. */
 const SESSION_MAX_AGE = 7 * 24 * 60 * 60;
+/**
+ * How long a stamped billing access claim stays "fresh" before the jwt callback
+ * re-derives it from the Subscription row (5 minutes, in ms). This bounds how
+ * long a Stripe-driven STATUS change (subscribe / cancel / past_due) can take to
+ * propagate into the lockout decision without an explicit `update()`. The trial
+ * EXPIRY edge needs no refresh at all — the claim carries the absolute deadline
+ * instant and the middleware evaluates `now >= deadline` against the live clock
+ * every request, so a trial simply running out is always enforced on time.
+ */
+const ACCESS_CLAIM_TTL_MS = 5 * 60 * 1000;
+
+/**
+ * Map a persisted {@link SubscriptionStatus} to the pure {@link AccessState} the
+ * lockout decision reasons about. `expired` collapses to `none` — both are
+ * non-usable (lockout-equivalent) states, and `none` is the canonical
+ * "no usable subscription" state in the access core.
+ */
+function toAccessState(status: SubscriptionStatus): AccessState {
+  switch (status) {
+    case 'trialing':
+      return 'trialing';
+    case 'active':
+      return 'active';
+    case 'past_due':
+      return 'past_due';
+    case 'canceled':
+      return 'canceled';
+    case 'expired':
+    default:
+      return 'none';
+  }
+}
 
 /**
  * True when a Google OAuth credential looks real (present and not one of the
@@ -264,6 +299,82 @@ export const authOptions: NextAuthOptions = {
           console.error('Onboarding-status refresh failed:', error);
           token.onboardingComplete = token.onboardingComplete ?? false;
           token.groomerSlug = token.groomerSlug ?? null;
+        }
+      }
+
+      // Stamp the compact billing access claim (status + trial deadline +
+      // pastDueSince as epoch ms) so the Edge middleware can decide the hard
+      // lockout via `accessFromClaim` WITHOUT a per-request DB/Stripe call.
+      //
+      // Freshness: re-stamp at sign-in (`!!user`), on an explicit `update()`
+      // (`trigger === 'update'`, which we fire right after checkout / a
+      // webhook-driven change), OR when the short TTL has elapsed since the last
+      // stamp. We DON'T re-read the Subscription on every token refresh — the
+      // claim carries the ABSOLUTE trial deadline instant, so a trial crossing
+      // noon is enforced by the middleware's live-clock comparison with zero
+      // re-stamps; the TTL only exists so a STATUS change (subscribe / cancel /
+      // past_due) propagates within ~5 min even without an explicit update.
+      const stampedAt = typeof token.accessStampedAt === 'number' ? token.accessStampedAt : 0;
+      const needsAccessRefresh =
+        !!user ||
+        trigger === 'update' ||
+        Date.now() - stampedAt >= ACCESS_CLAIM_TTL_MS;
+
+      if (token.userId && needsAccessRefresh) {
+        try {
+          const { Subscription } = await import('@/lib/db/models/subscription');
+          await connectDB();
+          const sub = await Subscription.findOne({ groomerId: token.userId })
+            .select('status trialDeadline trialEndsAt pastDueSince')
+            .lean<
+              Pick<
+                import('@/lib/db/models/subscription').ISubscription,
+                'status' | 'trialDeadline' | 'trialEndsAt' | 'pastDueSince'
+              > | null
+            >();
+
+          if (!sub) {
+            // No Subscription row → treat as a FRESH 14-day trial (the same
+            // "no row = default trial" semantics the entitlements layer uses).
+            // We MUST supply a non-null deadline here: the pure access core
+            // locks out a `trialing` row with a null deadline, so stamping
+            // `trialing` + null would wrongly lock out a brand-new groomer.
+            // Derive the deadline from the entitlements default so a new
+            // groomer is NOT locked out (fail-open for the no-row case).
+            const now = new Date();
+            const fresh = defaultTrialSubscription(now);
+            const deadline =
+              fresh.trialEndsAt instanceof Date
+                ? fresh.trialEndsAt
+                : fresh.trialEndsAt != null
+                  ? new Date(fresh.trialEndsAt)
+                  : null;
+            token.access = toAccessClaim({
+              status: 'trialing',
+              trialDeadline: deadline,
+              pastDueSince: null,
+            });
+          } else {
+            // Prefer the backfilled `trialDeadline`; fall back to the legacy
+            // `trialEndsAt` when it hasn't been backfilled yet (the fail-open
+            // path per task 5.3) so a legacy trialing row is still evaluated
+            // against a real deadline instead of locking out on a null one.
+            const trialDeadline =
+              sub.trialDeadline ?? sub.trialEndsAt ?? null;
+            token.access = toAccessClaim({
+              status: toAccessState(sub.status),
+              trialDeadline: trialDeadline ?? null,
+              pastDueSince: sub.pastDueSince ?? null,
+            });
+          }
+          token.accessStampedAt = Date.now();
+        } catch (error) {
+          // FAIL-OPEN: a missing/unresolvable billing state must NEVER lock out
+          // a groomer. On any error we SKIP stamping and leave the prior claim
+          // untouched — if none exists, the middleware treats an absent claim
+          // as "allow". We also leave `accessStampedAt` as-is so the next
+          // refresh window retries the read.
+          console.error('Access-claim stamping failed; leaving prior claim:', error);
         }
       }
 

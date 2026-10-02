@@ -42,6 +42,20 @@ export interface ISubscription {
   status: SubscriptionStatus;
   /** When the current trial ends (only meaningful while `trialing`). */
   trialEndsAt?: Date | null;
+  /** Trial start timestamp — anchor for the computed deadline (R1.1). */
+  trialStartedAt?: Date | null;
+  /**
+   * Stored computed trial deadline = noon in the groomer's tz on day 14
+   * (R1.2, R3.1). Stored (not only computed) so the middleware/access-guard
+   * can read it without recomputing or re-fetching the timezone per check.
+   * Written to the same instant as `trialEndsAt` so the two never drift.
+   */
+  trialDeadline?: Date | null;
+  /**
+   * When the subscription first entered `past_due` — the grace-window anchor,
+   * independent of `currentPeriodEnd` (R5.4).
+   */
+  pastDueSince?: Date | null;
   /** End of the current paid period; also the grace-window anchor for past_due. */
   currentPeriodEnd?: Date | null;
   /** Stripe Customer id (cus_...). */
@@ -83,6 +97,9 @@ const subscriptionSchema = new Schema<ISubscription>(
       default: 'trialing',
     },
     trialEndsAt: { type: Date, default: null },
+    trialStartedAt: { type: Date, default: null },
+    trialDeadline: { type: Date, default: null },
+    pastDueSince: { type: Date, default: null },
     currentPeriodEnd: { type: Date, default: null },
     stripeCustomerId: { type: String, default: null },
     stripeSubscriptionId: { type: String, default: null },

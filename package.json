@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "backfill:trial-deadline": "tsx scripts/backfill-trial-deadline.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

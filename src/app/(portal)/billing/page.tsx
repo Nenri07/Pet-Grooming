@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth/config';
@@ -6,6 +7,7 @@ import { isBillingConfigured } from '@/lib/billing/provider';
 import { getUsage } from '@/lib/sms/quota';
 import { PLANS, SMS_TOPUP, FOUNDING } from '@/lib/plans';
 import { BillingView } from '@/components/portal/BillingView';
+import { BillingSessionRefresh } from '@/components/portal/BillingSessionRefresh';
 
 /**
  * Billing page (server component) — Master Spec §13.2, §13.4.
@@ -30,14 +32,30 @@ export default async function BillingPage() {
   // Best-effort usage read (0 when Redis is unconfigured).
   const smsUsed = await getUsage(groomerId);
 
+  // Hard-lockout state (R3.2, R4.1): the groomer landed on /billing because the
+  // middleware revoked portal access — trial ended or subscription inactive.
+  // Grace-period (past_due) is NOT a lockout: `active` stays true there.
+  const locked =
+    !entitlements.active &&
+    (entitlements.status === 'expired' || entitlements.status === 'canceled');
+
   return (
-    <BillingView
-      billingConfigured={isBillingConfigured()}
+    <>
+      {/* On return from Checkout (?checkout=success) / trial start
+          (?trial=started), force a NextAuth update() so the access claim
+          re-stamps and the hard lockout lifts promptly (task 4.6 glue).
+          useSearchParams requires a Suspense boundary in the app router. */}
+      <Suspense fallback={null}>
+        <BillingSessionRefresh />
+      </Suspense>
+      <BillingView
+        billingConfigured={isBillingConfigured()}
       plan={entitlements.plan}
       tier={entitlements.tier}
       status={entitlements.status}
       active={entitlements.active}
       inGracePeriod={entitlements.inGracePeriod}
+      locked={locked}
       foundingMember={entitlements.foundingMember}
       trialEndsAt={entitlements.trialEndsAt}
       currentPeriodEnd={entitlements.currentPeriodEnd}
@@ -56,6 +74,7 @@ export default async function BillingPage() {
         proMonth: FOUNDING.proMonth,
       }}
       smsTopup={{ messages: SMS_TOPUP.messages, price: SMS_TOPUP.price }}
-    />
+      />
+    </>
   );
 }

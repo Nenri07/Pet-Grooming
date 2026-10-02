@@ -21,6 +21,7 @@
  */
 import { withAuth } from 'next-auth/middleware';
 import { NextResponse } from 'next/server';
+import { accessFromClaim, type AccessDecision } from '@/lib/billing/access';
 
 /**
  * Private Groomer_Portal route prefixes. A request whose path starts with any
@@ -74,13 +75,25 @@ function isOnboardingRoute(pathname: string): boolean {
  * request can never be redirected to itself (e.g. /onboarding -> /onboarding or
  * /login -> /login). `onboardingComplete` is treated as false when undefined,
  * so a not-yet-loaded flag sends the user to onboarding rather than looping.
+ *
+ * The optional `access` decision adds the Billing hard-lockout rule (Requirement
+ * 3), applied LAST so the existing auth/onboarding behaviour is untouched: an
+ * authenticated, onboarded groomer whose access is a lockout may only reach the
+ * Upgrade_Page (`/billing` and nested) and the auth routes; any other portal
+ * route redirects to `/billing`. When `access` is omitted (e.g. the billing
+ * claim has not been stamped yet) the lockout rule is skipped entirely, so the
+ * middleware fails OPEN and existing callers stay backward compatible.
+ *
+ * _Requirements: 3.1, 3.2, 3.3, 3.5, 3.6_
  */
 export function resolveRedirect(params: {
   pathname: string;
   isAuthenticated: boolean;
   onboardingComplete: boolean | undefined;
+  /** Billing access decision derived from the JWT claim; omit to skip lockout. */
+  access?: AccessDecision;
 }): string | null {
-  const { pathname, isAuthenticated } = params;
+  const { pathname, isAuthenticated, access } = params;
   // Undefined onboarding status is treated as incomplete (defensive default).
   const onboardingComplete = params.onboardingComplete === true;
 
@@ -104,6 +117,27 @@ export function resolveRedirect(params: {
     return '/onboarding';
   }
 
+  // Hard lockout (R3): an authenticated, onboarded groomer whose access has
+  // been resolved to a lockout may only reach the Upgrade_Page (/billing) and
+  // the auth routes; everything else in the portal redirects to /billing. Runs
+  // LAST so the auth/onboarding rules above are unchanged, and reuses the
+  // no-self-redirect guard verbatim (locked on /billing returns null).
+  if (isAuthenticated && onboardingComplete && access && !access.allow) {
+    // Auth routes (/login, /register) pass through — the earlier auth-route
+    // rule already handled a signed-in user before reaching here; this is only
+    // a defensive no-op so the lockout never bounces a sign-out/switch-account.
+    if (isAuthRoute(pathname)) return null;
+    // The Upgrade_Page itself (and anything nested under it) must stay
+    // reachable while locked so the groomer can subscribe (R3.2).
+    if (pathname === '/billing' || pathname.startsWith('/billing/')) return null;
+    // Any other portal route -> redirect to /billing (R3.1, R3.3), preserving
+    // the no-self-redirect invariant.
+    if (isPortalRoute(pathname)) return pathname === '/billing' ? null : '/billing';
+    // Public routes (/book, marketing, /pet-card, /t, /claim, /rebook,
+    // /credits, demo) are not portal routes, so they fall through and stay up
+    // for a locked groomer's clients (R3.6).
+  }
+
   return null;
 }
 
@@ -112,10 +146,20 @@ export default withAuth(
     const { pathname } = req.nextUrl;
     const token = req.nextauth.token;
 
+    // Derive the billing access decision from the compact JWT claim (no DB /
+    // Stripe here). When the claim is absent — e.g. not yet stamped (task 3.3
+    // adds stamping) — leave `access` undefined so the lockout rule is skipped
+    // and the middleware fails OPEN rather than locking a groomer out on
+    // missing billing state.
+    const access = token?.access
+      ? accessFromClaim(token.access, new Date())
+      : undefined;
+
     const dest = resolveRedirect({
       pathname,
       isAuthenticated: !!token,
       onboardingComplete: token?.onboardingComplete,
+      access,
     });
 
     if (dest) {

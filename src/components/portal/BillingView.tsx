@@ -8,6 +8,7 @@ import {
   MessageSquare,
   Sparkles,
   ShieldAlert,
+  Lock,
   Info,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
@@ -45,6 +46,13 @@ export interface BillingViewProps {
   status: string;
   active: boolean;
   inGracePeriod: boolean;
+  /**
+   * Hard-lockout flag: the groomer has been redirected here because their
+   * access is revoked (trial ended or subscription inactive). Computed by the
+   * page as `!active && (status === 'expired' || status === 'canceled')`.
+   * Distinct from `inGracePeriod` (past_due in grace — NOT a lockout).
+   */
+  locked?: boolean;
   foundingMember: boolean;
   /** ISO or null. */
   trialEndsAt: string | null;
@@ -138,6 +146,7 @@ export function BillingView(props: BillingViewProps) {
     status,
     active,
     inGracePeriod,
+    locked,
     foundingMember,
     trialEndsAt,
     currentPeriodEnd,
@@ -151,6 +160,12 @@ export function BillingView(props: BillingViewProps) {
 
   const [interval, setInterval] = React.useState<BillingInterval>('month');
   const { pending, error, run } = useBillingAction();
+
+  // Hard-lockout state. Trust the page-computed prop when provided; otherwise
+  // derive it the same way (fail-safe default so an omitted prop never
+  // wrongly locks a usable account).
+  const isLocked =
+    locked ?? (!active && (status === 'expired' || status === 'canceled'));
 
   const trialDays = daysUntil(trialEndsAt);
   const nextInvoice = formatDate(currentPeriodEnd);
@@ -175,6 +190,32 @@ export function BillingView(props: BillingViewProps) {
           Manage your subscription, invoices and SMS credits.
         </p>
       </header>
+
+      {/* Hard-lockout banner (R3.2, R4.1) — shown PROMINENTLY at the top when
+          the groomer has been redirected here because access is revoked (trial
+          ended or subscription inactive). Error-toned to distinguish it from
+          the softer grace-period warning below (which is NOT a lockout). The
+          subscribe CTAs further down serve as the recovery action. */}
+      {isLocked && (
+        <div
+          role="alert"
+          className="mb-4 flex items-start gap-3 rounded-box border-2 border-error/40 bg-error/10 p-4"
+        >
+          <Lock className="mt-0.5 h-6 w-6 shrink-0 text-error" aria-hidden="true" />
+          <div>
+            <p className="font-display text-lg font-semibold text-base-content">
+              {status === 'canceled'
+                ? 'Your subscription is inactive'
+                : 'Your free trial has ended'}
+            </p>
+            <p className="mt-1 text-sm text-base-content/80">
+              Subscribe below to restore access to your dashboard, clients and
+              bookings. Your data is safe — nothing has been deleted, and you can
+              pick up right where you left off.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Not-configured banner (§13.2 degradation) */}
       {!billingConfigured && (

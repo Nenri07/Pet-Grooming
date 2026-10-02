@@ -1,0 +1,483 @@
+{
+  "pbtResults": {
+    "2.2 Write property tests for trial math (PURE + TEST)": {
+      "status": "passed",
+      "lastRunTimestamp": 1790946135490
+    },
+    "2.4 Write property tests for `evaluateAccess` (PURE + TEST)": {
+      "status": "passed",
+      "lastRunTimestamp": 1790946139165
+    }
+  },
+  "executionHistory": {
+    "1.1 Add new billing env vars to the env example and placeholder-aware config": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945798835
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945817631
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945969924
+      }
+    ],
+    "1.2 Extend the `Subscription` model with trial/grace fields": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945798997
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945820134
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945971398
+      }
+    ],
+    "2.1 Implement trial math pure functions": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945799075
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945820475
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945972735
+      }
+    ],
+    "2.3 Implement the access/lockout decision pure functions": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945799232
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945821330
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945973687
+      }
+    ],
+    "3.1 Extend `resolveRedirect` with the lockout rule": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945799314
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945990025
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790946159619
+      }
+    ],
+    "3.3 Stamp the compact access claim in the JWT callback": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945799384
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790946372390
+      }
+    ],
+    "3.4 Add the shared server access guard for /api and server actions": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945799476
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790946373562
+      }
+    ],
+    "4.1 Add the `mapStripeSubStatus` pure helper (PURE)": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945799569
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945991013
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790946161019
+      }
+    ],
+    "4.3 Implement local trial provisioning action": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945799648
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790946374787
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790946704964
+      }
+    ],
+    "4.4 Add subscription lifecycle event routing to the webhook": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945799763
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790946706036
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790946955787
+      }
+    ],
+    "4.6 Verify subscription checkout + customer portal wiring (reuse existing)": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945799895
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790946958250
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790947256957
+      }
+    ],
+    "5.1 Build the trial countdown component": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945799969
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790947258088
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790947556171
+      }
+    ],
+    "5.2 Build the lockout/upgrade state on `/billing` and not-configured billing state": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945800065
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790947259525
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790947557557
+      }
+    ],
+    "5.3 Backfill/migration for existing subscriptions without `trialDeadline`": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945800210
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790947260635
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790947559185
+      }
+    ],
+    "6. Phase 1 verification gate": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945800307
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790947560139
+      }
+    ],
+    "7.1 Add Phase 2 env vars to the env example and placeholder-aware config": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945800395
+      }
+    ],
+    "7.2 Implement email normalization + disposable-domain pure functions": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945800516
+      }
+    ],
+    "7.4 Implement phone canonicalization pure function": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945800676
+      }
+    ],
+    "7.6 Implement identity-binding + velocity pure decisions": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945800768
+      }
+    ],
+    "8.1 Create the `IdentityBinding` model": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945800837
+      }
+    ],
+    "8.2 Add Redis keys/TTLs for OTP, velocity, and email-verify tokens": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945800925
+      }
+    ],
+    "8.3 Implement the `VerificationProvider` seam": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945801026
+      }
+    ],
+    "9.1 Implement verification server actions": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945801100
+      }
+    ],
+    "9.2 Wire the ordered abuse-gate pipeline into `startTrialGated`": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945801261
+      }
+    ],
+    "9.3 Add the client device-fingerprint lib": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945801358
+      }
+    ],
+    "10.1 Build email-verify + phone-OTP UI": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945801431
+      }
+    ],
+    "11. Phase 2 verification gate": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945801508
+      }
+    ],
+    "12.1 Implement the application-fee pure function": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945801583
+      }
+    ],
+    "12.3 Add Connect status + booking-permission pure helpers": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945801738
+      }
+    ],
+    "13.1 Add `connectStatus` to the GroomerProfile model": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945801817
+      }
+    ],
+    "13.2 Extend deposit PaymentIntent creation to a direct charge": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945801885
+      }
+    ],
+    "13.3 Route Connect (account) events in the webhook without breaking deposits": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945801977
+      }
+    ],
+    "13.4 Confirm Connect onboarding account-link action (reuse existing)": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945802060
+      }
+    ],
+    "14.1 Build the Connect status card in Settings": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945802151
+      }
+    ],
+    "14.2 Add the \"online payments not set up yet\" state to the public booking page": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945802235
+      }
+    ],
+    "14.3 Backfill `connectStatus` for existing profiles": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945802315
+      }
+    ],
+    "15. Phase 3 verification gate": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945802387
+      }
+    ],
+    "1. Phase 1 foundation — config + Subscription model extension": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945971528
+      }
+    ],
+    "2. Phase 1 pure core — trial math + access decision (PURE + property tests)": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790945973762
+      }
+    ],
+    "2.2 Write property tests for trial math (PURE + TEST)": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790946162503
+      }
+    ],
+    "2.4 Write property tests for `evaluateAccess` (PURE + TEST)": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790946163653
+      }
+    ],
+    "3. Phase 1 middleware + JWT lockout integration": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790946373657
+      }
+    ],
+    "3.2 Write unit/property tests for the extended `resolveRedirect` (PURE + TEST)": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790946567996
+      }
+    ],
+    "4.2 Write property test for `mapStripeSubStatus` (PURE + TEST)": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790946569059
+      }
+    ],
+    "4.5 Write webhook integration + confluence tests (TEST)": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790946956937
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790947255291
+      }
+    ],
+    "4. Phase 1 trial provisioning + subscription webhooks": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790947257114
+      }
+    ],
+    "5. Phase 1 UI — trial countdown + lockout/upgrade state": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790947559255
+      }
+    ]
+  }
+}

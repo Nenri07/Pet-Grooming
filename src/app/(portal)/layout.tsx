@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { PortalNav } from '@/components/portal/PortalNav';
+import { TrialCountdown } from '@/components/portal/TrialCountdown';
 
 /**
  * (portal) route group layout.
@@ -27,6 +28,12 @@ export default function PortalLayout({
     <div className="flex min-h-screen flex-col bg-base-200 md:flex-row">
       <PortalNav />
       <main className="min-w-0 flex-1 p-4 pb-[calc(72px+env(safe-area-inset-bottom))] sm:p-6 md:pb-6 md:pt-16 lg:p-8 lg:pt-16">
+        {/* Slim trial countdown above all portal content (R2). Suspended so its
+            server-side data fetch never blocks the shell; it self-hides when
+            the groomer is not trialing. */}
+        <React.Suspense fallback={null}>
+          <TrialCountdown className="mb-4" />
+        </React.Suspense>
         {children}
       </main>
     </div>

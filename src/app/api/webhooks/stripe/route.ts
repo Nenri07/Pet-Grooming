@@ -6,6 +6,13 @@
  * fulfil the booking on `payment_intent.succeeded` and best-effort mark a
  * failed transaction on `payment_intent.payment_failed`.
  *
+ * Beyond deposit fulfilment, the router also handles the PLATFORM subscription
+ * lifecycle (Stripe Billing): `customer.subscription.created/updated/deleted`,
+ * `invoice.paid`, `invoice.payment_failed`, and `customer.subscription.trial_will_end`
+ * drive the local `Subscription` row's status / period / grace-anchor and
+ * invalidate the entitlements cache. The DB-writing logic for these lives in
+ * `./helpers` (the deposit path here is deliberately left unchanged).
+ *
  * Fulfilment is the authoritative point at which persistent booking records
  * are created (Requirement 7.3): the Client, Pet, Appointment, and Transaction
  * are written here so a booking only materialises once money has actually
@@ -28,6 +35,12 @@ import { connectDB } from '@/lib/db/connect';
 import { Transaction } from '@/lib/db/models/transaction';
 import { idempotencyOnce, isRedisConfigured } from '@/lib/redis';
 import { fulfilBookingByPaymentIntentId } from '@/lib/booking/fulfil';
+import {
+  handleSubscriptionChange,
+  handleInvoicePaid,
+  handleInvoicePaymentFailed,
+  handleTrialWillEnd,
+} from './helpers';
 
 // Stripe SDK + Mongoose require the Node.js runtime; the Edge runtime lacks the
 // crypto and networking primitives they depend on.
@@ -117,6 +130,27 @@ export async function POST(req: Request): Promise<Response> {
       case 'payment_intent.payment_failed':
         await markPaymentFailed(event.data.object as Stripe.PaymentIntent);
         break;
+
+      // --- Platform subscription lifecycle (Stripe Flows (c)) -------------
+      // These keep the local Subscription row in sync with Stripe Billing and
+      // are independent of the deposit (payment_intent.*) path above. Every
+      // handler invalidates the entitlements cache so lockout/feature-gating
+      // reflect the new state on the next read.
+      case 'customer.subscription.created':
+      case 'customer.subscription.updated':
+      case 'customer.subscription.deleted':
+        await handleSubscriptionChange(event.data.object as Stripe.Subscription);
+        break;
+      case 'customer.subscription.trial_will_end':
+        await handleTrialWillEnd(event.data.object as Stripe.Subscription);
+        break;
+      case 'invoice.paid':
+        await handleInvoicePaid(event.data.object as Stripe.Invoice);
+        break;
+      case 'invoice.payment_failed':
+        await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
+        break;
+
       default:
         // Unhandled event types are acknowledged so Stripe stops retrying.
         break;
