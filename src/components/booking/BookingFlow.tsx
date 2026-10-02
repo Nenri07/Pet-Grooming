@@ -213,6 +213,45 @@ function PaymentsNotSetUp({
 }
 
 /**
+ * NoDepositConfirm — the Step 5 screen shown when the booking requires NO
+ * deposit (deposit amount is 0, R17.2). There is nothing to charge, so instead
+ * of mounting Stripe (which would otherwise show a 'payments unavailable' dead
+ * end when no key is configured) we show a simple confirm action that finalises
+ * the booking with a zero-amount, no-PaymentIntent result — advancing straight
+ * to the confirmation/receipt step.
+ */
+function NoDepositConfirm({
+  onConfirm,
+  onBack,
+}: {
+  onConfirm: () => void;
+  onBack: () => void;
+}) {
+  return (
+    <div className="flex flex-col gap-4">
+      <div>
+        <h2 className="text-xl font-semibold text-base-content">Confirm your booking</h2>
+        <p className="text-sm text-base-content/60">Step 5 of 5 — No deposit required</p>
+      </div>
+      <div className="alert rounded-2xl" role="status">
+        <span>
+          No deposit is required for this booking. Tap confirm and you&apos;re all
+          set — we&apos;ll send the details to the groomer.
+        </span>
+      </div>
+      <div className="flex gap-2">
+        <button type="button" className="btn btn-ghost rounded-btn min-h-11" onClick={onBack}>
+          Back
+        </button>
+        <button type="button" className="btn btn-primary rounded-btn min-h-11 flex-1" onClick={onConfirm}>
+          Confirm booking
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
  * BookingFlow — client container that drives the multi-step booking state
  * machine, renders the active step, shows a progress indicator, and animates
  * transitions between steps.
@@ -297,11 +336,31 @@ export function BookingFlow({ groomer, initialState, prefillNotice }: BookingFlo
       case 'calendar':
         return <StepCalendar {...stepProps} />;
       case 'payment':
+        // No deposit required (R17.2): nothing to charge, so skip Stripe
+        // entirely and confirm the booking straight through to success —
+        // otherwise StepPayment would show a 'payments unavailable' dead end.
+        if (!requiresDeposit) {
+          return (
+            <NoDepositConfirm
+              onBack={() => dispatch({ type: 'GO_BACK' })}
+              onConfirm={() =>
+                dispatch({
+                  type: 'PAYMENT_SUCCESS',
+                  payload: {
+                    paymentIntentId: '',
+                    status: 'succeeded',
+                    amount: 0,
+                    currency: 'USD',
+                  },
+                })
+              }
+            />
+          );
+        }
         // Block the deposit step when a deposit is required but online payments
         // aren't set up — show the labelled not-set-up state instead so the
-        // client never reaches a dead charge (R17.1). When no deposit is
-        // required, or Connect is complete, the existing StepPayment runs
-        // unchanged (R17.2 / R17.3).
+        // client never reaches a dead charge (R17.1). When Connect is
+        // complete, the existing StepPayment runs unchanged (R17.3).
         if (!depositBookingAllowed) {
           return (
             <PaymentsNotSetUp
