@@ -77,6 +77,12 @@ export async function startTracking(args: {
     console.error('[track] on_my_way SMS failed (non-fatal):', err)
   );
 
+  // Also email the client the tracker link (best-effort, never throws). Runs
+  // alongside the SMS; neither blocks the trip start.
+  await sendOnMyWayEmail({ groomerId, appointmentId, token }).catch((err) =>
+    console.error('[track] on_my_way email failed (non-fatal):', err)
+  );
+
   return { ok: true, token };
 }
 
@@ -189,5 +195,53 @@ async function sendOnMyWaySms(args: {
     to: phone,
     kind: 'on_my_way',
     vars: { pet: (pet as { name?: string } | null)?.name ?? 'your pet', link: trackLink(token) },
+  });
+}
+
+/**
+ * Email the client the "your groomer is on the way" branded message with the
+ * tracker link (§11.2). Mirrors {@link sendOnMyWaySms}'s lookup pattern but
+ * resolves the client's EMAIL (plus pet name and the groomer's businessName).
+ * Returns early when the client has no email on file. The ETA is intentionally
+ * omitted (passed as `null`) to keep this a lightweight send and avoid a heavy
+ * tracker/route computation on the trip-start path.
+ */
+async function sendOnMyWayEmail(args: {
+  groomerId: string;
+  appointmentId: string;
+  token: string;
+}): Promise<void> {
+  const { groomerId, appointmentId, token } = args;
+
+  const { connectDB } = await import('@/lib/db/connect');
+  await connectDB();
+  const { Appointment } = await import('@/lib/db/models/appointment');
+  const { Client } = await import('@/lib/db/models/client');
+  const { Pet } = await import('@/lib/db/models/pet');
+  const { GroomerProfile } = await import('@/lib/db/models/groomer-profile');
+
+  const appt = await Appointment.findOne({ _id: appointmentId, groomerId })
+    .select('clientId petId')
+    .lean();
+  if (!appt) return;
+  const a = appt as unknown as { clientId: unknown; petId: unknown };
+
+  const [client, pet, profile] = await Promise.all([
+    Client.findById(a.clientId).select('email').lean(),
+    Pet.findById(a.petId).select('name').lean(),
+    GroomerProfile.findOne({ userId: groomerId }).select('businessName').lean(),
+  ]);
+  const email = (client as { email?: string } | null)?.email;
+  if (!email) return;
+
+  const businessName =
+    (profile as { businessName?: string } | null)?.businessName?.trim() || 'Pawxis';
+
+  const { sendOnTheWayEmail } = await import('@/lib/email/send');
+  await sendOnTheWayEmail(email, {
+    businessName,
+    petName: (pet as { name?: string } | null)?.name,
+    trackUrl: trackLink(token),
+    etaMinutes: null,
   });
 }

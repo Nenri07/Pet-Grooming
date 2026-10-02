@@ -3,21 +3,37 @@
 /**
  * TrackerView — public "van is on the way" tracker (Master Spec §11.2).
  *
- * Branded header (groomer logo/name), an ETA read-out, a MAP PLACEHOLDER panel
- * (no Mapbox dependency — shows the van coordinates + ETA in a styled card),
- * the pet name, and Call / Text groomer buttons. Polls `/api/track/{token}`
- * every 10s to refresh the ETA + position; stops polling once the trip ends.
+ * Branded header (groomer logo/name), an ETA read-out, a real interactive
+ * Leaflet map (free OpenStreetMap tiles, no API key) showing the live groomer
+ * van moving toward the client's destination pin, the pet name, and Call / Text
+ * groomer buttons. Polls `/api/track/{token}` every 10s to refresh the ETA +
+ * position; stops polling once the trip ends.
  *
- * MAP SEAM (§11.2): the coordinate/ETA panel stands in for a Mapbox map. When a
- * Mapbox token is configured, drop a real map here consuming `van`.
+ * The map ({@link TrackerMap}) is loaded via `next/dynamic` with `ssr: false`
+ * so Leaflet's `window` access never runs on the server.
  *
  * Theme tokens only; 44px+ targets.
  *
  * _Master Spec: §11.2_
  */
 import * as React from 'react';
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
-import { MapPin, Navigation, Phone, MessageSquare, PawPrint } from 'lucide-react';
+import { Navigation, Phone, MessageSquare, PawPrint } from 'lucide-react';
+
+/**
+ * Client-only map — Leaflet touches `window`, so it must never render on the
+ * server. The loading fallback mirrors the map's height so nothing jumps.
+ */
+const TrackerMap = dynamic(() => import('./TrackerMap'), {
+  ssr: false,
+  loading: () => (
+    <div
+      className="h-72 w-full animate-pulse rounded-box border border-base-content/10 bg-base-200 sm:h-80"
+      aria-hidden="true"
+    />
+  ),
+});
 
 interface TrackerPayload {
   business: string;
@@ -25,6 +41,7 @@ interface TrackerPayload {
   petName: string | null;
   groomerPhone: string | null;
   van: { lat: number; lng: number } | null;
+  destination: { lat: number; lng: number } | null;
   etaMinutes: number | null;
   ended: boolean;
 }
@@ -113,22 +130,24 @@ export function TrackerView({ token, initial }: TrackerViewProps) {
               </span>
             </div>
 
-            {/* MAP PLACEHOLDER panel (no Mapbox dependency) */}
-            <div className="mt-5 rounded-box border border-base-content/10 bg-base-200 p-5">
-              <div className="flex items-center gap-2 text-base-content/70">
-                <MapPin className="h-5 w-5 text-primary" aria-hidden="true" />
-                <span className="text-sm font-medium">Live location</span>
-              </div>
+            {/* Live interactive map (Leaflet + OpenStreetMap, no API key). */}
+            <div className="mt-5">
               {data.van ? (
-                <p className="mt-2 font-mono text-sm text-base-content/80">
-                  {data.van.lat.toFixed(4)}, {data.van.lng.toFixed(4)}
-                </p>
+                <TrackerMap
+                  van={data.van}
+                  destination={data.destination}
+                  etaLabel={etaLabel}
+                  business={data.business}
+                />
               ) : (
-                <p className="mt-2 text-sm italic text-base-content/50">
-                  Waiting for the van to start sharing…
-                </p>
+                <div className="flex h-72 w-full flex-col items-center justify-center rounded-box border border-base-content/10 bg-base-200 p-5 text-center sm:h-80">
+                  <span className="h-3 w-3 animate-pulse rounded-full bg-primary" aria-hidden="true" />
+                  <p className="mt-3 text-sm italic text-base-content/60">
+                    Waiting for the van to start sharing…
+                  </p>
+                </div>
               )}
-              <p className="mt-1 text-xs text-base-content/50">
+              <p className="mt-2 text-center text-xs text-base-content/50">
                 Location updates automatically every few seconds.
               </p>
             </div>

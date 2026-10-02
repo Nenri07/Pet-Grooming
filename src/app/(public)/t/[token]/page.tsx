@@ -33,6 +33,7 @@ export default async function TrackerPage({ params }: { params: { token: string 
               petName: data.petName,
               groomerPhone: data.groomerPhone,
               van: data.van,
+              destination: data.destination,
               etaMinutes: data.etaMinutes,
               ended: data.ended,
             }}

@@ -228,6 +228,9 @@ export async function sendClientConfirmationEmail(
     <p style="margin:16px 0 0;font-size:13px;color:#6b7280;line-height:1.5;">
       We look forward to seeing you and your pet. If you need to make changes,
       please contact ${escapeHtml(details.groomerName)} directly.
+    </p>
+    <p style="margin:12px 0 0;font-size:13px;color:#6b7280;line-height:1.5;">
+      On the day, you'll get a text and email with a live link to track your groomer's arrival.
     </p>`;
 
   try {
@@ -417,6 +420,92 @@ export async function sendEmailVerification(to: string, link: string): Promise<b
     return true;
   } catch (err) {
     console.error('[email] Failed to send email-verification link:', err);
+    return false;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// "On the way" tracker email (Master Spec §11.2 — companion to the SMS)
+// ---------------------------------------------------------------------------
+
+/** Details rendered into the "groomer is on the way" email (§11.2). */
+export interface OnTheWayDetails {
+  /** The groomer's business / display name. */
+  businessName: string;
+  /** The pet's name, when known. */
+  petName?: string;
+  /** Absolute `/t/{token}` tracker URL carrying the live-tracking token. */
+  trackUrl: string;
+  /** Estimated arrival in minutes, when computed; omitted/null when unknown. */
+  etaMinutes?: number | null;
+}
+
+/**
+ * Send the client the "your groomer is on the way" email with a live tracker
+ * link (Master Spec §11.2). This is the email companion to the existing
+ * "on my way" SMS; both are sent when the groomer taps "On my way".
+ *
+ * Best-effort and guarded exactly like the other sends in this module: it
+ * no-ops and returns `false` when Resend / the from address are not configured,
+ * never throws, and retries up to 3 times. The tracking caller treats this as
+ * fire-and-forget — a `false` return (or any failure) never blocks the trip
+ * start.
+ *
+ * The `trackUrl` is a fully-qualified `${NEXT_PUBLIC_APP_URL}/t/{token}` link
+ * built by the caller via `trackLink`; it is only interpolated into an `href`,
+ * never echoed as untrusted text.
+ *
+ * @param to The client's email address.
+ * @param details Business name, optional pet name, tracker URL, optional ETA.
+ * @returns `true` on a successful send; `false` on any failure / missing config.
+ */
+export async function sendOnTheWayEmail(
+  to: string,
+  details: OnTheWayDetails
+): Promise<boolean> {
+  const resend = getResend();
+  const from = getFromAddress();
+  if (!resend || !from || !to) return false;
+
+  const businessName =
+    process.env.NEXT_PUBLIC_BUSINESS_NAME?.trim() || details.businessName?.trim() || 'Pawxis';
+  const forPet = details.petName?.trim() ? ` for ${escapeHtml(details.petName.trim())}` : '';
+  const etaLine =
+    typeof details.etaMinutes === 'number' && details.etaMinutes >= 0
+      ? `<p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:#374151;">
+          Estimated arrival: ~${Math.round(details.etaMinutes)} min
+        </p>`
+      : '';
+
+  const body = `
+    <p style="margin:0 0 16px;font-size:14px;line-height:1.5;">
+      ${escapeHtml(businessName)} is heading to you${forPet}.
+    </p>
+    ${etaLine}
+    <p style="margin:24px 0;">
+      <a href="${escapeHtml(details.trackUrl)}"
+         style="display:inline-block;padding:12px 20px;border-radius:999px;background:#5B9BD5;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;">
+        Track live
+      </a>
+    </p>
+    <p style="margin:16px 0 0;font-size:13px;color:#6b7280;line-height:1.5;">
+      The live link updates as your groomer travels and stops working once they
+      arrive.
+    </p>`;
+
+  try {
+    await withRetry(async () => {
+      const { error } = await resend.emails.send({
+        from,
+        to,
+        subject: `Your groomer is on the way from ${businessName}`,
+        html: emailShell(businessName, 'Your groomer is on the way', body),
+      });
+      if (error) throw error;
+    });
+    return true;
+  } catch (err) {
+    console.error('[email] Failed to send on-the-way email:', err);
     return false;
   }
 }

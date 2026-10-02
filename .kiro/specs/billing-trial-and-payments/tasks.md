@@ -198,7 +198,7 @@ Convert the feature design into a series of prompts for a code-generation LLM th
     - Derive `connectStatus` for existing profiles from `stripeConnectChargesEnabled` (`true ⇒ complete`, else `not_started`) via a one-off backfill or lazy on-read default so legacy profiles surface a correct status.
     - _Requirements: 15.1, 15.4_ — Design: Data Models
 
-- [-] 15. Phase 3 verification gate
+- [x] 15. Phase 3 verification gate
   - Verify phase: run `npx tsc --noEmit`, `npm test -- --run`, and `npm run build`; fix any failures; commit. Ensure all tests pass, ask the user if questions arise.
 
 ## Notes

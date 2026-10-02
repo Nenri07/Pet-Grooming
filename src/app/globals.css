@@ -38,3 +38,88 @@ body {
     display: none !important;
   }
 }
+
+/* ----------------------------------------------------------------------------
+   Public tracker map (TrackerMap.tsx) — Leaflet divIcon markers.
+   The van/home markers are inline-SVG divIcons (no image-asset path config,
+   which breaks under bundlers). These rules position the SVG, add the van's
+   soft pulse, and keep everything on the DaisyUI `primary` token for AA
+   contrast. Scoped under .pp-divicon so they only touch our markers.
+   ---------------------------------------------------------------------------- */
+.pp-divicon {
+  background: transparent;
+  border: 0;
+}
+
+.pp-marker {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+/* Van: circular primary badge with a soft expanding pulse behind it. */
+.pp-marker--van .pp-marker__badge {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  background: hsl(var(--p));
+  color: hsl(var(--pc));
+  box-shadow: 0 2px 8px hsl(var(--p) / 0.45);
+  border: 2px solid hsl(var(--b1));
+}
+
+.pp-marker--van .pp-marker__pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  background: hsl(var(--p) / 0.35);
+  transform: translate(-50%, -50%);
+  animation: pp-marker-pulse 2s ease-out infinite;
+}
+
+@keyframes pp-marker-pulse {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2.4);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pp-marker--van .pp-marker__pulse {
+    animation: none;
+  }
+}
+
+/* Home/destination: a teardrop pin in the primary colour. */
+.pp-marker--home .pp-marker__pin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px 9999px 9999px 0;
+  transform: rotate(-45deg);
+  background: hsl(var(--p));
+  color: hsl(var(--pc));
+  box-shadow: 0 2px 8px hsl(var(--p) / 0.45);
+  border: 2px solid hsl(var(--b1));
+}
+
+.pp-marker--home .pp-marker__pin > svg {
+  transform: rotate(45deg);
+}

@@ -31,7 +31,7 @@ export function MarketingFooter() {
   return (
     <footer className="bg-base-200 text-base-content">
       <div className="mx-auto max-w-6xl px-gutter py-section">
-        <div className="grid gap-10 md:grid-cols-4">
+        <div className="grid gap-10 md:grid-cols-5">
           <div className="md:col-span-1">
             <Link href="/" className="inline-flex items-center text-primary">
               <Image
@@ -71,6 +71,28 @@ export function MarketingFooter() {
             </Link>
             <Link href="#" className="text-base-content/70 hover:text-primary">
               Contact
+            </Link>
+          </nav>
+
+          <nav aria-label="Legal" className="flex flex-col gap-2 text-sm">
+            <span className="font-semibold text-base-content">Legal</span>
+            <Link href="/terms" className="text-base-content/70 hover:text-primary">
+              Terms of Service
+            </Link>
+            <Link href="/privacy" className="text-base-content/70 hover:text-primary">
+              Privacy Policy
+            </Link>
+            <Link href="/cookies" className="text-base-content/70 hover:text-primary">
+              Cookie Policy
+            </Link>
+            <Link href="/refunds" className="text-base-content/70 hover:text-primary">
+              Refunds & Cancellation
+            </Link>
+            <Link
+              href="/acceptable-use"
+              className="text-base-content/70 hover:text-primary"
+            >
+              Acceptable Use
             </Link>
           </nav>
 
