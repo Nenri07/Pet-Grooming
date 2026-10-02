@@ -195,6 +195,15 @@ const PX_PER_MIN_DAY = 1.1; // taller, touch-friendly day timeline
 const PX_PER_MIN_WEEK = 0.7; // compact week columns
 
 /**
+ * Minimum RESTING pixel height for a Week-view block. At PX_PER_MIN_WEEK a
+ * 15-min appointment would collapse to ~10px and clip its text, so we floor the
+ * resting height here while longer appointments still grow proportionally. The
+ * active-resize math keeps its own `SLOT_STEP_MIN × pxPerMin` floor so dragging
+ * continues to snap to slot steps.
+ */
+const MIN_WEEK_BLOCK_PX = 44;
+
+/**
  * Minimum pixel height for a Day-view block. Short appointments (e.g. a 15-min
  * nail trim) would otherwise collapse to a ~16px sliver and clip their text, so
  * we floor the height here while still letting longer appointments grow
@@ -1212,7 +1221,7 @@ function WeekBlock({
 
   const baseTop = Math.max(0, minutesFromDayStart(appt.startMs)) * pxPerMin;
   const baseHeight = Math.max(
-    SLOT_STEP_MIN * pxPerMin,
+    MIN_WEEK_BLOCK_PX,
     durationMinutes(appt.startMs, appt.endMs) * pxPerMin
   );
 
@@ -1232,7 +1241,7 @@ function WeekBlock({
       ref={move.setNodeRef}
       data-block
       className={cx(
-        'absolute left-0.5 right-0.5 z-10 select-none overflow-hidden rounded-btn border-l-4 text-[10px] shadow-card',
+        'absolute left-0.5 right-0.5 z-10 select-none overflow-hidden rounded-btn border-l-4 text-[11px] leading-tight shadow-card',
         statusClasses(appt.status),
         activeDrag ? 'opacity-90 ring-2 ring-primary' : ''
       )}
@@ -1241,7 +1250,7 @@ function WeekBlock({
       <button
         type="button"
         onClick={() => onOpen(appt.id)}
-        className="block w-full px-1 py-0.5 text-left"
+        className="block w-full px-1.5 py-1 text-left"
         aria-label={`Open ${appt.petName ?? 'appointment'} at ${fmtTime(appt.startMs)}`}
       >
         <span className="block truncate font-semibold">

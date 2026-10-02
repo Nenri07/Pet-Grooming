@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
+import { PawPrint } from 'lucide-react';
 import { connectDB } from '@/lib/db/connect';
 import { GroomerProfile } from '@/lib/db/models/groomer-profile';
 import { Service } from '@/lib/db/models/service';
@@ -96,7 +98,7 @@ async function loadGroomer(slug: string): Promise<BookingGroomer | null> {
       // Service/branding fields plus the Connect + deposit fields the booking
       // gate (task 14.2 / R17) needs to decide whether deposit bookings are
       // allowed and whether to show the "online payments not set up" state.
-      'userId businessName phone businessEmail depositAmount connectStatus stripeConnectChargesEnabled'
+      'userId businessName logoUrl phone businessEmail depositAmount connectStatus stripeConnectChargesEnabled'
     )
     .lean();
   if (!profile) return null;
@@ -136,6 +138,7 @@ async function loadGroomer(slug: string): Promise<BookingGroomer | null> {
   return {
     slug,
     businessName: profile.businessName ?? 'Pet Grooming',
+    logoUrl: profile.logoUrl ?? null,
     services: services.map((s) => ({
       name: s.name,
       basePrice: s.basePrice,
@@ -281,7 +284,20 @@ export default async function BookingPage({ params }: BookingPageProps) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       )}
-      <div className="mx-auto mb-6 w-full max-w-xl text-center">
+      <div className="mx-auto mb-6 flex w-full max-w-xl flex-col items-center text-center">
+        {groomer.logoUrl ? (
+          <Image
+            src={groomer.logoUrl}
+            alt={`${groomer.businessName} logo`}
+            width={96}
+            height={96}
+            className="mx-auto mb-3 h-20 w-20 rounded-full object-cover shadow-card ring-2 ring-base-100"
+          />
+        ) : (
+          <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <PawPrint className="h-9 w-9" aria-hidden="true" />
+          </div>
+        )}
         <h1 className="text-2xl font-bold text-primary">{groomer.businessName}</h1>
         <p className="text-sm text-base-content/60">Book your appointment</p>
       </div>

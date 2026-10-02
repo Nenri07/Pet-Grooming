@@ -184,9 +184,9 @@ export function PortalNav() {
           <Image
             src="/pawxisLogo.png"
             alt="Pawxis"
-            width={250}
-            height={100}
-            className="h-9 w-auto shrink-0 object-contain"
+            width={320}
+            height={128}
+            className="h-32 w-auto shrink-0 object-contain"
             priority
           />
         </Link>
@@ -219,9 +219,9 @@ export function PortalNav() {
               <Image
                 src="/pawxisLogo.png"
                 alt="Pawxis"
-                width={250}
-                height={100}
-                className="h-11 w-auto shrink-0 object-contain"
+                width={320}
+                height={128}
+                className="h-32 w-auto max-w-full object-contain"
                 priority
               />
             </Link>

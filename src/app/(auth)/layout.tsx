@@ -31,7 +31,7 @@ export default function AuthLayout({
             alt="Pawxis"
             width={320}
             height={128}
-            className="h-16 w-auto object-contain"
+            className="h-32 w-auto object-contain"
             priority
           />
         </Link>

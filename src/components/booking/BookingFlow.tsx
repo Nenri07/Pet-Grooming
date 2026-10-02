@@ -18,11 +18,17 @@ import { StepCalendar } from './StepCalendar';
 import { StepPayment } from './StepPayment';
 import { StepSuccess } from './StepSuccess';
 import { bookingAllowed } from '@/lib/billing/connect';
+import type { OwnerDetailsInput, PetInfoInput } from '@/types';
+import { BREED_OPTIONS } from '@/config/breeds';
+import { TEMPERAMENT_OPTIONS } from '@/config/temperaments';
+import { COAT_CONDITION_OPTIONS } from '@/config/coat-conditions';
 
 /** Serializable groomer info the server component passes to the flow. */
 export interface BookingGroomer {
   slug: string;
   businessName: string;
+  /** Optional logo image URL, surfaced in the booking page's branded header. */
+  logoUrl?: string | null;
   services: BookingStepServices;
   /**
    * Whether the groomer's Stripe Connect account can accept online payments
@@ -220,6 +226,48 @@ function PaymentsNotSetUp({
 export function BookingFlow({ groomer, initialState, prefillNotice }: BookingFlowProps) {
   const { state, dispatch } = useBookingFlow(initialState);
 
+  // Scroll the window to the top whenever the step changes so the user always
+  // starts the next step at the top rather than scrolled near the bottom. The
+  // page uses Lenis smooth scroll (via MotionProvider), which respects
+  // `window.scrollTo`, so smooth behavior is fine here.
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [state.currentStep]);
+
+  // Dev-only autofill: fills pet-info + owner-details with valid dummy data and
+  // advances to the estimate step so testers can click through quickly. The
+  // values are the FIRST option from each config list, guaranteeing they
+  // satisfy the booking zod schemas. Only rendered outside production builds.
+  const isDev = process.env.NODE_ENV !== 'production';
+  function handleAutofill() {
+    const dummyPet: PetInfoInput = {
+      name: 'Bella',
+      breed: BREED_OPTIONS[0].value,
+      weight: 20,
+      weightUnit: 'lbs',
+      age: 3,
+      temperament: TEMPERAMENT_OPTIONS[0].value,
+      coatCondition: COAT_CONDITION_OPTIONS[0].value,
+      specialFlags: [],
+      notes: '',
+    };
+    const dummyOwner: OwnerDetailsInput = {
+      name: 'Test Owner',
+      email: 'test@example.com',
+      phone: '+15551234567',
+      address: {
+        street: '123 Main St',
+        city: 'Austin',
+        state: 'TX',
+        postalCode: '78701',
+      },
+    };
+    dispatch({ type: 'SUBMIT_PET_INFO', payload: dummyPet });
+    dispatch({ type: 'SUBMIT_OWNER_DETAILS', payload: dummyOwner, smsConsent: false });
+  }
+
   const stepProps = {
     state,
     dispatch,
@@ -280,6 +328,17 @@ export function BookingFlow({ groomer, initialState, prefillNotice }: BookingFlo
         </div>
       )}
       <ProgressIndicator step={state.currentStep} stepIndex={state.stepIndex} />
+      {isDev && (
+        <div className="mb-3 flex justify-end">
+          <button
+            type="button"
+            className="btn btn-ghost btn-xs"
+            onClick={handleAutofill}
+          >
+            ⚡ Autofill (dev)
+          </button>
+        </div>
+      )}
       <Card>
         <motion.div
           key={state.currentStep}

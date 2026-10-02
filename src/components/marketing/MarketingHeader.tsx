@@ -42,15 +42,15 @@ export function MarketingHeader() {
     <div ref={scopeRef as React.RefObject<HTMLDivElement>}>
       <header
         data-header
-        className="fixed inset-x-0 top-0 z-50 flex h-20 items-center justify-between px-gutter transition-[height,background-color,box-shadow] duration-300 [&.is-scrolled]:h-16 [&.is-scrolled]:bg-base-100/80 [&.is-scrolled]:shadow-soft [&.is-scrolled]:backdrop-blur"
+        className="fixed inset-x-0 top-0 z-50 flex h-36 items-center justify-between px-gutter transition-[height,background-color,box-shadow] duration-300 [&.is-scrolled]:h-28 [&.is-scrolled]:bg-base-100/80 [&.is-scrolled]:shadow-soft [&.is-scrolled]:backdrop-blur"
       >
         <Link href="/" className="inline-flex items-center text-primary">
           <Image
             src="/pawxisLogo.png"
             alt="Pawxis"
-            width={250}
-            height={100}
-            className="h-10 w-auto object-contain"
+            width={320}
+            height={128}
+            className="h-32 w-auto object-contain"
             priority
           />
         </Link>
