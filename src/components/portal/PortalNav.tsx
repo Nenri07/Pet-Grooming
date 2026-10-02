@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import * as React from 'react';
 import Link from 'next/link';
@@ -20,29 +20,28 @@ import {
   MoreHorizontal,
   X,
 } from 'lucide-react';
-import { ThemeToggle } from './ThemeToggle';
 import { ThemeMenu } from './ThemeMenu';
 import { SmsCreditsPill } from './SmsCreditsPill';
 import { LogoutButton } from './LogoutButton';
 
 /**
- * PortalNav — the authenticated Groomer_Portal navigation shell (Master Spec §8).
+ * PortalNav â€” the authenticated Groomer_Portal navigation shell (Master Spec Â§8).
  *
  * Layout:
  *  - Desktop / tablet (md+): a COLLAPSIBLE left sidebar. A toggle narrows it to
  *    an icons-only rail; the collapsed state is persisted in localStorage so it
  *    survives reloads and route changes.
- *  - Mobile (<md): a fixed BOTTOM TAB BAR with five primary destinations —
+ *  - Mobile (<md): a fixed BOTTOM TAB BAR with five primary destinations â€”
  *    Today, Calendar, Inbox, Clients, More. "More" opens a bottom sheet holding
  *    the secondary destinations (Services / Availability / Analytics / Settings)
  *    plus the theme toggle.
  *  - A TOP BAR (all sizes) holds a search affordance, the SMS credits meter
  *    placeholder, the theme toggle and an avatar/initials link to settings.
  *
- * Motion is calm (CSS transitions only, ≤300ms). Every interactive element
- * meets the 44×44px touch-target minimum. Colors are theme tokens only.
+ * Motion is calm (CSS transitions only, â‰¤300ms). Every interactive element
+ * meets the 44Ã—44px touch-target minimum. Colors are theme tokens only.
  *
- * _Master Spec: §8 (Portal UI). Requirements: 18.2, 19.1, 19.2._
+ * _Master Spec: Â§8 (Portal UI). Requirements: 18.2, 19.1, 19.2._
  */
 
 interface NavItem {
@@ -124,7 +123,7 @@ function SearchAffordance() {
         name="q"
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        placeholder="Search clients…"
+        placeholder="Search clientsâ€¦"
         aria-label="Search clients"
         className="input input-bordered h-11 w-full rounded-btn border-base-content/10 bg-base-200 pl-9 text-sm focus:border-primary focus:outline-none"
       />
@@ -183,7 +182,6 @@ export function PortalNav() {
         <div className="ml-auto flex items-center gap-2">
           <SmsCreditsPill />
           <ThemeMenu />
-          <ThemeToggle />
           <LogoutButton variant="icon" />
           <AvatarMenu />
         </div>
@@ -253,14 +251,13 @@ export function PortalNav() {
         {/* Sidebar footer: SMS pill + theme + avatar (calm, tokenized). */}
         <div
           className={cx(
-            'mt-3 flex items-center gap-2 border-t border-base-content/10 pt-3',
+            'mt-3 flex flex-wrap items-center gap-2 border-t border-base-content/10 pt-3',
             collapsed ? 'flex-col' : 'justify-between'
           )}
         >
           {!collapsed && <SmsCreditsPill />}
           <div className={cx('flex items-center gap-1', collapsed && 'flex-col')}>
             <ThemeMenu align={collapsed ? 'start' : 'end'} />
-            <ThemeToggle />
             <LogoutButton variant="icon" />
             <AvatarMenu />
           </div>
@@ -370,7 +367,6 @@ export function PortalNav() {
               <SmsCreditsPill />
               <div className="flex items-center gap-1">
                 <ThemeMenu />
-                <ThemeToggle />
               </div>
             </div>
           </div>
