@@ -35,11 +35,11 @@ export function MarketingFooter() {
           <div className="md:col-span-1">
             <Link href="/" className="inline-flex items-center text-primary">
               <Image
-                src="/pawxis2.png"
+                src="/pawxisLogo.png"
                 alt="Pawxis"
-                width={40}
-                height={40}
-                className="h-10 w-10 object-contain"
+                width={250}
+                height={100}
+                className="h-11 w-auto object-contain"
               />
             </Link>
             <p className="mt-3 max-w-xs text-sm text-base-content/70">

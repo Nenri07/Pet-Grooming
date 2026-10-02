@@ -182,11 +182,11 @@ export function PortalNav() {
           className="inline-flex min-w-0 items-center gap-2 font-display text-xl font-bold text-primary"
         >
           <Image
-            src="/pawxis2.png"
+            src="/pawxisLogo.png"
             alt="Pawxis"
-            width={40}
-            height={40}
-            className="h-10 w-10 shrink-0 object-contain"
+            width={250}
+            height={100}
+            className="h-9 w-auto shrink-0 object-contain"
             priority
           />
         </Link>
@@ -217,11 +217,11 @@ export function PortalNav() {
               className="inline-flex min-w-0 items-center gap-2 font-display text-2xl font-bold text-primary"
             >
               <Image
-                src="/pawxis2.png"
+                src="/pawxisLogo.png"
                 alt="Pawxis"
-                width={44}
-                height={44}
-                className="h-11 w-11 shrink-0 object-contain"
+                width={250}
+                height={100}
+                className="h-11 w-auto shrink-0 object-contain"
                 priority
               />
             </Link>
