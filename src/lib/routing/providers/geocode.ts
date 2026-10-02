@@ -19,6 +19,8 @@
  */
 import { createHash } from 'node:crypto';
 import type { LatLng } from '@/lib/routing/geo';
+import { isMapboxConfigured, getMapboxToken } from '@/lib/routing/config';
+import { MapboxGeocodeProvider } from '@/lib/routing/providers/mapbox-geocode';
 import { cacheGet, cacheSet, keys, TTL, isRedisConfigured } from '@/lib/redis';
 
 /** Pluggable geocoder. Returns `null` when an address can't be resolved. */
@@ -155,12 +157,18 @@ export class NominatimGeocodeProvider implements GeocodeProvider {
 }
 
 /**
- * Factory returning the geocoder to use. Defaults to the free Nominatim
- * provider (no API key). When a vendor key is configured, return the real
- * provider here.
+ * Factory returning the geocoder to use.
+ *
+ * WIRED (§10.1): when `MAPBOX_TOKEN` is configured, this returns a
+ * {@link MapboxGeocodeProvider}; otherwise it falls back to the free
+ * {@link NominatimGeocodeProvider} (no API key), so geocoding degrades
+ * gracefully with zero accounts.
  */
 export function getGeocodeProvider(): GeocodeProvider {
-  // TODO(geocoder): if (process.env.MAPBOX_TOKEN) return new MapboxGeocodeProvider();
+  if (isMapboxConfigured()) {
+    const token = getMapboxToken();
+    if (token) return new MapboxGeocodeProvider(token);
+  }
   return new NominatimGeocodeProvider();
 }
 

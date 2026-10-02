@@ -11,6 +11,9 @@
  */
 import { Schema, model, models, type Model, type Types } from 'mongoose';
 import type { CoatCondition, EstimateRule } from '@/types';
+// Type-only import — the pure geometry core (service-area.ts) only imports a
+// `LatLng` type from geo.ts, so this creates no Mongoose-in-routing cycle.
+import type { GeoPolygon } from '@/lib/routing/service-area';
 
 interface AvailabilityWindow {
   dayOfWeek: number;
@@ -69,6 +72,8 @@ export interface IGroomerProfile {
   baseAddress?: string;
   baseLocation?: GeoPoint;
   serviceRadiusKm?: number;
+  /** Drawn service area; when set it is authoritative over `serviceRadiusKm` (§10.4). */
+  serviceAreaPolygon?: GeoPolygon;
   maxDetourMin?: number;
   bufferMin?: number;
   slotStepMin?: number;
@@ -162,6 +167,10 @@ const groomerProfileSchema = new Schema<IGroomerProfile>(
     baseAddress: { type: String, maxlength: 300 },
     baseLocation: { type: geoPointSchema },
     serviceRadiusKm: { type: Number, min: 0 },
+    // Loose GeoJSON Polygon for the drawn service area (§10.4). Stored as Mixed;
+    // its shape is validated by `isValidPolygon` at the app layer, matching how
+    // other loose routing fields are handled rather than a strict sub-schema.
+    serviceAreaPolygon: { type: Schema.Types.Mixed },
     maxDetourMin: { type: Number, min: 0, default: 25 },
     bufferMin: { type: Number, min: 0, default: 10 },
     slotStepMin: { type: Number, min: 5, default: 15 },

@@ -3,14 +3,16 @@
 /**
  * TrackerView — public "van is on the way" tracker (Master Spec §11.2).
  *
- * Branded header (groomer logo/name), an ETA read-out, a real interactive
- * Leaflet map (free OpenStreetMap tiles, no API key) showing the live groomer
- * van moving toward the client's destination pin, the pet name, and Call / Text
- * groomer buttons. Polls `/api/track/{token}` every 10s to refresh the ETA +
- * position; stops polling once the trip ends.
+ * Branded header (groomer logo/name), an ETA read-out, a real interactive map
+ * showing the live groomer van moving toward the client's destination pin, the
+ * pet name, and Call / Text groomer buttons. Polls `/api/track/{token}` every
+ * 10s to refresh the ETA + position; stops polling once the trip ends.
  *
- * The map ({@link TrackerMap}) is loaded via `next/dynamic` with `ssr: false`
- * so Leaflet's `window` access never runs on the server.
+ * The map is Mapbox GL JS ({@link TrackerMapbox}) when a public browser token
+ * (`NEXT_PUBLIC_MAPBOX_TOKEN`) is configured, else it falls back to Leaflet +
+ * free OpenStreetMap tiles ({@link TrackerMap}, no API key). Either variant is
+ * loaded via `next/dynamic` with `ssr: false` so their `window` access never
+ * runs on the server.
  *
  * Theme tokens only; 44px+ targets.
  *
@@ -22,18 +24,43 @@ import Image from 'next/image';
 import { Navigation, Phone, MessageSquare, PawPrint } from 'lucide-react';
 
 /**
- * Client-only map — Leaflet touches `window`, so it must never render on the
- * server. The loading fallback mirrors the map's height so nothing jumps.
+ * Shared loading fallback — mirrors the map's height so nothing jumps while
+ * the client-only map chunk hydrates.
  */
+const MapSkeleton = () => (
+  <div
+    className="h-72 w-full animate-pulse rounded-box border border-base-content/10 bg-base-200 sm:h-80"
+    aria-hidden="true"
+  />
+);
+
+/**
+ * Client-only maps — both Mapbox GL and Leaflet touch `window`, so neither may
+ * render on the server. We dynamically import both and pick one at render time
+ * based on whether a public Mapbox token is configured.
+ */
+const TrackerMapbox = dynamic(() => import('./TrackerMapbox'), {
+  ssr: false,
+  loading: MapSkeleton,
+});
 const TrackerMap = dynamic(() => import('./TrackerMap'), {
   ssr: false,
-  loading: () => (
-    <div
-      className="h-72 w-full animate-pulse rounded-box border border-base-content/10 bg-base-200 sm:h-80"
-      aria-hidden="true"
-    />
-  ),
+  loading: MapSkeleton,
 });
+
+/**
+ * Is a non-empty, non-placeholder Mapbox token configured? Mirrors the shared
+ * `isSet` convention used across config (empty / `…replace_me` / `your-…` ⇒
+ * "not configured"); kept inline so this client component never imports
+ * server-only config.
+ */
+function isMapboxToken(value: string | undefined): value is string {
+  if (!value) return false;
+  const t = value.trim();
+  if (t.length === 0) return false;
+  if (t.includes('replace_me') || t.startsWith('your-')) return false;
+  return true;
+}
 
 interface TrackerPayload {
   business: string;
@@ -86,6 +113,12 @@ export function TrackerView({ token, initial }: TrackerViewProps) {
         ? 'Arriving now'
         : `${data.etaMinutes} min away`;
 
+  // `NEXT_PUBLIC_*` is inlined at build time, so this read is a static string
+  // in the client bundle. Prefer Mapbox GL when a public token is set, else
+  // degrade to the Leaflet + OpenStreetMap map.
+  const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+  const useMapbox = React.useMemo(() => isMapboxToken(mapboxToken), [mapboxToken]);
+
   return (
     <div className="overflow-hidden rounded-box border border-base-content/10 bg-base-100 shadow-card">
       {/* Branded header */}
@@ -130,15 +163,26 @@ export function TrackerView({ token, initial }: TrackerViewProps) {
               </span>
             </div>
 
-            {/* Live interactive map (Leaflet + OpenStreetMap, no API key). */}
+            {/* Live interactive map — Mapbox GL when a public token is set,
+                else Leaflet + OpenStreetMap (no API key). */}
             <div className="mt-5">
               {data.van ? (
-                <TrackerMap
-                  van={data.van}
-                  destination={data.destination}
-                  etaLabel={etaLabel}
-                  business={data.business}
-                />
+                useMapbox ? (
+                  <TrackerMapbox
+                    van={data.van}
+                    destination={data.destination}
+                    etaLabel={etaLabel}
+                    business={data.business}
+                    token={mapboxToken as string}
+                  />
+                ) : (
+                  <TrackerMap
+                    van={data.van}
+                    destination={data.destination}
+                    etaLabel={etaLabel}
+                    business={data.business}
+                  />
+                )
               ) : (
                 <div className="flex h-72 w-full flex-col items-center justify-center rounded-box border border-base-content/10 bg-base-200 p-5 text-center sm:h-80">
                   <span className="h-3 w-3 animate-pulse rounded-full bg-primary" aria-hidden="true" />

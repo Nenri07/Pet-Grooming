@@ -27,6 +27,7 @@ import {
   DashboardView,
   type DashboardData,
   type DashboardStop,
+  type UpcomingItem,
   type RadarItem,
   type MonthSummary,
 } from '@/components/portal/DashboardView';
@@ -88,6 +89,7 @@ interface LeanAppointment {
   notes?: string | null;
   location?: LatLng | null;
   routeMeta?: LeanRouteMeta | null;
+  tracking?: { startedAt?: Date; arrivedAt?: Date } | null;
 }
 
 /** "Best fit" / "Nearby stop" label from a routeMeta score (Master Spec §10.4). */
@@ -103,6 +105,15 @@ function routeLabel(meta: LeanRouteMeta | null | undefined): string | null {
 /** Format a Date to a short local time label (server-side, stable). */
 function timeLabel(d: Date): string {
   return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+}
+
+/** Format a Date to a short local date label (e.g. "Mon, Jun 3"). */
+function dateLabel(d: Date): string {
+  return d.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  });
 }
 
 /** Percentage diff helper for the month summary. Returns null when undefined. */
@@ -196,8 +207,42 @@ export default async function DashboardPage() {
       timeLabel: timeLabel(start),
       status: doc.status,
       travelToNext,
+      // A trip is "active" once started and not yet arrived (seeds Live ETA).
+      trackingActive: Boolean(doc.tracking?.startedAt && !doc.tracking?.arrivedAt),
     });
   }
+
+  // ---- Upcoming: next bookings beyond today (tomorrow → +14d) ----
+  // So the groomer can see client/pet/service/address even when today is empty.
+  const upcomingStart = startOfDay(addDays(now, 1));
+  const upcomingEnd = endOfDay(addDays(now, 14));
+  const upcomingDocs = await Appointment.find({
+    groomerId,
+    scheduledDate: { $gte: upcomingStart, $lte: upcomingEnd },
+    status: { $ne: 'cancelled' },
+  })
+    .select('clientId petId serviceId serviceAddress scheduledDate status')
+    .populate('clientId', 'name')
+    .populate('petId', 'name')
+    .populate('serviceId', 'name')
+    .sort({ scheduledDate: 1 })
+    .limit(8)
+    .lean<LeanAppointment[]>();
+
+  const upcoming: UpcomingItem[] = upcomingDocs.map((doc) => {
+    const start = new Date(doc.scheduledDate);
+    return {
+      id: String(doc._id),
+      petName: doc.petId?.name ?? null,
+      clientName: doc.clientId?.name ?? null,
+      serviceName: doc.serviceId?.name ?? null,
+      serviceAddress: doc.serviceAddress ?? null,
+      scheduledDate: start.toISOString(),
+      dateLabel: dateLabel(start),
+      timeLabel: timeLabel(start),
+      status: doc.status,
+    };
+  });
 
   // ---- Order Radar: upcoming appts (today→+7d) carrying routeMeta ----
   const radarDocs = await Appointment.find({
@@ -330,6 +375,7 @@ export default async function DashboardPage() {
 
   const data: DashboardData = {
     stops,
+    upcoming,
     radar,
     bookingMode,
     monthSummary,

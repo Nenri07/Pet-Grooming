@@ -35,7 +35,7 @@ import { connectDB } from '@/lib/db/connect';
 import { GroomerProfile } from '@/lib/db/models/groomer-profile';
 import { isValidSlugFormat } from '@/lib/validators/slug';
 import { settingsSchema, type ServiceSettingsInput } from '@/lib/validators/settings';
-import { getGeocodeProvider } from '@/lib/routing';
+import { getGeocodeProvider, isValidPolygon, normalizePolygon, type GeoPolygon } from '@/lib/routing';
 import type { CoatCondition, EstimateRule } from '@/types';
 
 // ---------------------------------------------------------------------------
@@ -62,8 +62,12 @@ export interface BusinessSettingsData {
   groomerSlug: string;
   /** Where the groomer starts their day — used by routing to score slots. */
   baseAddress: string;
+  /** Geocoded base coordinates, or `null` — seeds the service-area map centre. */
+  baseLocation: { lat: number; lng: number } | null;
   /** Service radius in km, or `null` for "no limit". */
   serviceRadiusKm: number | null;
+  /** Drawn service area; authoritative over the radius when present (§10.4). */
+  serviceAreaPolygon: GeoPolygon | null;
 }
 
 /** Result envelope returned by {@link getBusinessSettings}. */
@@ -112,7 +116,9 @@ function toSettingsData(profile: {
   logoUrl?: string;
   groomerSlug?: string;
   baseAddress?: string;
+  baseLocation?: { lat: number; lng: number };
   serviceRadiusKm?: number;
+  serviceAreaPolygon?: GeoPolygon;
 }): BusinessSettingsData {
   return {
     businessName: profile.businessName ?? '',
@@ -129,7 +135,11 @@ function toSettingsData(profile: {
     logoUrl: profile.logoUrl ?? '',
     groomerSlug: profile.groomerSlug ?? '',
     baseAddress: profile.baseAddress ?? '',
+    baseLocation: profile.baseLocation
+      ? { lat: profile.baseLocation.lat, lng: profile.baseLocation.lng }
+      : null,
     serviceRadiusKm: profile.serviceRadiusKm ?? null,
+    serviceAreaPolygon: profile.serviceAreaPolygon ?? null,
   };
 }
 
@@ -190,7 +200,7 @@ export async function getBusinessSettings(): Promise<GetBusinessSettingsResult> 
 
     const profile = await GroomerProfile.findOne({ userId: session.user.id })
       .select(
-        'businessName phone businessEmail depositAmount estimateRules logoUrl groomerSlug baseAddress serviceRadiusKm'
+        'businessName phone businessEmail depositAmount estimateRules logoUrl groomerSlug baseAddress baseLocation serviceRadiusKm serviceAreaPolygon'
       )
       .lean();
 
@@ -253,6 +263,11 @@ export async function updateBusinessSettings(
     const baseAddress = (data.baseAddress ?? '').trim();
     const serviceRadiusKm =
       typeof data.serviceRadiusKm === 'number' ? data.serviceRadiusKm : null;
+    // A valid drawn polygon is persisted (normalised/closed); null/undefined
+    // means "clear it" (mirrors the radius set-vs-unset handling below).
+    const serviceAreaPolygon = isValidPolygon(data.serviceAreaPolygon)
+      ? normalizePolygon(data.serviceAreaPolygon)
+      : null;
 
     // Build the $set additively alongside the existing fields.
     const set: Record<string, unknown> = {
@@ -270,6 +285,12 @@ export async function updateBusinessSettings(
       unset.serviceRadiusKm = '';
     } else {
       set.serviceRadiusKm = serviceRadiusKm;
+    }
+    // Same set-vs-unset pattern for the drawn service area (§10.4).
+    if (serviceAreaPolygon === null) {
+      unset.serviceAreaPolygon = '';
+    } else {
+      set.serviceAreaPolygon = serviceAreaPolygon;
     }
 
     // Geocode on save: resolve coordinates when the address is non-empty AND it
@@ -296,7 +317,7 @@ export async function updateBusinessSettings(
       { new: true }
     )
       .select(
-        'businessName phone businessEmail depositAmount estimateRules logoUrl groomerSlug baseAddress serviceRadiusKm'
+        'businessName phone businessEmail depositAmount estimateRules logoUrl groomerSlug baseAddress baseLocation serviceRadiusKm serviceAreaPolygon'
       )
       .lean();
 

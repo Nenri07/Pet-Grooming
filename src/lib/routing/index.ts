@@ -9,7 +9,10 @@
 export * from '@/lib/routing/geo';
 export * from '@/lib/routing/insertion';
 export * from '@/lib/routing/scoring';
+export * from '@/lib/routing/service-area';
+export * from '@/lib/routing/serviceable';
 export * from '@/lib/routing/providers/geocode';
+export * from '@/lib/routing/config';
 
 import { DEFAULT_TRAVEL_CFG } from '@/lib/routing/geo';
 

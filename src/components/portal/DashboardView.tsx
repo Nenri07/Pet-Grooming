@@ -22,6 +22,7 @@ import { toast } from 'sonner';
 import { Card } from '@/components/ui/Card';
 import { Reveal, NumberTicker } from '@/components/motion';
 import { updateAppointmentStatus } from '@/actions/appointments';
+import { useLiveEta } from '@/hooks/useLiveEta';
 import type { AppointmentStatus } from '@/types';
 
 /**
@@ -62,6 +63,23 @@ export interface DashboardStop {
   status: AppointmentStatus;
   /** Travel from this stop to the next; null when it cannot be computed. */
   travelToNext: TravelChip | null;
+  /** Whether a live trip is started but not yet arrived (seeds Live ETA). */
+  trackingActive?: boolean;
+}
+
+export interface UpcomingItem {
+  id: string;
+  petName: string | null;
+  clientName: string | null;
+  serviceName: string | null;
+  serviceAddress: string | null;
+  /** ISO-8601 scheduled start. */
+  scheduledDate: string;
+  /** Pre-formatted local date label (e.g. "Mon, Jun 3"). */
+  dateLabel: string;
+  /** Pre-formatted local time label (e.g. "9:30 AM"). */
+  timeLabel: string;
+  status: AppointmentStatus;
 }
 
 export interface RadarItem {
@@ -86,6 +104,8 @@ export interface MonthSummary {
 
 export interface DashboardData {
   stops: DashboardStop[];
+  /** Next appointments beyond today (tomorrow → +14d), nearest first. */
+  upcoming: UpcomingItem[];
   radar: RadarItem[];
   bookingMode: 'instant' | 'request';
   monthSummary: MonthSummary;
@@ -162,7 +182,14 @@ function TravelChipRow({ chip }: { chip: TravelChip }) {
   );
 }
 
-/** One-tap status action buttons for a stop (Start / Complete). */
+/**
+ * One-tap actions for a stop. Two independent concerns live here:
+ *  - Status: Start / Complete, backed by `updateAppointmentStatus`.
+ *  - Live ETA: "On my way" starts the trip via {@link useLiveEta} (texts +
+ *    emails the client the tracker link, §11.2). It is additive and does NOT
+ *    change the appointment status — the same mechanism the appointment-detail
+ *    `LiveEtaControl` uses, surfaced inline on the dashboard timeline.
+ */
 function StopActions({
   stop,
   onChanged,
@@ -170,10 +197,16 @@ function StopActions({
   stop: DashboardStop;
   onChanged: () => void;
 }) {
-  const [pending, setPending] = React.useState<null | AppointmentStatus | 'omw'>(
-    null
-  );
+  const [pending, setPending] = React.useState<null | AppointmentStatus>(null);
   const [error, setError] = React.useState<string | null>(null);
+
+  // Live ETA controller — hook is unconditional (StopActions is a component).
+  const {
+    state: etaState,
+    error: etaError,
+    start: etaStart,
+    stop: etaStop,
+  } = useLiveEta(stop.id, Boolean(stop.trackingActive));
 
   const run = React.useCallback(
     async (next: AppointmentStatus) => {
@@ -193,10 +226,6 @@ function StopActions({
     [stop.id, onChanged]
   );
 
-  // "On my way" is a tracking action (Phase 11), not a status change — it stays
-  // a non-mutating stub for now so the affordance is present.
-  const [omwArmed, setOmwArmed] = React.useState(false);
-
   if (stop.status === 'completed' || stop.status === 'cancelled') {
     return null;
   }
@@ -205,17 +234,37 @@ function StopActions({
     <div className="mt-3 flex flex-wrap items-center gap-2">
       {stop.status === 'upcoming' && (
         <>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setOmwArmed(true);
-              // TODO(phase-11): open live "van is on the way" tracking link.
-            }}
-            className="btn btn-outline btn-sm min-h-[40px]"
-          >
-            {omwArmed ? 'On my way ✓' : 'On my way'}
-          </button>
+          {etaState === 'sharing' ? (
+            <>
+              <span className="inline-flex min-h-[40px] items-center gap-1.5 rounded-badge bg-success/10 px-3 text-sm font-medium text-success">
+                <Truck className="h-4 w-4" aria-hidden="true" />
+                Sharing live ✓
+              </span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void etaStop();
+                }}
+                className="btn btn-ghost btn-sm min-h-[40px]"
+              >
+                Stop
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                void etaStart();
+              }}
+              disabled={etaState === 'starting'}
+              className="btn btn-outline btn-sm min-h-[40px]"
+            >
+              <Truck className="h-4 w-4" aria-hidden="true" />
+              {etaState === 'starting' ? 'Starting…' : 'On my way'}
+            </button>
+          )}
           <button
             type="button"
             onClick={(e) => {
@@ -242,9 +291,9 @@ function StopActions({
           {pending === 'completed' ? 'Completing…' : 'Complete'}
         </button>
       )}
-      {error && (
+      {(error || (etaState === 'error' && etaError)) && (
         <span role="alert" className="text-xs text-error">
-          {error}
+          {error ?? etaError}
         </span>
       )}
     </div>
@@ -357,6 +406,107 @@ function TodaysRouteCard({
               onOpen={onOpen}
               onChanged={onChanged}
             />
+          ))}
+        </ol>
+      )}
+    </Card>
+  );
+}
+
+/* --------------------------------- Upcoming --------------------------------- */
+
+/** One upcoming booking row — date/time, pet, service · client, directions. */
+function UpcomingRow({
+  item,
+  onOpen,
+}: {
+  item: UpcomingItem;
+  onOpen: (id: string) => void;
+}) {
+  return (
+    <li>
+      <div
+        role="button"
+        tabIndex={0}
+        aria-label={`Open appointment for ${item.petName ?? 'pet'} on ${item.dateLabel} at ${item.timeLabel}`}
+        onClick={() => onOpen(item.id)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onOpen(item.id);
+          }
+        }}
+        className="cursor-pointer rounded-box border border-base-content/10 bg-base-100 p-3 transition-colors hover:bg-base-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-base-content">
+              {item.dateLabel} · {item.timeLabel}
+            </p>
+            <p className="truncate text-base font-medium text-base-content">
+              {item.petName ?? 'Unnamed pet'}
+            </p>
+            {item.serviceName && (
+              <p className="truncate text-sm text-base-content/60">
+                {item.serviceName}
+                {item.clientName ? ` · ${item.clientName}` : ''}
+              </p>
+            )}
+          </div>
+          <StatusBadge status={item.status} />
+        </div>
+
+        {item.serviceAddress ? (
+          <a
+            href={mapsDirectionsUrl(item.serviceAddress)}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="mt-2 inline-flex min-h-[40px] items-center gap-1.5 text-sm font-medium text-primary underline underline-offset-2"
+          >
+            <MapPin className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <span className="truncate">Directions</span>
+          </a>
+        ) : (
+          <p className="mt-2 inline-flex items-center gap-1.5 text-sm italic text-base-content/50">
+            <MapPinOff className="h-4 w-4 shrink-0" aria-hidden="true" />
+            Address unavailable
+          </p>
+        )}
+      </div>
+    </li>
+  );
+}
+
+/**
+ * Upcoming card — the next bookings BEYOND today (tomorrow → +14d) so the
+ * groomer can see client / pet / service / address details even when Today's
+ * Route is empty. Tapping a row opens the appointment detail.
+ */
+function UpcomingCard({
+  upcoming,
+  onOpen,
+}: {
+  upcoming: UpcomingItem[];
+  onOpen: (id: string) => void;
+}) {
+  return (
+    <Card className="flex flex-col">
+      <div className="mb-4 flex items-center gap-2">
+        <CalendarClock className="h-5 w-5 text-primary" aria-hidden="true" />
+        <h2 className="font-display text-lg font-semibold text-base-content">
+          Upcoming
+        </h2>
+      </div>
+
+      {upcoming.length === 0 ? (
+        <p className="rounded-box bg-base-200 px-4 py-6 text-center text-sm text-base-content/60">
+          No upcoming bookings in the next 14 days.
+        </p>
+      ) : (
+        <ol className="flex flex-col gap-2">
+          {upcoming.map((item) => (
+            <UpcomingRow key={item.id} item={item} onOpen={onOpen} />
           ))}
         </ol>
       )}
@@ -739,6 +889,7 @@ export function DashboardView({ data }: DashboardViewProps) {
   const router = useRouter();
   const {
     stops,
+    upcoming,
     radar,
     bookingMode,
     monthSummary,
@@ -785,6 +936,10 @@ export function DashboardView({ data }: DashboardViewProps) {
         </Reveal>
 
         <Reveal y={12} duration={0.28} delay={0.04}>
+          <UpcomingCard upcoming={upcoming} onOpen={handleOpen} />
+        </Reveal>
+
+        <Reveal y={12} duration={0.28} delay={0.08}>
           {radarLocked ? (
             <OrderRadarLocked />
           ) : (
@@ -796,11 +951,11 @@ export function DashboardView({ data }: DashboardViewProps) {
           )}
         </Reveal>
 
-        <Reveal y={12} duration={0.28} delay={0.08}>
+        <Reveal y={12} duration={0.28} delay={0.12}>
           <ThisMonthCard summary={monthSummary} />
         </Reveal>
 
-        <Reveal y={12} duration={0.28} delay={0.12}>
+        <Reveal y={12} duration={0.28} delay={0.16}>
           <FillMyDayCard
             gap={fillGap}
             recovered={fillRecoveredThisMonth}
@@ -809,11 +964,11 @@ export function DashboardView({ data }: DashboardViewProps) {
           />
         </Reveal>
 
-        <Reveal y={12} duration={0.28} delay={0.16}>
+        <Reveal y={12} duration={0.28} delay={0.2}>
           <RebookingCard />
         </Reveal>
 
-        <Reveal y={12} duration={0.28} delay={0.2}>
+        <Reveal y={12} duration={0.28} delay={0.24}>
           <SmsCreditsCard used={smsUsed} included={smsIncluded} />
         </Reveal>
       </div>

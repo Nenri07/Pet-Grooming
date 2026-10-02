@@ -154,6 +154,21 @@ function fmtTime(ms: number): string {
   return new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 }
 
+/** Full date label for the detail panel (e.g. "Mon, Jun 3, 2024"). */
+function fmtDate(ms: number): string {
+  return new Date(ms).toLocaleDateString([], {
+    weekday: 'short',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
+/** Google Maps directions URL to an address (empty string → no link). */
+function directionsUrl(address: string): string {
+  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`;
+}
+
 function fmtDayLabel(d: Date): string {
   return d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
 }
@@ -178,6 +193,18 @@ function startOfWeek(d: Date): Date {
 
 const PX_PER_MIN_DAY = 1.1; // taller, touch-friendly day timeline
 const PX_PER_MIN_WEEK = 0.7; // compact week columns
+
+/**
+ * Minimum pixel height for a Day-view block. Short appointments (e.g. a 15-min
+ * nail trim) would otherwise collapse to a ~16px sliver and clip their text, so
+ * we floor the height here while still letting longer appointments grow
+ * proportionally via `durationMinutes × PX_PER_MIN_DAY`. ~64px comfortably fits
+ * three lines (pet / time+service / client) at our type scale.
+ */
+const MIN_DAY_BLOCK_PX = 64;
+
+/** Horizontal gap (px) between side-by-side Day-view lanes. */
+const DAY_LANE_GAP_PX = 6;
 const HOUR_LINES = Array.from(
   { length: DAY_END_HOUR - DAY_START_HOUR + 1 },
   (_, i) => DAY_START_HOUR + i
@@ -622,6 +649,50 @@ function CurrentTimeLine({ pxPerMin, day }: { pxPerMin: number; day: Date }) {
   );
 }
 
+/** An appointment paired with its computed lane placement. */
+interface LaidOutAppointment {
+  appt: CalendarAppointment;
+  laneIndex: number; // 0-based column within the day
+}
+
+/**
+ * Greedy interval-graph "lane" layout for a day's appointments.
+ *
+ * Because `MIN_DAY_BLOCK_PX` floors each block's height, two appointments that
+ * are close in time (but don't truly overlap) can still *visually* overlap once
+ * rendered. To keep every block readable we lay overlapping blocks out SIDE BY
+ * SIDE instead of stacking them.
+ *
+ * Algorithm (v1 — global lanes for the whole day): walk the day's appointments
+ * in start order and drop each into the first lane whose previous appointment
+ * ends at/before this one's start; otherwise open a new lane. The returned
+ * `laneCount` is the max lanes used across the day, and every block is widthed
+ * as `1/laneCount` offset by its `laneIndex`. This is intentionally simple —
+ * clusters that don't overlap still share the global lane count, which only
+ * ever makes blocks *narrower*, never clipped — and avoids the extra bookkeeping
+ * of per-cluster widths. Good enough for a single groomer's day.
+ *
+ * `appts` MUST already be sorted by `startMs` ascending (DayView does this).
+ */
+function computeDayLanes(appts: CalendarAppointment[]): {
+  laidOut: LaidOutAppointment[];
+  laneCount: number;
+} {
+  // Track the end time of the last appointment placed in each lane.
+  const laneEnds: number[] = [];
+  const laidOut: LaidOutAppointment[] = appts.map((appt) => {
+    let laneIndex = laneEnds.findIndex((end) => end <= appt.startMs);
+    if (laneIndex === -1) {
+      laneIndex = laneEnds.length;
+      laneEnds.push(appt.endMs);
+    } else {
+      laneEnds[laneIndex] = appt.endMs;
+    }
+    return { appt, laneIndex };
+  });
+  return { laidOut, laneCount: Math.max(1, laneEnds.length) };
+}
+
 function DayView({
   anchor,
   appointments,
@@ -637,12 +708,29 @@ function DayView({
   const dayKey = localDayKey(anchor.getTime());
   const dayStart = startOfLocalDay(anchor);
 
+  // Which appointment's detail panel is open (null = none). A tap on a block
+  // opens the in-place panel; the panel still offers "Open full details" which
+  // navigates to /appointments/{id} via `onOpen`.
+  const [openId, setOpenId] = React.useState<string | null>(null);
+
   const dayAppts = React.useMemo(
     () =>
       appointments
         .filter((a) => localDayKey(a.startMs) === dayKey)
         .sort((a, b) => a.startMs - b.startMs),
     [appointments, dayKey]
+  );
+
+  const { laidOut, laneCount } = React.useMemo(
+    () => computeDayLanes(dayAppts),
+    [dayAppts]
+  );
+
+  // The appointment backing the open detail panel (resolve lazily; it may have
+  // been filtered out between renders, in which case we close).
+  const openAppt = React.useMemo(
+    () => dayAppts.find((a) => a.id === openId) ?? null,
+    [dayAppts, openId]
   );
 
   const handleColumnClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -670,13 +758,25 @@ function DayView({
           <GridLines pxPerMin={pxPerMin} />
           <CurrentTimeLine pxPerMin={pxPerMin} day={anchor} />
 
-          {dayAppts.map((a, idx) => {
+          {laidOut.map(({ appt: a, laneIndex }, idx) => {
             const top = Math.max(0, minutesFromDayStart(a.startMs)) * pxPerMin;
+            // Floor the height so even short appointments stay legible, but let
+            // longer ones grow proportionally.
             const height = Math.max(
-              SLOT_STEP_MIN * pxPerMin,
+              MIN_DAY_BLOCK_PX,
               durationMinutes(a.startMs, a.endMs) * pxPerMin
             );
-            const prev = idx > 0 ? dayAppts[idx - 1] : null;
+            // Lane-based horizontal placement: each block takes 1/laneCount of
+            // the column, offset by its lane, with a small gap between lanes.
+            // (Keeps the old left-2 inset by rendering lanes inside left-2/right-2.)
+            const widthPct = 100 / laneCount;
+            const left = `calc(0.5rem + (100% - 1rem) * ${laneIndex} / ${laneCount} + ${
+              laneIndex > 0 ? DAY_LANE_GAP_PX / 2 : 0
+            }px)`;
+            const width = `calc((100% - 1rem) * ${widthPct / 100} - ${
+              laneCount > 1 ? DAY_LANE_GAP_PX : 0
+            }px)`;
+            const prev = idx > 0 ? laidOut[idx - 1].appt : null;
             return (
               <React.Fragment key={a.id}>
                 {prev && <TravelChip prev={prev} curr={a} pxPerMin={pxPerMin} />}
@@ -686,24 +786,26 @@ function DayView({
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.2, delay: Math.min(idx * 0.03, 0.2) }}
-                  onClick={() => onOpen(a.id)}
+                  onClick={() => setOpenId(a.id)}
                   className={cx(
-                    'absolute left-2 right-2 z-10 overflow-hidden rounded-box border-l-4 px-2 py-1 text-left text-xs shadow-card transition-transform hover:scale-[1.01]',
+                    'absolute z-10 flex flex-col gap-0.5 overflow-hidden rounded-box border-l-4 px-2.5 py-2 text-left shadow-card transition-transform hover:scale-[1.01]',
                     statusClasses(a.status)
                   )}
-                  style={{ top, height }}
-                  aria-label={`${a.petName ?? 'Appointment'} at ${fmtTime(a.startMs)}`}
+                  style={{ top, height, left, width }}
+                  aria-label={`${a.petName ?? 'Appointment'} at ${fmtTime(a.startMs)} — view details`}
                 >
-                  <span className="block truncate font-semibold">
+                  <span className="block truncate text-sm font-semibold leading-tight">
                     {a.petName ?? 'Appointment'}
                     {a.petBreed ? ` · ${a.petBreed}` : ''}
                   </span>
-                  <span className="block truncate opacity-80">
+                  <span className="block truncate text-xs leading-tight">
                     {fmtTime(a.startMs)}–{fmtTime(a.endMs)}
                     {a.serviceName ? ` · ${a.serviceName}` : ''}
                   </span>
                   {a.clientName && (
-                    <span className="block truncate opacity-70">{a.clientName}</span>
+                    <span className="block truncate text-xs leading-tight opacity-80">
+                      {a.clientName}
+                    </span>
                   )}
                 </motion.button>
               </React.Fragment>
@@ -717,6 +819,164 @@ function DayView({
           )}
         </div>
       </div>
+
+      <AnimatePresence>
+        {openAppt && (
+          <AppointmentDetailPanel
+            key="day-detail"
+            appt={openAppt}
+            onClose={() => setOpenId(null)}
+            onOpenFull={() => onOpen(openAppt.id)}
+          />
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+/**
+ * In-place appointment detail panel for the Day view — a bottom sheet on mobile,
+ * a centered modal on desktop. Mirrors `AddBookingModal`'s overlay / motion /
+ * Escape-to-close pattern so the two feel consistent.
+ *
+ * A single tap on a Day block opens this (no page change). It surfaces the full
+ * booking — pet, status, date + time, service, client, service address with a
+ * Google Maps "Directions" link, and the travel estimate when present — plus an
+ * "Open full details" action that navigates to the existing /appointments/{id}
+ * page via the parent's `onOpenFull`.
+ */
+function AppointmentDetailPanel({
+  appt,
+  onClose,
+  onOpenFull,
+}: {
+  appt: CalendarAppointment;
+  onClose: () => void;
+  onOpenFull: () => void;
+}) {
+  // Escape closes (mirrors the modal affordances elsewhere in this file).
+  React.useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  const address = appt.serviceAddress?.trim() || null;
+  const driveMin =
+    typeof appt.extraDriveMin === 'number' ? Math.round(appt.extraDriveMin) : null;
+  const driveKm = typeof appt.fromPrevKm === 'number' ? appt.fromPrevKm : null;
+  const hasTravel = driveMin !== null || driveKm !== null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${appt.petName ?? 'Appointment'} details`}
+    >
+      <div className="absolute inset-0 bg-neutral/40" onClick={onClose} aria-hidden="true" />
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 24 }}
+        transition={{ duration: 0.25 }}
+        className="relative z-10 w-full max-w-md rounded-t-box border border-base-content/10 bg-base-100 p-5 shadow-card sm:rounded-box"
+      >
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="truncate text-lg font-semibold text-base-content">
+              {appt.petName ?? 'Appointment'}
+            </h2>
+            {appt.petBreed && (
+              <p className="truncate text-sm text-base-content/70">{appt.petBreed}</p>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className={cx('badge', statusBadge(appt.status))}>{appt.status}</span>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close"
+              className="btn btn-ghost btn-circle min-h-[44px] min-w-[44px]"
+            >
+              <X className="h-5 w-5" aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+
+        <dl className="flex flex-col gap-3 text-sm">
+          <div className="flex flex-col gap-0.5">
+            <dt className="text-base-content/60">When</dt>
+            <dd className="font-medium text-base-content">
+              {fmtDate(appt.startMs)} · {fmtTime(appt.startMs)}–{fmtTime(appt.endMs)}
+            </dd>
+          </div>
+
+          {appt.serviceName && (
+            <div className="flex flex-col gap-0.5">
+              <dt className="text-base-content/60">Service</dt>
+              <dd className="font-medium text-base-content">{appt.serviceName}</dd>
+            </div>
+          )}
+
+          {appt.clientName && (
+            <div className="flex flex-col gap-0.5">
+              <dt className="text-base-content/60">Client</dt>
+              <dd className="font-medium text-base-content">{appt.clientName}</dd>
+            </div>
+          )}
+
+          <div className="flex flex-col gap-0.5">
+            <dt className="text-base-content/60">Address</dt>
+            <dd className="font-medium text-base-content">
+              {address ?? <span className="text-base-content/50">No address on file</span>}
+            </dd>
+            {address && (
+              <a
+                href={directionsUrl(address)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1 inline-flex min-h-[44px] w-fit items-center gap-1 text-primary hover:underline"
+              >
+                <Navigation className="h-4 w-4" aria-hidden="true" />
+                Directions
+              </a>
+            )}
+          </div>
+
+          {hasTravel && (
+            <div className="flex flex-col gap-0.5">
+              <dt className="text-base-content/60">Travel from previous stop</dt>
+              <dd className="flex items-center gap-1 font-medium text-base-content">
+                <Navigation className="h-4 w-4 text-primary" aria-hidden="true" />
+                {driveKm !== null ? `${driveKm.toFixed(1)} km` : null}
+                {driveKm !== null && driveMin !== null ? ' · ' : null}
+                {driveMin !== null ? `${driveMin} min drive` : null}
+              </dd>
+            </div>
+          )}
+        </dl>
+
+        <div className="mt-5 flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="btn btn-ghost min-h-[44px] bg-base-200"
+          >
+            Close
+          </button>
+          <button
+            type="button"
+            onClick={onOpenFull}
+            className="btn btn-primary min-h-[44px] gap-1"
+          >
+            <ExternalLink className="h-4 w-4" aria-hidden="true" />
+            Open full details
+          </button>
+        </div>
+      </motion.div>
     </div>
   );
 }

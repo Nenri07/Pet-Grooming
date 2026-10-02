@@ -21,11 +21,14 @@
  *    optional weight range, a priceAdjustmentPercent integer in [-50, 50], and
  *    an optional note up to 500 characters
  *  - logoUrl: optional string (a Cloudinary secure_url produced by ImageUpload)
+ *  - serviceAreaPolygon: optional drawn GeoJSON Polygon (or null to clear) that
+ *    is authoritative over serviceRadiusKm when present (§10.4)
  *
  * _Requirements: 15.1, 21.1_
  */
 import { z } from 'zod';
 import type { CoatCondition } from '@/types';
+import { isValidPolygon } from '@/lib/routing/service-area';
 
 /** Maximum length of the business name (Requirement 15.1). */
 export const BUSINESS_NAME_MAX_LENGTH = 100;
@@ -188,6 +191,19 @@ export const settingsSchema = z.object({
     })
     .optional()
     .or(z.literal('')),
+
+  // A drawn GeoJSON Polygon that, when present, is authoritative over the
+  // radius above (§10.4). It arrives as a nested object from the map draw tool,
+  // so we accept a passthrough object validated by `isValidPolygon`, or `null`
+  // / `undefined` to CLEAR it. Shape rules (ring length, [lng,lat] bounds) live
+  // in the pure geometry core, keeping this schema the single gate.
+  serviceAreaPolygon: z
+    .object({ type: z.literal('Polygon'), coordinates: z.array(z.array(z.array(z.number()))) })
+    .passthrough()
+    .refine((value) => isValidPolygon(value), {
+      message: 'Draw a valid service area with at least three points.',
+    })
+    .nullish(),
 });
 
 /**

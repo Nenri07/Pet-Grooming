@@ -1,12 +1,14 @@
 'use client';
 
 import * as React from 'react';
+import dynamic from 'next/dynamic';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { Link2, Plus, Trash2 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
 import { ImageUpload } from '@/components/ui/ImageUpload';
+import type { GeoPolygon } from '@/lib/routing/service-area';
 import {
   updateBusinessSettings,
   updateGroomerSlug,
@@ -62,6 +64,21 @@ function cx(...classes: Array<string | false | null | undefined>): string {
   return classes.filter(Boolean).join(' ');
 }
 
+/**
+ * The polygon-draw map is client-only (Mapbox GL touches `window`), so load it
+ * via `next/dynamic` with `ssr: false` and a calm pulse skeleton that matches
+ * the map's own footprint.
+ */
+const ServiceAreaMap = dynamic(() => import('./ServiceAreaMap'), {
+  ssr: false,
+  loading: () => (
+    <div
+      className="h-72 w-full animate-pulse rounded-box border border-base-content/10 bg-base-200 sm:h-96"
+      aria-hidden="true"
+    />
+  ),
+});
+
 /** Human-friendly labels for coat conditions. */
 const COAT_LABELS: Record<(typeof COAT_CONDITIONS)[number], string> = {
   smooth: 'Smooth',
@@ -90,6 +107,7 @@ function toFormValues(settings: BusinessSettingsData): ServiceSettingsInput {
     baseAddress: settings.baseAddress,
     serviceRadiusKm:
       settings.serviceRadiusKm ?? ('' as unknown as number),
+    serviceAreaPolygon: settings.serviceAreaPolygon ?? null,
   };
 }
 
@@ -334,6 +352,27 @@ function BusinessProfileForm({ initialSettings }: BusinessSettingsProps) {
             ) : (
               <p className="mt-1 text-xs text-base-content/60">Leave blank for no limit.</p>
             )}
+          </div>
+
+          {/* Drawn service area — authoritative over the radius when present. */}
+          <div className="form-control mt-3">
+            <p className="label-text font-medium">Service area map (optional)</p>
+            <p className="mb-2 mt-1 text-xs text-base-content/60">
+              Draw your exact service area on the map. Clients outside it can&apos;t book. If you
+              don&apos;t draw one, the service radius above is used.
+            </p>
+            <Controller
+              control={control}
+              name="serviceAreaPolygon"
+              render={({ field }) => (
+                <ServiceAreaMap
+                  token={process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? null}
+                  baseLocation={initialSettings.baseLocation}
+                  value={(field.value as GeoPolygon | null) ?? null}
+                  onChange={(poly) => field.onChange(poly)}
+                />
+              )}
+            />
           </div>
         </fieldset>
 

@@ -31,7 +31,7 @@ import {
   scoreInsertion,
   labelForScore,
   exceedsMaxDetour,
-  isWithinServiceRadius,
+  isServiceable,
   getTravelProvider,
   haversineKm,
   ROUTING,
@@ -39,6 +39,7 @@ import {
   type Stop,
   type TravelProvider,
   type TravelCfg,
+  type GeoPolygon,
 } from '@/lib/routing';
 import type { TimeSlot } from '@/types';
 
@@ -95,6 +96,8 @@ export interface RoutingInput {
     bufferMin: number;
     maxDetourMin?: number;
     serviceRadiusKm?: number;
+    /** Drawn service area; authoritative over the radius when present (§10.4). */
+    serviceAreaPolygon?: GeoPolygon | null;
     travel: TravelCfg;
   };
   /**
@@ -161,8 +164,19 @@ export async function applyRoutingFilter(
     // Infeasible insertion → not bookable at all.
     if (!result) continue;
 
-    // Hard filter: outside the service radius is never bookable (either view).
-    if (!isWithinServiceRadius(result.fromPrevKm, config.serviceRadiusKm)) continue;
+    // Hard filter: a drawn service-area polygon (if any) is authoritative over
+    // the radius; outside the serviceable area is never bookable (either view).
+    // clientLoc is guaranteed non-null here (the routing filter early-returns
+    // a pass-through when it is unknown).
+    if (
+      !isServiceable({
+        point: clientLoc,
+        polygon: config.serviceAreaPolygon ?? null,
+        fromBaseKm: result.fromPrevKm,
+        serviceRadiusKm: config.serviceRadiusKm,
+      })
+    )
+      continue;
 
     // Client view hides over-detour slots; groomer view keeps them.
     if (view === 'client' && exceedsMaxDetour(result.extraDriveMin, config.maxDetourMin)) continue;
@@ -372,6 +386,7 @@ export async function getSlotsForDate(
         bufferMin: profile.bufferMin ?? ROUTING.bufferMin,
         maxDetourMin: profile.maxDetourMin ?? ROUTING.maxDetourMin,
         serviceRadiusKm: profile.serviceRadiusKm,
+        serviceAreaPolygon: profile.serviceAreaPolygon,
         travel: {
           roadFactor: profile.roadFactor ?? ROUTING.travel.roadFactor,
           avgSpeedKmh: profile.avgSpeedKmh ?? ROUTING.travel.avgSpeedKmh,

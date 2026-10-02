@@ -10,6 +10,8 @@
  *
  * _Master Spec: §10.2_
  */
+import { isMapboxConfigured, getMapboxToken } from '@/lib/routing/config';
+import { MapboxMatrixProvider } from '@/lib/routing/providers/mapbox-travel';
 
 /** A geographic point. */
 export type LatLng = { lat: number; lng: number };
@@ -77,21 +79,26 @@ export const DEFAULT_TRAVEL_CFG: TravelCfg = {
 };
 
 /**
- * Factory returning the travel provider to use. Today this always returns the
- * default haversine provider.
+ * Factory returning the travel provider to use.
  *
- * SEAM (§10.2): when `MAPBOX_TOKEN` is configured and real road times are
- * wanted, construct a `MapboxMatrixProvider(cfg)` here instead. That provider
- * should:
- *   - call the Mapbox Matrix API for `minutes`/`km`,
- *   - cache each pair in Redis under `keys.travelTime(hash(a), hash(b))`
+ * WIRED (§10.2): when `MAPBOX_TOKEN` is configured, this returns a
+ * {@link MapboxMatrixProvider} that:
+ *   - calls the Mapbox Directions API (driving profile) for `minutes`/`km`,
+ *   - caches each pair in Redis under `keys.travelTime(hash(a), hash(b))`
  *     (`tt:{hash(a)}:{hash(b)}`) for 7 days (see `redis.ts` TTL.TRAVEL),
- *   - fall back to `HaversineTravelProvider` on any error or cache miss + API
- *     failure, so routing never hard-fails on a network blip.
- * It is intentionally NOT implemented now — no Mapbox account is required to
- * ship Phase 3.
+ *   - falls back to {@link HaversineTravelProvider} on any error or cache miss +
+ *     API failure, so routing never hard-fails on a network blip.
+ * When the token is unset/placeholder it returns the default haversine
+ * provider — no Mapbox account is required to ship Phase 3.
+ *
+ * `MapboxMatrixProvider` only imports types + the haversine value from this
+ * module and executes no geo code at load, so the value import below is a
+ * safe (CALL-time only) cycle.
  */
 export function getTravelProvider(cfg: TravelCfg = DEFAULT_TRAVEL_CFG): TravelProvider {
-  // TODO(mapbox): if (process.env.MAPBOX_TOKEN) return new MapboxMatrixProvider(cfg);
+  if (isMapboxConfigured()) {
+    const token = getMapboxToken();
+    if (token) return new MapboxMatrixProvider(cfg, token);
+  }
   return new HaversineTravelProvider(cfg);
 }
