@@ -26,15 +26,30 @@
  * booking on `payment_intent.succeeded` by looking up the PendingBooking
  * instead of parsing metadata.
  *
- * _Requirements: 7.1, 7.2, 7.6_
+ * Stripe Connect direct charges (Phase 3, task 13.2; design "Stripe Flows (e)"):
+ * the deposit PaymentIntent is created as a DIRECT CHARGE on the groomer's
+ * connected account (`{ stripeAccount: acct_… }`, i.e. the `Stripe-Account`
+ * header), so funds settle on the groomer's balance and Pawxis is NOT the MoR
+ * (R16.4). The deposit path REQUIRES a `complete` Connected_Account (R16.1,
+ * R17.1): when the groomer hasn't finished Connect we return a clear error
+ * envelope WITHOUT creating a charge or a PendingBooking. Application-fee
+ * plumbing is present but 0 at launch (R16.2) — see the fee-omit note at the
+ * call site. The PendingBooking keyed by PI id and the fulfilment path are
+ * UNCHANGED; `payment_intent.succeeded` for a direct charge arrives as a
+ * CONNECT event (`event.account` set) which task 13.3 routes to the same
+ * unchanged `fulfilBookingByPaymentIntentId`.
+ *
+ * _Requirements: 7.1, 7.2, 7.6, 16.1, 16.2, 16.4, 17.1_
  */
 import { connectDB } from '@/lib/db/connect';
-import { GroomerProfile } from '@/lib/db/models/groomer-profile';
+import { GroomerProfile, type ConnectStatus } from '@/lib/db/models/groomer-profile';
 import { PendingBooking } from '@/lib/db/models/pending-booking';
 import { getStripe, isStripeConfigured } from '@/lib/stripe/client';
 import { createHold, SlotHeldError } from '@/lib/calendar/holds';
 import { isRedisConfigured } from '@/lib/redis';
 import { generateBookingRef } from '@/lib/booking/reference';
+import { computeApplicationFee } from '@/lib/billing/fees';
+import { getPlatformFeePercent } from '@/lib/billing/config';
 import type { OwnerDetailsInput, PetInfoInput } from '@/types';
 
 /** Hard fallback deposit if neither the profile nor the env configure one. */
@@ -109,6 +124,36 @@ function resolveDepositAmount(profileDeposit: unknown): number {
 }
 
 /**
+ * User-facing message when a deposit booking is attempted against a groomer who
+ * has not completed Stripe Connect onboarding (R16.1 / R17.1). The deposit path
+ * ALWAYS requires payment, so a non-`complete` account (or no account) blocks
+ * the booking here with this labelled state rather than charging. (R17.2's
+ * no-deposit booking is a separate path, gated on the booking page in task 14.2
+ * — it never reaches this deposit-intent helper.)
+ */
+const CONNECT_NOT_READY_ERROR =
+  "This groomer isn't able to accept online payments yet. Please contact them to book.";
+
+/**
+ * Resolve the groomer's EFFECTIVE Connect status for the deposit gate.
+ *
+ * Prefers the stored `connectStatus` enum (task 13.1) when present. For rows
+ * written before `connectStatus` existed it falls back to a COARSE status
+ * derived from the legacy `stripeConnectChargesEnabled` boolean
+ * (`true` → treat as `complete`, else `not_started`), so legacy profiles still
+ * gate correctly without a backfill. (The canonical status/charges mapping on
+ * `account.updated` lives in `@/lib/billing/connect`; this is only the
+ * read-side fallback.)
+ */
+function effectiveConnectStatus(profile: {
+  connectStatus?: ConnectStatus;
+  stripeConnectChargesEnabled?: boolean;
+}): ConnectStatus {
+  if (profile.connectStatus) return profile.connectStatus;
+  return profile.stripeConnectChargesEnabled === true ? 'complete' : 'not_started';
+}
+
+/**
  * Create a Stripe PaymentIntent for a groomer's booking deposit.
  *
  * @param groomerSlug the groomer's public booking slug.
@@ -142,7 +187,11 @@ export async function createDepositPaymentIntent(
     await connectDB();
 
     const profile = await GroomerProfile.findOne({ groomerSlug })
-      .select('userId depositAmount')
+      // Also pull the Connect fields so we can gate the deposit on a COMPLETE
+      // connected account and target the direct charge at it (task 13.2).
+      .select(
+        'userId depositAmount stripeConnectAccountId connectStatus stripeConnectChargesEnabled'
+      )
       .lean();
 
     if (!profile) {
@@ -150,6 +199,19 @@ export async function createDepositPaymentIntent(
         ok: false,
         error: "We couldn't start the payment because this groomer is unavailable.",
       };
+    }
+
+    // GATE (R16.1 / R17.1, refined R16.1/16.2): a deposit booking requires a
+    // COMPLETE Connected_Account. If the groomer hasn't finished Connect (or
+    // has no connected account id), block cleanly here — BEFORE placing any
+    // Redis hold, creating a charge, or persisting a PendingBooking — with the
+    // labelled "can't accept online payments yet" envelope. The deposit path
+    // always requires payment, so there is no "pay later" fallback here;
+    // R17.2's no-deposit booking is handled by the booking-page gate (task 14.2).
+    const connectStatus = effectiveConnectStatus(profile);
+    const connectAccountId = profile.stripeConnectAccountId;
+    if (connectStatus !== 'complete' || !connectAccountId) {
+      return { ok: false, error: CONNECT_NOT_READY_ERROR };
     }
 
     const amount = resolveDepositAmount(profile.depositAmount);
@@ -203,21 +265,53 @@ export async function createDepositPaymentIntent(
     }
 
     const stripe = getStripe();
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Stripe expects the smallest unit (cents).
+
+    const amountMinor = Math.round(amount * 100); // Stripe expects the smallest unit (cents).
+
+    // Application-fee plumbing (R16.2): derive the fee from the configurable
+    // platform rate (0 at launch ⇒ fee 0). The plumbing is PRESENT so a
+    // non-zero percentage can be enabled by config alone, with no re-architecting.
+    //
+    // Fee-omit-when-0 decision: Stripe REJECTS `application_fee_amount: 0` on a
+    // direct charge, so we OMIT the field entirely when the computed fee is 0
+    // (the launch case) and INCLUDE it only when it is > 0. This keeps the
+    // plumbing intact (the computation always runs) while producing a valid
+    // request today.
+    const applicationFeeAmount = computeApplicationFee(
+      amountMinor,
       currency,
-      // Only small identifiers live on Stripe metadata; the full pet+owner+slot
-      // payload is persisted in the PendingBooking below (Stripe caps each
-      // metadata VALUE at 500 chars, which the full booking exceeds).
-      metadata: {
-        groomerId,
-        groomerSlug,
-        // paymentIntentId is added below once the intent id is known — Stripe
-        // exposes it as `intent.id`, so we set it via a follow-up update only
-        // if needed. We instead key the PendingBooking on intent.id directly.
+      getPlatformFeePercent()
+    );
+
+    // Create the deposit PaymentIntent as a DIRECT CHARGE on the groomer's
+    // connected account via `{ stripeAccount: connectAccountId }` (the
+    // `Stripe-Account` header). Funds settle on the groomer's balance; Pawxis
+    // is not the MoR (R16.4). `payment_intent.succeeded` for this charge is
+    // delivered as a CONNECT event (`event.account` set) and task 13.3 routes
+    // it to the same unchanged `fulfilBookingByPaymentIntentId` (keyed by PI id).
+    const paymentIntent = await stripe.paymentIntents.create(
+      {
+        amount: amountMinor,
+        currency,
+        // Omit application_fee_amount when 0 (Stripe rejects a 0 fee); include
+        // it only when > 0 so the fee routes to the platform once enabled.
+        ...(applicationFeeAmount > 0
+          ? { application_fee_amount: applicationFeeAmount }
+          : {}),
+        // Only small identifiers live on Stripe metadata; the full pet+owner+slot
+        // payload is persisted in the PendingBooking below (Stripe caps each
+        // metadata VALUE at 500 chars, which the full booking exceeds).
+        metadata: {
+          groomerId,
+          groomerSlug,
+          // paymentIntentId is added below once the intent id is known — Stripe
+          // exposes it as `intent.id`, so we set it via a follow-up update only
+          // if needed. We instead key the PendingBooking on intent.id directly.
+        },
+        automatic_payment_methods: { enabled: true },
       },
-      automatic_payment_methods: { enabled: true },
-    });
+      { stripeAccount: connectAccountId }
+    );
 
     if (!paymentIntent.client_secret) {
       return {
@@ -231,6 +325,13 @@ export async function createDepositPaymentIntent(
     // id, so the webhook can reconstruct the booking on success without relying
     // on (size-limited) Stripe metadata. Upsert keeps this idempotent if the
     // client retries intent creation for the same payment.
+    //
+    // The PendingBooking is keyed by the PI id REGARDLESS of which account the
+    // intent lives on, so it stays unchanged for direct charges: fulfilment
+    // (`fulfilBookingByPaymentIntentId`) also keys off the PI id. The connected
+    // account id is not stored here because the webhook learns it from the
+    // CONNECT event's `event.account` (task 13.3) and the lookup needs only the
+    // PI id. The hold logic below is likewise unchanged.
     const pending = await PendingBooking.findOneAndUpdate(
       { paymentIntentId: paymentIntent.id },
       {
@@ -265,9 +366,14 @@ export async function createDepositPaymentIntent(
 
     // Record the PaymentIntent id on the intent's own metadata too, so the
     // identifier is visible in the Stripe dashboard alongside the record.
-    await stripe.paymentIntents.update(paymentIntent.id, {
-      metadata: { groomerId, groomerSlug, paymentIntentId: paymentIntent.id },
-    });
+    // This MUST target the connected account as well (`{ stripeAccount }`),
+    // because the intent lives ON that account — a platform-scoped update would
+    // not find it.
+    await stripe.paymentIntents.update(
+      paymentIntent.id,
+      { metadata: { groomerId, groomerSlug, paymentIntentId: paymentIntent.id } },
+      { stripeAccount: connectAccountId }
+    );
 
     return {
       ok: true,

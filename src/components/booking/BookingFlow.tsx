@@ -17,12 +17,31 @@ import { StepEstimate } from './StepEstimate';
 import { StepCalendar } from './StepCalendar';
 import { StepPayment } from './StepPayment';
 import { StepSuccess } from './StepSuccess';
+import { bookingAllowed } from '@/lib/billing/connect';
 
 /** Serializable groomer info the server component passes to the flow. */
 export interface BookingGroomer {
   slug: string;
   businessName: string;
   services: BookingStepServices;
+  /**
+   * Whether the groomer's Stripe Connect account can accept online payments
+   * (effective connect status === 'complete'). When `false` and a deposit is
+   * required, the flow blocks the payment step and shows the "online payments
+   * not set up yet" state instead (R17.1).
+   */
+  paymentsReady: boolean;
+  /**
+   * Whether a booking requires an upfront deposit (the groomer configured a
+   * deposit amount > 0). When `false`, bookings proceed without the payment
+   * step (R17.2).
+   */
+  requiresDeposit: boolean;
+  /** Optional business phone, surfaced in the not-set-up card so clients can
+   * reach the groomer directly to book. */
+  businessPhone?: string;
+  /** Optional business email, surfaced in the not-set-up card. */
+  businessEmail?: string;
 }
 
 /**
@@ -100,6 +119,94 @@ function ProgressIndicator({
 }
 
 /**
+ * PaymentsNotSetUp — the calm "online payments aren't set up yet" state shown
+ * INSTEAD of the deposit payment step when a booking requires a deposit but the
+ * groomer's Stripe Connect account isn't `complete` (R17.1).
+ *
+ * This mirrors the server-side guard in `createDepositPaymentIntent`
+ * (CONNECT_NOT_READY_ERROR) so the client never advances into a payment step
+ * that can only fail — the booking is blocked here with a clear next step
+ * (contact the groomer directly), surfacing their phone/email when available.
+ *
+ * DaisyUI theme tokens, WCAG 2.1 AA contrast, 44px touch targets.
+ *
+ * _Requirements: 17.1, 17.4_
+ */
+function PaymentsNotSetUp({
+  businessName,
+  phone,
+  email,
+  onBack,
+}: {
+  businessName: string;
+  phone?: string;
+  email?: string;
+  onBack: () => void;
+}) {
+  const hasContact = Boolean(phone || email);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div>
+        <h2 className="text-xl font-semibold text-base-content">
+          Online payments aren&apos;t set up yet
+        </h2>
+        <p className="text-sm text-base-content/60">
+          This booking requires a deposit
+        </p>
+      </div>
+
+      <div className="alert alert-info rounded-2xl" role="status">
+        <span>
+          {businessName} hasn&apos;t enabled online payments yet, so we
+          can&apos;t take your deposit here.{' '}
+          {hasContact
+            ? 'Please reach out to them directly to finish booking:'
+            : 'Please contact them directly to finish booking your appointment.'}
+        </span>
+      </div>
+
+      {hasContact && (
+        <ul className="flex flex-col gap-2 text-sm text-base-content">
+          {phone && (
+            <li>
+              <span className="font-medium">Phone: </span>
+              <a
+                href={`tel:${phone}`}
+                className="link link-primary inline-flex min-h-11 items-center"
+              >
+                {phone}
+              </a>
+            </li>
+          )}
+          {email && (
+            <li>
+              <span className="font-medium">Email: </span>
+              <a
+                href={`mailto:${email}`}
+                className="link link-primary inline-flex min-h-11 items-center"
+              >
+                {email}
+              </a>
+            </li>
+          )}
+        </ul>
+      )}
+
+      <div className="flex gap-2">
+        <button
+          type="button"
+          className="btn btn-ghost rounded-btn min-h-11"
+          onClick={onBack}
+        >
+          Back
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
  * BookingFlow — client container that drives the multi-step booking state
  * machine, renders the active step, shows a progress indicator, and animates
  * transitions between steps.
@@ -120,6 +227,17 @@ export function BookingFlow({ groomer, initialState, prefillNotice }: BookingFlo
     groomerSlug: groomer.slug,
   };
 
+  // R17 gate: a deposit booking may only proceed to the payment step when the
+  // groomer can actually take the deposit. `bookingAllowed` is the shared pure
+  // decision (true iff no deposit is required OR Connect is complete); when a
+  // deposit IS required and payments aren't ready we must block the charge.
+  const paymentsReady = groomer.paymentsReady;
+  const requiresDeposit = groomer.requiresDeposit;
+  const depositBookingAllowed = bookingAllowed(
+    requiresDeposit,
+    paymentsReady ? 'complete' : 'not_started'
+  );
+
   function renderStep() {
     switch (state.currentStep) {
       case 'pet-info':
@@ -131,6 +249,21 @@ export function BookingFlow({ groomer, initialState, prefillNotice }: BookingFlo
       case 'calendar':
         return <StepCalendar {...stepProps} />;
       case 'payment':
+        // Block the deposit step when a deposit is required but online payments
+        // aren't set up — show the labelled not-set-up state instead so the
+        // client never reaches a dead charge (R17.1). When no deposit is
+        // required, or Connect is complete, the existing StepPayment runs
+        // unchanged (R17.2 / R17.3).
+        if (!depositBookingAllowed) {
+          return (
+            <PaymentsNotSetUp
+              businessName={groomer.businessName}
+              phone={groomer.businessPhone}
+              email={groomer.businessEmail}
+              onBack={() => dispatch({ type: 'GO_BACK' })}
+            />
+          );
+        }
         return <StepPayment {...stepProps} />;
       case 'success':
         return <StepSuccess {...stepProps} />;

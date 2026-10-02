@@ -326,3 +326,75 @@ export async function handleTrialWillEnd(
   );
   await invalidateEntitlements(String(row.groomerId));
 }
+
+// ---------------------------------------------------------------------------
+// IMPURE Connect account handler (DB side) — Stripe Flows (d)/(e).
+//
+// `account.updated` is a CONNECT event (delivered with a top-level
+// `event.account` = the connected `acct_...` id). It keeps the groomer's
+// GroomerProfile in sync with Stripe's view of their Connected_Account: the
+// surfaced `connectStatus` enum AND the fast `stripeConnectChargesEnabled`
+// boolean the booking gate reads.
+//
+// This is deliberately NOT part of the entitlements/subscription path: Connect
+// status is read by the public booking gate (`bookingAllowed`), not by
+// `resolveEntitlements`, so we do NOT call `invalidateEntitlements` here —
+// over-invalidating would churn the subscription cache for an unrelated signal.
+//
+// Idempotency: the mapping (`mapConnectStatus`) is a pure function of the
+// account object and every write is a state-SET, so a re-delivered
+// `account.updated` converges to the same stored row (R15.5).
+//
+// _Design: Stripe Flows (d) — Connect Express onboarding → connectStatus_
+// _Requirements: 15.4, 15.5_
+// ---------------------------------------------------------------------------
+import { GroomerProfile } from '@/lib/db/models/groomer-profile';
+import { mapConnectStatus } from '@/lib/billing/connect';
+
+/**
+ * Handle `account.updated` (a Stripe Connect event).
+ *
+ * Finds the GroomerProfile whose `stripeConnectAccountId` equals `account.id`,
+ * then sets:
+ *   - `connectStatus = mapConnectStatus(account)` — the surfaced five-state
+ *     enum the Settings card + booking gate read; and
+ *   - `stripeConnectChargesEnabled = (account.charges_enabled === true)` — the
+ *     fast "can I charge?" boolean, kept in lockstep so it can never disagree
+ *     with the enum (`complete` iff charges enabled, R15.4).
+ *
+ * If no profile matches the account id we log and skip (acknowledge) — the
+ * event is for a connected account we did not provision locally.
+ *
+ * Idempotent: `mapConnectStatus` is pure and the update is a state-SET, so a
+ * re-delivered event produces the same final row (R15.5). This does NOT touch
+ * the Subscription row or the entitlements cache — Connect status is not an
+ * entitlement (it is consumed by the booking gate, not `resolveEntitlements`).
+ *
+ * _Requirements: 15.4, 15.5_
+ */
+export async function handleAccountUpdated(
+  account: Stripe.Account
+): Promise<void> {
+  await connectDB();
+
+  const accountId = typeof account.id === 'string' ? account.id : null;
+  if (!accountId) {
+    console.warn('Stripe webhook: account.updated with no account id; skipping.');
+    return;
+  }
+
+  const profile = await GroomerProfile.findOne({ stripeConnectAccountId: accountId });
+  if (!profile) {
+    console.warn(
+      `Stripe webhook: no GroomerProfile for Connect account=${accountId}; skipping.`
+    );
+    return;
+  }
+
+  // Pure mapping + the synced boolean. `mapConnectStatus` returns `complete`
+  // iff `charges_enabled === true`, so the enum and the flag always agree.
+  profile.connectStatus = mapConnectStatus(account);
+  profile.stripeConnectChargesEnabled = account.charges_enabled === true;
+
+  await profile.save();
+}

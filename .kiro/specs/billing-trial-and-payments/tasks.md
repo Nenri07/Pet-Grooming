@@ -150,55 +150,55 @@ Convert the feature design into a series of prompts for a code-generation LLM th
     - Add the email-verification and phone-OTP steps to the registration/trial-start flow (request/confirm OTP, resend within rate limit, labelled Not_Configured_State when a provider is unavailable, user-safe error messages). DaisyUI theme tokens, WCAG 2.1 AA, 44px touch targets.
     - _Requirements: 7.1, 10.1, 10.2, 10.3, 10.4, 13.1, 13.4_ — Design: UI
 
-- [-] 11. Phase 2 verification gate
+- [x] 11. Phase 2 verification gate
   - Verify phase: run `npx tsc --noEmit`, `npm test -- --run`, and `npm run build`; fix any failures; commit. Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 12. Phase 3 config + fee pure core (PURE + property tests)
-  - [~] 12.1 Implement the application-fee pure function
+- [x] 12. Phase 3 config + fee pure core (PURE + property tests)
+  - [x] 12.1 Implement the application-fee pure function
     - Create `src/lib/billing/fees.ts` with `computeApplicationFee(amountMinor, currency, ratePercent)` — zero-decimal-currency aware, returns an integer in minor units with `0 <= fee <= amountMinor`, `fee === 0` when `ratePercent === 0`, non-decreasing in `ratePercent`. Reads launch default `0` from `STRIPE_PLATFORM_FEE_PERCENT` at the call site (function stays pure).
     - _Requirements: 16.2_ — Design: Pure Functions → `fees.ts`
-  - [ ]* 12.2 Write property test for `computeApplicationFee` (PURE + TEST)
+  - [x]* 12.2 Write property test for `computeApplicationFee` (PURE + TEST)
     - Add `tests/properties/fees.test.ts`.
     - **Property 1: fee bounds** — integer, `0 <= fee <= amountMinor` for any rate in `[0,100]` and any supported currency (incl. zero-decimal jpy/krw); `fee === 0` at rate 0; non-decreasing in rate. Examples: rate 0, rate 100, amount 0.
     - _Requirements: 16.2_
-  - [~] 12.3 Add Connect status + booking-permission pure helpers
+  - [x] 12.3 Add Connect status + booking-permission pure helpers
     - Add `mapConnectStatus(account) -> ConnectStatus` (`{not_started,pending,needs_info,complete,disabled}`; `complete` iff `charges_enabled`) and `bookingAllowed(requiresDeposit, connectStatus)` (true iff `!requiresDeposit || connectStatus === 'complete'`) in the appropriate pure helper modules.
     - _Requirements: 15.1, 15.4, 17.2, 17.3_ — Design: Data Models (ConnectStatus), Stripe Flows (d)
-  - [ ]* 12.4 Write property tests for Connect status + booking permission (PURE + TEST)
+  - [x]* 12.4 Write property tests for Connect status + booking permission (PURE + TEST)
     - Add `tests/properties/connect.test.ts`.
     - **Property 13: connect status mapping** — total, `complete` iff `charges_enabled`, idempotent (same account twice ⇒ same `connectStatus` + `chargesEnabled`).
     - **Property 14: bookingAllowed** — true iff `requiresDeposit === false` OR `connectStatus === 'complete'`.
     - _Requirements: 15.1, 15.4, 15.5, 17.2, 17.3_
 
-- [ ] 13. Phase 3 Connect model + direct-charge deposit + webhook routing
-  - [~] 13.1 Add `connectStatus` to the GroomerProfile model
+- [x] 13. Phase 3 Connect model + direct-charge deposit + webhook routing
+  - [x] 13.1 Add `connectStatus` to the GroomerProfile model
     - In `src/lib/db/models/groomer-profile.ts`, add `connectStatus: ConnectStatus` enum (default `not_started`) alongside the existing `stripeConnectAccountId` / `stripeConnectChargesEnabled` boolean (kept as the fast "can I charge?" flag).
     - _Requirements: 15.1, 15.4_ — Design: Data Models (ConnectStatus)
-  - [~] 13.2 Extend deposit PaymentIntent creation to a direct charge
+  - [x] 13.2 Extend deposit PaymentIntent creation to a direct charge
     - In `src/lib/stripe/helpers.ts`, extend `createDepositPaymentIntent` to load `connectStatus`+`stripeConnectAccountId`, block with a labelled result when not `complete`, else create the PI **on the connected account** (`{ stripeAccount: acct_... }`) with `application_fee_amount = computeApplicationFee(amountMinor, currency, STRIPE_PLATFORM_FEE_PERCENT)` and `automatic_payment_methods`. Persist `PendingBooking` keyed by intent id (unchanged). Reuse `fulfilBookingByPaymentIntentId` unchanged.
     - _Requirements: 16.1, 16.2, 16.4, 17.1_ — Design: Stripe Flows (e)
-  - [~] 13.3 Route Connect (account) events in the webhook without breaking deposits
+  - [x] 13.3 Route Connect (account) events in the webhook without breaking deposits
     - In `src/app/api/webhooks/stripe/route.ts`, route by `event.type` AND presence of `event.account`: `account.updated` (Connect) → `handleAccountUpdated` mapping `mapConnectStatus` into `connectStatus` + syncing `stripeConnectChargesEnabled`; direct-charge `payment_intent.succeeded/payment_failed` (now Connect events) still flow to the UNCHANGED deposit fulfilment (keys off PI id regardless of account). Try `STRIPE_WEBHOOK_SECRET` first, fall back to `STRIPE_CONNECT_WEBHOOK_SECRET` only if configured. Reuse `idempotencyOnce(event.id)`.
     - _Requirements: 6.1, 6.2, 6.3, 15.4, 15.5, 16.3, 16.5_ — Design: webhook routing
-  - [~] 13.4 Confirm Connect onboarding account-link action (reuse existing)
+  - [x] 13.4 Confirm Connect onboarding account-link action (reuse existing)
     - Verify/extend `createConnectAccountLink` to create an Express account (if none) + account link, return the hosted URL, store only `accountId`, optimistically refresh via `accounts.retrieve` on return, and return `connect_not_configured` without throwing when Connect is unconfigured.
     - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.5, 14.6_ — Design: Stripe Flows (d)
-  - [ ]* 13.5 Write direct-charge + connect webhook integration tests (TEST)
+  - [x]* 13.5 Write direct-charge + connect webhook integration tests (TEST)
     - Direct-charge PI example fulfils one booking even on duplicate delivery (R16.5); `account.updated` updates `connectStatus`+`chargesEnabled` idempotently; deposit blocked when `connectStatus != complete`.
     - _Requirements: 16.3, 16.5, 15.4, 15.5, 17.1_
 
-- [ ] 14. Phase 3 UI — Connect status card + booking "not set up" state
-  - [~] 14.1 Build the Connect status card in Settings
+- [x] 14. Phase 3 UI — Connect status card + booking "not set up" state
+  - [x] 14.1 Build the Connect status card in Settings
     - Add a Settings card showing the current `connectStatus` (not started / pending / needs info / complete / disabled) with a re-onboarding link that opens hosted onboarding when `needs_info`/`disabled`, and a labelled "payouts not set up yet" state when Connect is unconfigured. DaisyUI tokens, WCAG 2.1 AA, 44px targets.
     - _Requirements: 15.1, 15.2, 15.3, 15.6, 18.2_ — Design: UI
-  - [~] 14.2 Add the "online payments not set up yet" state to the public booking page
+  - [x] 14.2 Add the "online payments not set up yet" state to the public booking page
     - On the public booking page, block deposit-requiring bookings when the groomer's `connectStatus != complete` and show the labelled state; allow no-deposit bookings to proceed; enable deposit bookings automatically once Connect is complete. DaisyUI tokens, WCAG 2.1 AA, 44px targets.
     - _Requirements: 17.1, 17.2, 17.3, 17.4_ — Design: Decision Points Resolved (R17)
-  - [~] 14.3 Backfill `connectStatus` for existing profiles
+  - [x] 14.3 Backfill `connectStatus` for existing profiles
     - Derive `connectStatus` for existing profiles from `stripeConnectChargesEnabled` (`true ⇒ complete`, else `not_started`) via a one-off backfill or lazy on-read default so legacy profiles surface a correct status.
     - _Requirements: 15.1, 15.4_ — Design: Data Models
 
-- [~] 15. Phase 3 verification gate
+- [-] 15. Phase 3 verification gate
   - Verify phase: run `npx tsc --noEmit`, `npm test -- --run`, and `npm run build`; fix any failures; commit. Ensure all tests pass, ask the user if questions arise.
 
 ## Notes

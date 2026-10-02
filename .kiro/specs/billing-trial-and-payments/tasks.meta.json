@@ -15,6 +15,10 @@
     "7.3 Write property tests for email functions (PURE + TEST)": {
       "status": "passed",
       "lastRunTimestamp": 1790948935932
+    },
+    "12.2 Write property test for `computeApplicationFee` (PURE + TEST)": {
+      "status": "passed",
+      "lastRunTimestamp": 1790950956213
     }
   },
   "executionHistory": {
@@ -445,6 +449,11 @@
         "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
         "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
         "timestamp": 1790950191556
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790950616407
       }
     ],
     "12.1 Implement the application-fee pure function": [
@@ -452,6 +461,16 @@
         "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
         "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
         "timestamp": 1790945801583
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790950628192
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790950849687
       }
     ],
     "12.3 Add Connect status + booking-permission pure helpers": [
@@ -459,6 +478,16 @@
         "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
         "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
         "timestamp": 1790945801738
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790950629286
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790950850803
       }
     ],
     "13.1 Add `connectStatus` to the GroomerProfile model": [
@@ -466,6 +495,16 @@
         "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
         "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
         "timestamp": 1790945801817
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790950627049
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790950852101
       }
     ],
     "13.2 Extend deposit PaymentIntent creation to a direct charge": [
@@ -473,6 +512,11 @@
         "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
         "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
         "timestamp": 1790945801885
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790951158286
       }
     ],
     "13.3 Route Connect (account) events in the webhook without breaking deposits": [
@@ -480,6 +524,11 @@
         "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
         "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
         "timestamp": 1790945801977
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790951159778
       }
     ],
     "13.4 Confirm Connect onboarding account-link action (reuse existing)": [
@@ -487,6 +536,11 @@
         "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
         "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
         "timestamp": 1790945802060
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790951161625
       }
     ],
     "14.1 Build the Connect status card in Settings": [
@@ -494,6 +548,11 @@
         "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
         "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
         "timestamp": 1790945802151
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790951535773
       }
     ],
     "14.2 Add the \"online payments not set up yet\" state to the public booking page": [
@@ -501,6 +560,11 @@
         "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
         "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
         "timestamp": 1790945802235
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790951536825
       }
     ],
     "14.3 Backfill `connectStatus` for existing profiles": [
@@ -508,6 +572,11 @@
         "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
         "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
         "timestamp": 1790945802315
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790951538187
       }
     ],
     "15. Phase 3 verification gate": [
@@ -515,6 +584,11 @@
         "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
         "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
         "timestamp": 1790945802387
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790951540901
       }
     ],
     "1. Phase 1 foundation — config + Subscription model extension": [
@@ -663,6 +737,48 @@
         "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
         "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
         "timestamp": 1790950190143
+      }
+    ],
+    "12. Phase 3 config + fee pure core (PURE + property tests)": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790950850959
+      }
+    ],
+    "13. Phase 3 Connect model + direct-charge deposit + webhook routing": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790951162118
+      }
+    ],
+    "12.4 Write property tests for Connect status + booking permission (PURE + TEST)": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790951162458
+      }
+    ],
+    "12.2 Write property test for `computeApplicationFee` (PURE + TEST)": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790951163753
+      }
+    ],
+    "14. Phase 3 UI — Connect status card + booking \"not set up\" state": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790951538416
+      }
+    ],
+    "13.5 Write direct-charge + connect webhook integration tests (TEST)": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790951539499
       }
     ]
   }

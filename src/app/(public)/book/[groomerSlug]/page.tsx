@@ -91,7 +91,14 @@ async function loadGroomerSeoData(slug: string): Promise<GroomerSeoData | null> 
 async function loadGroomer(slug: string): Promise<BookingGroomer | null> {
   await connectDB();
 
-  const profile = await GroomerProfile.findOne({ groomerSlug: slug }).lean();
+  const profile = await GroomerProfile.findOne({ groomerSlug: slug })
+    .select(
+      // Service/branding fields plus the Connect + deposit fields the booking
+      // gate (task 14.2 / R17) needs to decide whether deposit bookings are
+      // allowed and whether to show the "online payments not set up" state.
+      'userId businessName phone businessEmail depositAmount connectStatus stripeConnectChargesEnabled'
+    )
+    .lean();
   if (!profile) return null;
 
   const services = await Service.find({
@@ -101,6 +108,31 @@ async function loadGroomer(slug: string): Promise<BookingGroomer | null> {
     .select('name basePrice durationMinutes')
     .lean();
 
+  // Derive the EFFECTIVE Connect status exactly as the server deposit guard
+  // does (prefer the stored `connectStatus` enum; fall back to the legacy
+  // `stripeConnectChargesEnabled` boolean for rows written before the enum
+  // existed). `paymentsReady` is true only when charges are fully enabled, so
+  // the client gate never diverges from the server's CONNECT_NOT_READY block.
+  const effectiveStatus =
+    profile.connectStatus ??
+    (profile.stripeConnectChargesEnabled === true ? 'complete' : 'not_started');
+  const paymentsReady = effectiveStatus === 'complete';
+
+  // A deposit is only required when the groomer has configured a positive
+  // deposit amount. A 0 deposit means no upfront payment, so the booking may
+  // proceed without the payment step (R17.2).
+  const requiresDeposit =
+    typeof profile.depositAmount === 'number' && profile.depositAmount > 0;
+
+  const businessPhone =
+    typeof profile.phone === 'string' && profile.phone.trim().length > 0
+      ? profile.phone.trim()
+      : undefined;
+  const businessEmail =
+    typeof profile.businessEmail === 'string' && profile.businessEmail.trim().length > 0
+      ? profile.businessEmail.trim()
+      : undefined;
+
   return {
     slug,
     businessName: profile.businessName ?? 'Pet Grooming',
@@ -109,6 +141,10 @@ async function loadGroomer(slug: string): Promise<BookingGroomer | null> {
       basePrice: s.basePrice,
       durationMinutes: s.durationMinutes,
     })),
+    paymentsReady,
+    requiresDeposit,
+    businessPhone,
+    businessEmail,
   };
 }
 

@@ -9,7 +9,8 @@
     "lint": "next lint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "backfill:trial-deadline": "tsx scripts/backfill-trial-deadline.ts"
+    "backfill:trial-deadline": "tsx scripts/backfill-trial-deadline.ts",
+    "backfill:connect-status": "tsx scripts/backfill-connect-status.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

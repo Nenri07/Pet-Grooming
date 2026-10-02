@@ -38,6 +38,16 @@ interface TravelFeeTier {
 /** How new bookings are handled (§9.2). */
 export type BookingMode = 'instant' | 'request';
 
+/**
+ * The five surfaced Stripe Connect onboarding states (R15.1).
+ *
+ * Mirrors the canonical `ConnectStatus` union owned by `@/lib/billing/connect`
+ * (task 12.3). Re-declared locally here to keep the model self-contained and
+ * avoid a cross-task import race while 12.3 lands concurrently; the two unions
+ * are structurally identical.
+ */
+export type ConnectStatus = 'not_started' | 'pending' | 'needs_info' | 'complete' | 'disabled';
+
 export interface IGroomerProfile {
   _id: Types.ObjectId;
   userId: Types.ObjectId;
@@ -75,6 +85,12 @@ export interface IGroomerProfile {
   stripeConnectAccountId?: string;
   /** Whether the Connect account has finished onboarding (charges enabled). */
   stripeConnectChargesEnabled?: boolean;
+  /**
+   * Richer Connect onboarding state for the five surfaced UI states (R15.1).
+   * Kept alongside `stripeConnectChargesEnabled` (the fast "can I charge?"
+   * flag); `connectStatus === 'complete'` iff charges are enabled (R15.4).
+   */
+  connectStatus?: ConnectStatus;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -161,6 +177,11 @@ const groomerProfileSchema = new Schema<IGroomerProfile>(
     // --- Stripe Connect (client deposits, §13.3; additive) ---
     stripeConnectAccountId: { type: String },
     stripeConnectChargesEnabled: { type: Boolean, default: false },
+    connectStatus: {
+      type: String,
+      enum: ['not_started', 'pending', 'needs_info', 'complete', 'disabled'],
+      default: 'not_started',
+    },
   },
   { timestamps: true }
 );

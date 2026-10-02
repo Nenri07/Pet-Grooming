@@ -17,9 +17,14 @@
  */
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
-import { getBillingProvider, type BillingResult } from '@/lib/billing/provider';
+import {
+  getBillingProvider,
+  isConnectConfigured,
+  type BillingResult,
+} from '@/lib/billing/provider';
 import type { BillingInterval } from '@/lib/plans';
 import type { CheckoutPlan } from '@/lib/billing/provider';
+import { mapConnectStatus } from '@/lib/billing/connect';
 
 /** Absolute app base URL for building return/success/cancel links. */
 function appUrl(path: string): string {
@@ -115,4 +120,83 @@ export async function createConnectAccountLink(): Promise<BillingResult> {
     refreshUrl: appUrl('/settings?connect=refresh'),
     returnUrl: appUrl('/settings?connect=done'),
   });
+}
+
+/**
+ * The result of an optimistic Connect-status refresh. Deliberately a tiny,
+ * never-throw envelope: `{ ok: true, status }` when we successfully read the
+ * connected account and persisted the derived status, or `{ ok: false }` for
+ * every degraded path (not signed in, Connect not configured, no account yet,
+ * or any Stripe/DB error).
+ */
+export interface RefreshConnectStatusResult {
+  ok: boolean;
+  /** The freshly-derived {@link import('@/lib/billing/connect').ConnectStatus}. */
+  status?: string;
+}
+
+/**
+ * Optimistically refresh the groomer's Stripe Connect status after they return
+ * from the Stripe-hosted onboarding flow to `/settings?connect=done` (§13.3,
+ * Stripe Flows (d)).
+ *
+ * This complements — but does NOT replace — the authoritative `account.updated`
+ * Connect webhook (task 13.3). It lets the Settings UI reflect the new status
+ * promptly instead of waiting for the webhook to land. It reuses the SAME pure
+ * {@link mapConnectStatus} mapping and persists the SAME fields the webhook
+ * writes (`connectStatus` + `stripeConnectChargesEnabled`), so the optimistic
+ * refresh and the webhook can never disagree.
+ *
+ * Degrades gracefully (never throws): not signed in, Connect not configured, no
+ * stored `stripeConnectAccountId`, or any Stripe/DB error all resolve to
+ * `{ ok: false }`.
+ *
+ * _Requirements: 14.1, 14.2, 14.3, 14.4, 14.5, 14.6, 15.4_
+ */
+export async function refreshConnectStatus(): Promise<RefreshConnectStatusResult> {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) return { ok: false };
+
+    // Connect is configured independently of subscription billing; bail out
+    // (degraded, not an error) when it isn't set up so we never touch Stripe.
+    if (!isConnectConfigured()) return { ok: false };
+
+    // Lazily import the DB + Stripe singletons so this module stays importable
+    // in contexts where billing/Connect is unconfigured.
+    const [{ connectDB }, { GroomerProfile }, { getStripe }] = await Promise.all([
+      import('@/lib/db/connect'),
+      import('@/lib/db/models/groomer-profile'),
+      import('@/lib/stripe/client'),
+    ]);
+
+    await connectDB();
+
+    const profile = await GroomerProfile.findOne({ userId: session.user.id })
+      .select('stripeConnectAccountId')
+      .lean<{ stripeConnectAccountId?: string } | null>();
+
+    const accountId = profile?.stripeConnectAccountId;
+    if (!accountId) return { ok: false };
+
+    // Read the live account and derive the status with the same pure mapping
+    // the webhook uses. `complete` iff `charges_enabled === true` (R15.4).
+    const account = await getStripe().accounts.retrieve(accountId);
+    const status = mapConnectStatus(account);
+
+    await GroomerProfile.findOneAndUpdate(
+      { userId: session.user.id },
+      {
+        $set: {
+          connectStatus: status,
+          stripeConnectChargesEnabled: account.charges_enabled === true,
+        },
+      }
+    );
+
+    return { ok: true, status };
+  } catch (err) {
+    console.error('[billing] refreshConnectStatus failed:', err);
+    return { ok: false };
+  }
 }

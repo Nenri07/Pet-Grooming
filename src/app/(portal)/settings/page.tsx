@@ -6,6 +6,29 @@ import { BusinessSettings } from '@/components/portal/BusinessSettings';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { ThemePicker } from '@/components/portal/ThemePicker';
 import { LogoutButton } from '@/components/portal/LogoutButton';
+import { ConnectStatusCard } from '@/components/portal/ConnectStatusCard';
+import { isConnectConfigured } from '@/lib/billing/provider';
+import { connectDB } from '@/lib/db/connect';
+import { GroomerProfile } from '@/lib/db/models/groomer-profile';
+import type { ConnectStatus } from '@/lib/billing/connect';
+
+/**
+ * Load the groomer's current Stripe Connect onboarding status for the
+ * "Online payments" card (R15.1). Defaults to `not_started` when no profile
+ * row exists yet or `connectStatus` is unset, and fails open (never throws) so
+ * the Settings page always renders.
+ */
+async function loadConnectStatus(userId: string): Promise<ConnectStatus> {
+  try {
+    await connectDB();
+    const profile = await GroomerProfile.findOne({ userId })
+      .select('connectStatus')
+      .lean<{ connectStatus?: ConnectStatus } | null>();
+    return profile?.connectStatus ?? 'not_started';
+  } catch {
+    return 'not_started';
+  }
+}
 
 /**
  * Business settings page (server component shell).
@@ -35,6 +58,9 @@ export default async function SettingsPage() {
 
   const result = await getBusinessSettings();
 
+  const connectConfigured = isConnectConfigured();
+  const connectStatus = await loadConnectStatus(session.user.id);
+
   if (!result.ok) {
     return (
       <div className="mx-auto w-full max-w-2xl">
@@ -48,6 +74,11 @@ export default async function SettingsPage() {
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
       <BusinessSettings initialSettings={result.settings} />
+
+      <ConnectStatusCard
+        connectConfigured={connectConfigured}
+        status={connectStatus}
+      />
 
       <Card>
         <CardHeader>

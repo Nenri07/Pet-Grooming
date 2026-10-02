@@ -13,6 +13,19 @@
  * invalidate the entitlements cache. The DB-writing logic for these lives in
  * `./helpers` (the deposit path here is deliberately left unchanged).
  *
+ * It also routes the CONNECT account lifecycle: `account.updated` (a Connect
+ * event, delivered with a top-level `event.account`) maps the Stripe account
+ * into the GroomerProfile's `connectStatus` + `stripeConnectChargesEnabled`
+ * (`handleAccountUpdated` in `./helpers`). Direct-charge deposit successes also
+ * arrive here as Connect `payment_intent.*` events and flow through the EXACT
+ * same idempotent `fulfilBooking` path as platform deposits — they key off the
+ * PaymentIntent id, not the account, so no account-specific branching is needed.
+ *
+ * Signature verification is DUAL-SECRET: we verify with `STRIPE_WEBHOOK_SECRET`
+ * first (which also covers Connect in the default single-endpoint topology) and
+ * only fall back to a separate `STRIPE_CONNECT_WEBHOOK_SECRET` when one is
+ * configured (non-placeholder). Both failing → 400 (R6.1, R6.2).
+ *
  * Fulfilment is the authoritative point at which persistent booking records
  * are created (Requirement 7.3): the Client, Pet, Appointment, and Transaction
  * are written here so a booking only materialises once money has actually
@@ -40,6 +53,7 @@ import {
   handleInvoicePaid,
   handleInvoicePaymentFailed,
   handleTrialWillEnd,
+  handleAccountUpdated,
 } from './helpers';
 
 // Stripe SDK + Mongoose require the Node.js runtime; the Edge runtime lacks the
@@ -78,6 +92,62 @@ async function markPaymentFailed(paymentIntent: Stripe.PaymentIntent): Promise<v
   );
 }
 
+/**
+ * Whether an env value is present and NOT a shipped placeholder. Mirrors the
+ * `isSet` classifier in `@/lib/billing/config` so the dual-secret logic treats
+ * a placeholder `STRIPE_CONNECT_WEBHOOK_SECRET` the same way the rest of the
+ * billing surface does — as "not configured" (R19.4).
+ */
+function isSecretConfigured(value: string | undefined): value is string {
+  if (!value) return false;
+  const t = value.trim();
+  if (t.length === 0) return false;
+  if (t.includes('replace_me') || t.startsWith('your-') || t.startsWith('price_replace')) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Verify a Stripe webhook signature with DUAL-SECRET fallback.
+ *
+ * Connect events (`account.updated`, and the direct-charge `payment_intent.*`
+ * for deposits) may be delivered to THIS endpoint. Two topologies are
+ * supported transparently:
+ *
+ *   - Single endpoint (default): Stripe signs BOTH platform and Connect
+ *     deliveries with `STRIPE_WEBHOOK_SECRET`. We try it first and succeed.
+ *   - Separate Connect endpoint: a second endpoint is configured with its own
+ *     `STRIPE_CONNECT_WEBHOOK_SECRET`. Its deliveries fail the platform-secret
+ *     check, so — only when that secret is configured (non-placeholder) — we
+ *     retry `constructEvent` with the Connect secret.
+ *
+ * If BOTH secrets fail (or only the platform one is configured and it fails),
+ * the signature is invalid and the caller returns 400 (R6.1, R6.2).
+ *
+ * @throws the Stripe signature error from the LAST attempt when verification
+ *   fails under every configured secret.
+ */
+function verifyStripeEvent(
+  rawBody: string,
+  signature: string,
+  platformSecret: string
+): Stripe.Event {
+  const stripe = getStripe();
+  try {
+    // Primary: the platform secret also covers Connect in single-endpoint mode.
+    return stripe.webhooks.constructEvent(rawBody, signature, platformSecret);
+  } catch (primaryErr) {
+    const connectSecret = process.env.STRIPE_CONNECT_WEBHOOK_SECRET;
+    // Only attempt the fallback when a DISTINCT Connect secret is actually
+    // configured; otherwise re-throw the original platform-secret failure.
+    if (isSecretConfigured(connectSecret) && connectSecret !== platformSecret) {
+      return stripe.webhooks.constructEvent(rawBody, signature, connectSecret);
+    }
+    throw primaryErr;
+  }
+}
+
 export async function POST(req: Request): Promise<Response> {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!webhookSecret) {
@@ -93,9 +163,11 @@ export async function POST(req: Request): Promise<Response> {
   // Read the RAW body for signature verification (do not JSON-parse first).
   const rawBody = await req.text();
 
+  // Verify with the platform secret first; fall back to the Connect secret only
+  // when a separate one is configured (dual-secret topology). Both-fail → 400.
   let event: Stripe.Event;
   try {
-    event = getStripe().webhooks.constructEvent(rawBody, signature, webhookSecret);
+    event = verifyStripeEvent(rawBody, signature, webhookSecret);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Invalid signature';
     console.error('Stripe webhook signature verification failed:', message);
@@ -149,6 +221,18 @@ export async function POST(req: Request): Promise<Response> {
         break;
       case 'invoice.payment_failed':
         await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
+        break;
+
+      // --- Connect account lifecycle (Stripe Flows (d)) -------------------
+      // `account.updated` is a Connect event (carries a top-level
+      // `event.account`). It maps the account into `connectStatus` and keeps
+      // `stripeConnectChargesEnabled` in sync on the GroomerProfile. It does
+      // NOT touch the deposit (payment_intent.*) path above — direct-charge
+      // deposit successes still arrive as `payment_intent.succeeded` and fulfil
+      // through the SAME unchanged `fulfilBooking` path, keyed off the PI id
+      // regardless of `event.account`.
+      case 'account.updated':
+        await handleAccountUpdated(event.data.object as Stripe.Account);
         break;
 
       default:

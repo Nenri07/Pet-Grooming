@@ -55,6 +55,21 @@ async function resolveRebook(token: string): Promise<ResolvedRebook | null> {
     .select('name basePrice durationMinutes')
     .lean();
 
+  // Mirror the public booking page's R17 gate derivation so a returning client
+  // sees the same "online payments not set up yet" state and no-deposit
+  // behaviour as a fresh booking.
+  const effectiveStatus =
+    profile.connectStatus ??
+    (profile.stripeConnectChargesEnabled === true ? 'complete' : 'not_started');
+  const businessPhone =
+    typeof profile.phone === 'string' && profile.phone.trim().length > 0
+      ? profile.phone.trim()
+      : undefined;
+  const businessEmail =
+    typeof profile.businessEmail === 'string' && profile.businessEmail.trim().length > 0
+      ? profile.businessEmail.trim()
+      : undefined;
+
   const groomer: BookingGroomer = {
     slug: profile.groomerSlug ?? '',
     businessName: profile.businessName ?? 'Pet Grooming',
@@ -63,6 +78,11 @@ async function resolveRebook(token: string): Promise<ResolvedRebook | null> {
       basePrice: s.basePrice,
       durationMinutes: s.durationMinutes,
     })),
+    paymentsReady: effectiveStatus === 'complete',
+    requiresDeposit:
+      typeof profile.depositAmount === 'number' && profile.depositAmount > 0,
+    businessPhone,
+    businessEmail,
   };
 
   const p = pet as unknown as {
