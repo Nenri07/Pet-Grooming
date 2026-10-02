@@ -186,7 +186,7 @@ export function PortalNav() {
             alt="Pawxis"
             width={320}
             height={128}
-            className="h-32 w-auto shrink-0 object-contain"
+            className="h-10 w-auto shrink-0 object-contain"
             priority
           />
         </Link>
@@ -221,7 +221,7 @@ export function PortalNav() {
                 alt="Pawxis"
                 width={320}
                 height={128}
-                className="h-32 w-auto max-w-full object-contain"
+                className="h-12 w-auto max-w-full object-contain"
                 priority
               />
             </Link>
