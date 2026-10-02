@@ -1,29 +1,46 @@
 'use client';
 import * as React from 'react';
 import { motion, useInView } from 'framer-motion';
-import { NumberTicker } from '@/components/motion';
+import { Download, Printer } from 'lucide-react';
 import { useGsapContext, useReducedMotion } from '@/lib/animation';
 import { SectionHeading } from './SectionHeading';
 import { landing } from '@/content/landing';
+import { ReceiptTicket } from '@/components/booking/ReceiptTicket';
+import type { ReceiptData } from '@/components/booking/ReceiptPDF';
 
 /**
- * ReceiptShowcase — animates the branded booking-receipt "download" experience.
+ * ReceiptShowcase — shows the REAL premium booking-receipt design on the
+ * landing page by rendering the shared `<ReceiptTicket>` (the exact ticket
+ * clients see on the booking success step) with sample data. Because the live
+ * Download / Print buttons live in `BookingReceipt` (not the ticket), the
+ * showcase renders the ticket on its own and adds a non-functional
+ * "Download / Print" hint so prospects see — but can't trigger — the actions.
  *
  * Motion ownership:
- *   - Framer (useInView + motion) owns the ticket slide/scale-in and the
- *     download button's tap micro-interaction on their own nodes.
- *   - NumberTicker (Framer) owns the deposit amount count-up (SSR-safe: the
- *     final value is in server HTML).
+ *   - Framer (useInView + motion) owns the ticket slide/scale-in on its node.
  *   - GSAP owns a subtle continuous float on a DEDICATED wrapper node, distinct
  *     from the Framer entrance node, so the two never write the same transform.
  *
- * Reduced motion: the ticket renders in its final state, no float, no count-up
- * (NumberTicker shows the final value), and the button has no motion.
+ * Reduced motion: the ticket renders in its final state, no float, no entrance.
  */
+
+/** Realistic sample receipt data — the exact shape the real ticket renders. */
+const SAMPLE_RECEIPT: ReceiptData = {
+  businessName: 'Happy Paws',
+  logoUrl: '/pawxis2.png',
+  bookingRef: 'PP-XK4T9M',
+  petName: 'Bella',
+  serviceName: 'Full groom',
+  serviceAddress: '12 Oak Street, Austin',
+  clientName: 'Jordan Lee',
+  scheduledDate: '2025-07-17T14:30:00',
+  depositAmount: 25,
+  currency: 'usd',
+};
+
 export function ReceiptShowcase() {
   const reduced = useReducedMotion();
   const { receipt } = landing;
-  const { sample } = receipt;
 
   const ref = React.useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { amount: 0.4, once: true });
@@ -91,9 +108,9 @@ export function ReceiptShowcase() {
             </ul>
           </div>
 
-          {/* ---- Receipt ticket mockup ---- */}
+          {/* ---- The REAL receipt ticket (premium design, sample data) ---- */}
           <div
-            className="order-1 flex justify-center lg:order-2"
+            className="order-1 flex flex-col items-center lg:order-2"
             data-float-layer
           >
             <motion.div
@@ -101,86 +118,29 @@ export function ReceiptShowcase() {
               initial={hidden}
               animate={inView ? shown : hidden}
               transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-              className="w-full max-w-sm overflow-hidden rounded-box border border-base-content/10 bg-base-100 shadow-card"
+              className="w-full max-w-sm"
             >
-              {/* Header: primary→accent gradient */}
-              <div className="bg-gradient-to-r from-primary to-accent px-6 py-5 text-primary-content">
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] opacity-90">
-                  Booking receipt
-                </p>
-                <p className="mt-1 font-display text-xl font-bold">PawPort</p>
-              </div>
+              {/* Distinct id so it never collides with a live #pp-receipt. */}
+              <ReceiptTicket data={SAMPLE_RECEIPT} id="pp-receipt-showcase" />
 
-              {/* Body */}
-              <div className="space-y-5 px-6 py-6">
-                {/* Big boxed reference */}
-                <div className="rounded-2xl border border-dashed border-base-content/20 bg-base-200 px-4 py-3 text-center">
-                  <p className="text-[0.7rem] uppercase tracking-wide text-base-content/50">
-                    Reference
-                  </p>
-                  <p className="mt-1 font-display text-2xl font-bold tracking-widest text-base-content">
-                    {sample.reference}
-                  </p>
-                </div>
-
-                <dl className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <dt className="text-base-content/50">Date</dt>
-                    <dd className="font-medium text-base-content">
-                      {sample.date}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-base-content/50">Time</dt>
-                    <dd className="font-medium text-base-content">
-                      {sample.time}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-base-content/50">Pet</dt>
-                    <dd className="font-medium text-base-content">
-                      {sample.pet}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-base-content/50">Service</dt>
-                    <dd className="font-medium text-base-content">
-                      {sample.service}
-                    </dd>
-                  </div>
-                </dl>
-
-                <div className="flex items-center justify-between border-t border-base-content/10 pt-4">
-                  <div>
-                    <p className="text-base-content/50">Deposit</p>
-                    <p className="font-display text-2xl font-bold text-base-content">
-                      <NumberTicker
-                        value={sample.amount}
-                        prefix={sample.currency}
-                      />
-                    </p>
-                  </div>
-                  <span className="rounded-badge bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                    {sample.depositLabel}
-                  </span>
-                </div>
-
-                {/* Download button micro-interaction */}
-                <motion.button
-                  type="button"
-                  whileHover={reduced ? undefined : { scale: 1.03 }}
-                  whileTap={reduced ? undefined : { scale: 0.97 }}
-                  transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                  className="btn btn-primary min-h-[44px] w-full gap-2"
-                >
-                  <span aria-hidden>⭳</span>
+              {/* Non-functional action hint — mirrors the real buttons. */}
+              <div
+                aria-hidden="true"
+                className="mt-4 flex flex-col gap-3 sm:flex-row"
+              >
+                <span className="btn btn-primary pointer-events-none min-h-[44px] flex-1 gap-2 opacity-60">
+                  <Download className="h-4 w-4" />
                   {receipt.downloadLabel}
-                </motion.button>
-
-                <p className="text-center text-[0.7rem] text-base-content/50">
-                  Illustrative example
-                </p>
+                </span>
+                <span className="btn btn-outline pointer-events-none min-h-[44px] gap-2 opacity-60 sm:flex-none">
+                  <Printer className="h-4 w-4" />
+                  Print
+                </span>
               </div>
+
+              <p className="mt-3 text-center text-[0.7rem] text-base-content/50">
+                Illustrative example
+              </p>
             </motion.div>
           </div>
         </div>
