@@ -1,5 +1,6 @@
 import type { Config } from 'tailwindcss';
 import daisyui from 'daisyui';
+import tailwindcssAnimate from 'tailwindcss-animate';
 
 /**
  * PawPort theme catalog for DaisyUI.
@@ -63,7 +64,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [daisyui],
+  plugins: [daisyui, tailwindcssAnimate],
   daisyui: {
     darkTheme: 'pawport_dark',
     themes: [

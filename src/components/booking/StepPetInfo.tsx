@@ -18,6 +18,13 @@ import { TEMPERAMENT_OPTIONS } from '@/config/temperaments';
 import { COAT_CONDITION_OPTIONS } from '@/config/coat-conditions';
 import { SPECIAL_FLAG_OPTIONS } from '@/config/special-flags';
 import { ImageUpload } from '@/components/ui/ImageUpload';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 /** Format a service price as a plain USD amount for the picker labels. */
 function formatServicePrice(amount: number): string {
@@ -199,20 +206,23 @@ export function StepPetInfo({ state, dispatch, services }: BookingStepProps) {
           <label className="label" htmlFor="booking-service">
             <span className="label-text">Service</span>
           </label>
-          <select
-            id="booking-service"
-            className="select select-bordered min-h-[44px] w-full"
-            value={state.selectedServiceIndex}
-            onChange={(e) =>
-              dispatch({ type: 'SELECT_SERVICE', payload: Number(e.target.value) })
+          <Select
+            value={String(state.selectedServiceIndex)}
+            onValueChange={(v) =>
+              dispatch({ type: 'SELECT_SERVICE', payload: Number(v) })
             }
           >
-            {services.map((svc, i) => (
-              <option key={i} value={i}>
-                {svc.name} — {formatServicePrice(svc.basePrice)} · {svc.durationMinutes} min
-              </option>
-            ))}
-          </select>
+            <SelectTrigger id="booking-service" aria-label="Service">
+              <SelectValue placeholder="Choose a service" />
+            </SelectTrigger>
+            <SelectContent>
+              {services.map((svc, i) => (
+                <SelectItem key={i} value={String(i)}>
+                  {svc.name} — {formatServicePrice(svc.basePrice)} · {svc.durationMinutes} min
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <p className="mt-1 text-xs text-base-content/60">
             Your estimate and available times are based on the service you pick.
           </p>
