@@ -23,6 +23,7 @@
  * _Requirements: 7.3, 7.5_
  */
 import type Stripe from 'stripe';
+import type { Types } from 'mongoose';
 import { connectDB } from '@/lib/db/connect';
 import { GroomerProfile } from '@/lib/db/models/groomer-profile';
 import { Service } from '@/lib/db/models/service';
@@ -212,6 +213,129 @@ function isDuplicateKeyError(err: unknown): boolean {
 }
 
 /**
+ * Upsert the booking's Client (keyed by `{groomerId, email}`) and Pet (keyed by
+ * `{groomerId, clientId, name}`) using the SAME field mapping for every caller.
+ *
+ * Shared by both the paid path ({@link fulfilBookingByPaymentIntentId}) and the
+ * no-deposit path ({@link fulfilFreeBooking}) so the two can never drift. The
+ * SMS-consent timestamp is stamped on the Client only when the client ticked
+ * the consent box at step 2.
+ */
+async function upsertClientAndPet(
+  groomerId: Types.ObjectId,
+  booking: BookingMetadata
+): Promise<{ client: { _id: Types.ObjectId }; pet: { _id: Types.ObjectId } }> {
+  const email = booking.owner.email.toLowerCase();
+
+  const clientSet: Record<string, unknown> = {
+    name: booking.owner.name,
+    phone: booking.owner.phone,
+    address: booking.owner.address,
+  };
+  if (booking.smsConsent) {
+    clientSet.smsConsentAt = new Date();
+  }
+  const client = await Client.findOneAndUpdate(
+    { groomerId, email },
+    { $set: clientSet, $setOnInsert: { groomerId, email } },
+    { new: true, upsert: true }
+  );
+
+  const pet = await Pet.findOneAndUpdate(
+    { groomerId, clientId: client._id, name: booking.pet.name },
+    {
+      $set: {
+        photoUrl: booking.pet.photoUrl,
+        breed: booking.pet.breed,
+        weight: booking.pet.weight,
+        weightUnit: booking.pet.weightUnit,
+        age: booking.pet.age,
+        temperament: booking.pet.temperament,
+        coatCondition: booking.pet.coatCondition,
+        specialFlags: booking.pet.specialFlags ?? [],
+        notes: booking.pet.notes,
+      },
+      $setOnInsert: { groomerId, clientId: client._id, name: booking.pet.name },
+    },
+    { new: true, upsert: true }
+  );
+
+  return { client, pet };
+}
+
+/**
+ * Best-effort hold release + slot-cache invalidation for a freshly created
+ * booking. Shared by both paths; never throws past this block so a Redis
+ * hiccup can't fail fulfilment. `logId` only tags the console output.
+ */
+async function releaseHoldAndBustCache(
+  groomerId: Types.ObjectId,
+  holdId: string | undefined,
+  scheduledDate: Date,
+  logId: string
+): Promise<void> {
+  if (!holdId) return;
+  const holdDateStr = scheduledDate.toISOString().slice(0, 10);
+  try {
+    await releaseHold(String(groomerId), holdId, holdDateStr);
+  } catch (holdErr) {
+    console.error(`fulfil: releaseHold failed for ${logId}:`, holdErr);
+  }
+  try {
+    await invalidateSlotsCache(String(groomerId), holdDateStr);
+  } catch (cacheErr) {
+    console.error(`fulfil: invalidateSlotsCache failed for ${logId}:`, cacheErr);
+  }
+}
+
+/**
+ * Best-effort SMS confirmation + reminder scheduling for a freshly created
+ * booking. Shared by both paths; guarded so an SMS/QStash problem can never
+ * fail fulfilment (Master Spec §12.3). `logId` only tags the console output.
+ */
+async function sendBookingSms(
+  args: {
+    groomerId: Types.ObjectId;
+    clientId: Types.ObjectId;
+    appointmentId: Types.ObjectId;
+    phone: string;
+    petName: string;
+    scheduledDate: Date;
+  },
+  logId: string
+): Promise<void> {
+  try {
+    const dateStr = args.scheduledDate.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    });
+    const timeStr = args.scheduledDate.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+    const { sendSms } = await import('@/lib/sms/send-sms');
+    await sendSms({
+      groomerId: String(args.groomerId),
+      clientId: String(args.clientId),
+      appointmentId: String(args.appointmentId),
+      to: args.phone,
+      kind: 'booking_confirmed',
+      vars: { pet: args.petName, date: dateStr, time: timeStr },
+    });
+
+    const { scheduleReminders } = await import('@/lib/sms/reminders');
+    await scheduleReminders({
+      groomerId: String(args.groomerId),
+      appointmentId: String(args.appointmentId),
+      startAtMs: args.scheduledDate.getTime(),
+    });
+  } catch (smsErr) {
+    console.error(`fulfil: SMS dispatch/scheduling failed for ${logId}:`, smsErr);
+  }
+}
+
+/**
  * Deposit amount (whole currency units) received on a PaymentIntent.
  */
 function depositAmountOf(paymentIntent: Stripe.PaymentIntent): number {
@@ -337,7 +461,6 @@ export async function fulfilBookingByPaymentIntentId(
     (typeof profile.businessName === 'string' && profile.businessName.trim()) ||
     'your groomer';
 
-  const email = booking.owner.email.toLowerCase();
   const service = booking.serviceId
     ? await Service.findOne({ _id: booking.serviceId, groomerId }).lean()
     : await Service.findOne({ groomerId, isActive: true }).sort({ createdAt: 1 }).lean();
@@ -358,38 +481,7 @@ export async function fulfilBookingByPaymentIntentId(
   // (older PendingBooking records / no-Stripe flows).
   const bookingRef = booking.bookingRef || generateBookingRef();
 
-  const clientSet: Record<string, unknown> = {
-    name: booking.owner.name,
-    phone: booking.owner.phone,
-    address: booking.owner.address,
-  };
-  if (booking.smsConsent) {
-    clientSet.smsConsentAt = new Date();
-  }
-  const client = await Client.findOneAndUpdate(
-    { groomerId, email },
-    { $set: clientSet, $setOnInsert: { groomerId, email } },
-    { new: true, upsert: true }
-  );
-
-  const pet = await Pet.findOneAndUpdate(
-    { groomerId, clientId: client._id, name: booking.pet.name },
-    {
-      $set: {
-        photoUrl: booking.pet.photoUrl,
-        breed: booking.pet.breed,
-        weight: booking.pet.weight,
-        weightUnit: booking.pet.weightUnit,
-        age: booking.pet.age,
-        temperament: booking.pet.temperament,
-        coatCondition: booking.pet.coatCondition,
-        specialFlags: booking.pet.specialFlags ?? [],
-        notes: booking.pet.notes,
-      },
-      $setOnInsert: { groomerId, clientId: client._id, name: booking.pet.name },
-    },
-    { new: true, upsert: true }
-  );
+  const { client, pet } = await upsertClientAndPet(groomerId, booking);
 
   const serviceAddress = formatServiceAddress(booking.owner.address);
 
@@ -434,60 +526,34 @@ export async function fulfilBookingByPaymentIntentId(
   await PendingBooking.deleteOne({ paymentIntentId: stripePaymentId });
 
   // Best-effort hold release + cache bust (never throws past this block).
-  if (booking.holdId) {
-    const holdDateStr = scheduledDate.toISOString().slice(0, 10);
-    try {
-      await releaseHold(String(groomerId), booking.holdId, holdDateStr);
-    } catch (holdErr) {
-      console.error(`fulfil: releaseHold failed for ${stripePaymentId}:`, holdErr);
-    }
-    try {
-      await invalidateSlotsCache(String(groomerId), holdDateStr);
-    } catch (cacheErr) {
-      console.error(
-        `fulfil: invalidateSlotsCache failed for ${stripePaymentId}:`,
-        cacheErr
-      );
-    }
-  }
+  await releaseHoldAndBustCache(
+    groomerId,
+    booking.holdId,
+    scheduledDate,
+    stripePaymentId
+  );
 
   // Best-effort notifications AFTER records are created (Req 8.2 / 8.3).
-  await sendBookingNotifications(paymentIntent, booking, {
+  await sendBookingNotifications(booking, {
     groomerBusinessName: businessName,
     serviceName: service.name,
     scheduledDate,
+    depositAmount: depositAmountOf(paymentIntent),
+    currency: paymentIntent.currency ?? 'usd',
   });
 
   // Best-effort SMS confirmation + reminder scheduling (Master Spec §12.3).
-  try {
-    const dateStr = scheduledDate.toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-    });
-    const timeStr = scheduledDate.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-    });
-    const { sendSms } = await import('@/lib/sms/send-sms');
-    await sendSms({
-      groomerId: String(groomerId),
-      clientId: String(client._id),
-      appointmentId: String(appointment._id),
-      to: booking.owner.phone,
-      kind: 'booking_confirmed',
-      vars: { pet: booking.pet.name, date: dateStr, time: timeStr },
-    });
-
-    const { scheduleReminders } = await import('@/lib/sms/reminders');
-    await scheduleReminders({
-      groomerId: String(groomerId),
-      appointmentId: String(appointment._id),
-      startAtMs: scheduledDate.getTime(),
-    });
-  } catch (smsErr) {
-    console.error(`fulfil: SMS dispatch/scheduling failed for ${stripePaymentId}:`, smsErr);
-  }
+  await sendBookingSms(
+    {
+      groomerId,
+      clientId: client._id,
+      appointmentId: appointment._id,
+      phone: booking.owner.phone,
+      petName: booking.pet.name,
+      scheduledDate,
+    },
+    stripePaymentId
+  );
 
   return {
     ok: true,
@@ -509,14 +575,142 @@ export async function fulfilBookingByPaymentIntentId(
 }
 
 /**
+ * Materialise a NO-DEPOSIT booking directly from the flow state — the Stripe-
+ * free counterpart to {@link fulfilBookingByPaymentIntentId}.
+ *
+ * A groomer with a $0 deposit never creates a PaymentIntent nor a
+ * PendingBooking, so there is no payment-driven path to persist the booking.
+ * This function does the same Client + Pet upsert, Appointment creation, hold
+ * release and best-effort notifications as the paid path — reusing the SAME
+ * shared helpers so the two can never drift — but records NO Transaction row
+ * (there is no payment) and reports a zero deposit.
+ *
+ * Idempotency: a free booking has no Stripe id to dedupe on, so this creates
+ * the appointment unconditionally. A double-submit is unlikely because the
+ * success step owns a single on-mount call behind its own loading state. We
+ * deliberately keep this simple rather than inventing a synthetic key.
+ *
+ * @returns a {@link FulfilResult} with `depositAmount: 0`, `currency: 'usd'`
+ *   and an empty `paymentIntentId`.
+ */
+export async function fulfilFreeBooking(
+  booking: BookingMetadata
+): Promise<FulfilResult> {
+  await connectDB();
+
+  const profile = await GroomerProfile.findOne({ groomerSlug: booking.groomerSlug })
+    .select('userId businessName')
+    .lean();
+  if (!profile) {
+    return {
+      ok: false,
+      error: `No groomer profile for slug "${booking.groomerSlug}".`,
+    };
+  }
+  const groomerId = profile.userId;
+  const businessName =
+    (typeof profile.businessName === 'string' && profile.businessName.trim()) ||
+    'your groomer';
+
+  const service = booking.serviceId
+    ? await Service.findOne({ _id: booking.serviceId, groomerId }).lean()
+    : await Service.findOne({ groomerId, isActive: true }).sort({ createdAt: 1 }).lean();
+
+  if (!service) {
+    return {
+      ok: false,
+      error: 'No bookable service for this groomer.',
+    };
+  }
+
+  const scheduledDate = new Date(booking.slotStart);
+  const scheduledEndDate = booking.slotEnd
+    ? new Date(booking.slotEnd)
+    : new Date(scheduledDate.getTime() + service.durationMinutes * 60 * 1000);
+
+  const bookingRef = booking.bookingRef || generateBookingRef();
+
+  const { client, pet } = await upsertClientAndPet(groomerId, booking);
+
+  const serviceAddress = formatServiceAddress(booking.owner.address);
+
+  const appointment = await Appointment.create({
+    groomerId,
+    clientId: client._id,
+    petId: pet._id,
+    serviceId: service._id,
+    scheduledDate,
+    scheduledEndDate,
+    status: 'upcoming',
+    serviceAddress,
+    notes: booking.pet.notes,
+    bookingRef,
+    source: 'public',
+  });
+
+  // Best-effort hold release + cache bust (never throws past this block).
+  await releaseHoldAndBustCache(groomerId, booking.holdId, scheduledDate, bookingRef);
+
+  // Best-effort notifications AFTER records are created, with a zero deposit
+  // (Req 8.2 / 8.3). Guarded so a notification problem can't fail fulfilment.
+  await sendBookingNotifications(booking, {
+    groomerBusinessName: businessName,
+    serviceName: service.name,
+    scheduledDate,
+    depositAmount: 0,
+    currency: 'usd',
+  });
+
+  // Best-effort SMS confirmation + reminder scheduling (Master Spec §12.3).
+  await sendBookingSms(
+    {
+      groomerId,
+      clientId: client._id,
+      appointmentId: appointment._id,
+      phone: booking.owner.phone,
+      petName: booking.pet.name,
+      scheduledDate,
+    },
+    bookingRef
+  );
+
+  return {
+    ok: true,
+    created: true,
+    summary: {
+      bookingRef,
+      petName: booking.pet.name,
+      serviceName: service.name,
+      serviceAddress,
+      clientName: booking.owner.name,
+      scheduledDate: scheduledDate.toISOString(),
+      scheduledEndDate: scheduledEndDate.toISOString(),
+      depositAmount: 0,
+      currency: 'usd',
+      paymentIntentId: '',
+      businessName,
+    },
+  };
+}
+
+/**
  * Fire the client-confirmation and groomer-notification emails for a freshly
  * created booking. Best-effort: guarded so a notification problem can never
  * fail fulfilment (Req 8.2, 8.3, 8.6).
+ *
+ * The deposit amount + currency are passed in explicitly rather than derived
+ * from a PaymentIntent, so both the paid path and the no-deposit path
+ * ({@link fulfilFreeBooking}, which passes `depositAmount: 0`) can share it.
  */
 async function sendBookingNotifications(
-  paymentIntent: Stripe.PaymentIntent,
   booking: BookingMetadata,
-  ctx: { groomerBusinessName: string; serviceName: string; scheduledDate: Date }
+  ctx: {
+    groomerBusinessName: string;
+    serviceName: string;
+    scheduledDate: Date;
+    depositAmount: number;
+    currency: string;
+  }
 ): Promise<void> {
   try {
     const dateStr = ctx.scheduledDate.toLocaleDateString('en-US', {
@@ -530,8 +724,7 @@ async function sendBookingNotifications(
       minute: '2-digit',
     });
     const serviceAddress = formatServiceAddress(booking.owner.address);
-    const depositAmount = depositAmountOf(paymentIntent);
-    const currency = (paymentIntent.currency ?? 'usd').toUpperCase();
+    const currency = (ctx.currency || 'usd').toUpperCase();
 
     await sendClientConfirmationEmail(booking.owner.email, {
       date: dateStr,
@@ -539,7 +732,7 @@ async function sendBookingNotifications(
       services: [ctx.serviceName],
       serviceAddress,
       groomerName: ctx.groomerBusinessName,
-      depositAmount,
+      depositAmount: ctx.depositAmount,
       currency,
     });
 
@@ -556,9 +749,6 @@ async function sendBookingNotifications(
       specialNotes: booking.pet.notes,
     });
   } catch (err) {
-    console.error(
-      `fulfil: notification dispatch failed for ${paymentIntent.id}:`,
-      err
-    );
+    console.error('fulfil: notification dispatch failed:', err);
   }
 }

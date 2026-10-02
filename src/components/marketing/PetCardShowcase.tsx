@@ -54,7 +54,7 @@ const SAMPLE_CARD: PetCardViewData = {
   nextRecommendedDate: '2025-07-17',
   branding: {
     businessName: 'Happy Paws',
-    logoUrl: '/pawxis2.png',
+    logoUrl: '/pawxisLogo.png',
   },
 };
 

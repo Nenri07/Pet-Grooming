@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Loader2, AlertTriangle } from 'lucide-react';
 import type { BookingStepProps } from '@/hooks/useBookingFlow';
 import { finalizeBookingByPaymentIntent } from '@/actions/booking-finalize';
+import { finalizeFreeBooking } from '@/actions/booking-free';
 import { generateBookingRef } from '@/lib/booking/reference';
 import { BookingReceipt } from './BookingReceipt';
 import type { ReceiptData } from './ReceiptPDF';
@@ -11,12 +12,19 @@ import type { ReceiptData } from './ReceiptPDF';
 /**
  * StepSuccess — Step 6 of the booking flow (Confirmation / terminal step).
  *
- * On mount (once) this step calls the webhook-INDEPENDENT
- * {@link finalizeBookingByPaymentIntent} server action with the PaymentIntent
- * id captured at payment. This guarantees the booking is persisted even when
- * the Stripe webhook is delayed or not configured on the host — the webhook
- * remains the authoritative backstop and both paths share one idempotent
- * commit guarded by the Transaction unique index, so they never double-create.
+ * On mount (once) this step persists the booking, choosing the path by whether
+ * a real PaymentIntent was captured:
+ *   - DEPOSIT booking → the webhook-INDEPENDENT
+ *     {@link finalizeBookingByPaymentIntent} server action with the captured
+ *     PaymentIntent id. This guarantees the booking is persisted even when the
+ *     Stripe webhook is delayed or not configured on the host — the webhook
+ *     remains the authoritative backstop and both paths share one idempotent
+ *     commit guarded by the Transaction unique index, so they never
+ *     double-create.
+ *   - NO-DEPOSIT booking (R17.2, no PaymentIntent) → the Stripe-free
+ *     {@link finalizeFreeBooking} server action, which persists the booking
+ *     straight from the captured flow state (pet, owner, slot). The resulting
+ *     receipt legitimately shows a $0 deposit.
  *
  * While finalising it shows a brief "finalizing your booking…" state, then
  * renders the confirmation ticket ({@link BookingReceipt}) built from the
@@ -58,6 +66,7 @@ type FinalizeState =
 export function StepSuccess({
   state,
   services,
+  groomerSlug,
   notificationsPending,
 }: StepSuccessProps) {
   const slot = state.selectedSlot;
@@ -109,61 +118,115 @@ export function StepSuccess({
 
   const paymentIntentId = payment?.paymentIntentId;
 
+  // Map a server fulfilment summary (paid OR free) into the receipt shape.
+  const receiptFromSummary = React.useCallback(
+    (s: {
+      businessName: string;
+      bookingRef: string;
+      petName: string;
+      serviceName: string;
+      serviceAddress: string;
+      clientName: string;
+      scheduledDate: string;
+      depositAmount: number;
+      currency: string;
+      paymentIntentId: string;
+    }): ReceiptData => ({
+      businessName: s.businessName,
+      bookingRef: s.bookingRef || fallbackRefRef.current,
+      petName: s.petName,
+      serviceName: s.serviceName,
+      serviceAddress: s.serviceAddress,
+      clientName: s.clientName,
+      scheduledDate: s.scheduledDate,
+      depositAmount: s.depositAmount,
+      currency: s.currency,
+      // Omit a falsy ('') free-booking id so the receipt doesn't show an empty
+      // "Payment ID:" line.
+      paymentIntentId: s.paymentIntentId || undefined,
+      bookedOn: new Date(),
+    }),
+    []
+  );
+
   React.useEffect(() => {
     if (startedRef.current && retryKey === 0) return;
     startedRef.current = true;
     let cancelled = false;
     setFinalize({ status: 'finalizing' });
 
-    // No real PaymentIntent (dev / synthetic success) → skip the server call
-    // and show the ticket from local state with a generated reference (Req 7.6).
-    if (!paymentIntentId) {
+    const showLocal = () =>
       setFinalize({
         status: 'done',
         data: buildLocalReceipt(fallbackRefRef.current),
         degraded: true,
       });
-      return;
+
+    // No real PaymentIntent. Two sub-cases:
+    //   1. No-deposit booking (R17.2): the deposit is legitimately $0 and there
+    //      is no Stripe id to finalise against. Persist the booking directly
+    //      from flow state via the no-deposit server action, then show the
+    //      REAL receipt built from the returned summary.
+    //   2. Dev / synthetic success with no captured flow state → fall back to
+    //      the local ticket with a generated reference (Req 7.6).
+    if (!paymentIntentId) {
+      const canFreeFinalize = Boolean(
+        groomerSlug && state.petInfo && state.ownerDetails && slot
+      );
+      if (!canFreeFinalize) {
+        showLocal();
+        return;
+      }
+
+      // TODO: thread selected service id — BookingStepServices carries no id, so
+      // the server falls back to the groomer's first active service for now.
+      finalizeFreeBooking({
+        groomerSlug,
+        pet: state.petInfo!,
+        owner: state.ownerDetails!,
+        slotStartMs: new Date(slot!.start).getTime(),
+        slotEndMs: new Date(slot!.end).getTime(),
+        smsConsent: state.smsConsent,
+      })
+        .then((result) => {
+          if (cancelled) return;
+          if (result.ok) {
+            setFinalize({
+              status: 'done',
+              degraded: false,
+              data: receiptFromSummary(result.summary),
+            });
+          } else {
+            showLocal();
+          }
+        })
+        .catch(() => {
+          if (cancelled) return;
+          showLocal();
+        });
+
+      return () => {
+        cancelled = true;
+      };
     }
 
     finalizeBookingByPaymentIntent(paymentIntentId)
       .then((result) => {
         if (cancelled) return;
         if (result.ok) {
-          const s = result.summary;
           setFinalize({
             status: 'done',
             degraded: false,
-            data: {
-              businessName: s.businessName,
-              bookingRef: s.bookingRef || fallbackRefRef.current,
-              petName: s.petName,
-              serviceName: s.serviceName,
-              serviceAddress: s.serviceAddress,
-              clientName: s.clientName,
-              scheduledDate: s.scheduledDate,
-              depositAmount: s.depositAmount,
-              currency: s.currency,
-              paymentIntentId: s.paymentIntentId,
-              bookedOn: new Date(),
-            },
+            data: receiptFromSummary(result.summary),
           });
         } else {
           // Finalisation could not confirm — show the local ticket gracefully.
-          setFinalize({
-            status: 'done',
-            data: buildLocalReceipt(fallbackRefRef.current),
-            degraded: true,
-          });
+          showLocal();
         }
       })
       .catch(() => {
         if (cancelled) return;
-        setFinalize({
-          status: 'done',
-          data: buildLocalReceipt(fallbackRefRef.current),
-          degraded: true,
-        });
+        showLocal();
       });
 
     return () => {

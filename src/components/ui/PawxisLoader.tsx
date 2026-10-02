@@ -41,7 +41,7 @@ export default function PawxisLoader({
     <div className={containerClass} role="status" aria-label={label}>
       <div className="flex flex-col items-center gap-2">
         <Image
-          src="/pawxis2.png"
+          src="/pawxisLogo.png"
           alt=""
           aria-hidden="true"
           width={56}

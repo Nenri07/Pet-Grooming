@@ -27,7 +27,7 @@ import type { ReceiptData } from '@/components/booking/ReceiptPDF';
 /** Realistic sample receipt data — the exact shape the real ticket renders. */
 const SAMPLE_RECEIPT: ReceiptData = {
   businessName: 'Happy Paws',
-  logoUrl: '/pawxis2.png',
+  logoUrl: '/pawxisLogo.png',
   bookingRef: 'PP-XK4T9M',
   petName: 'Bella',
   serviceName: 'Full groom',

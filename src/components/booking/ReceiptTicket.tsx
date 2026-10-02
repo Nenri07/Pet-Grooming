@@ -111,7 +111,7 @@ export function ReceiptTicket({ data, id = 'pp-receipt' }: ReceiptTicketProps) {
         <div className="flex min-w-0 items-center gap-3">
           <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-base-100 shadow-card">
             <Image
-              src="/pawxis2.png"
+              src="/pawxisLogo.png"
               alt="Pawxis"
               fill
               className="object-contain p-1"
