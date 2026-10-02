@@ -41,6 +41,11 @@ export const PRICE_ADJUSTMENT_MIN = -50;
 export const PRICE_ADJUSTMENT_MAX = 50;
 /** Maximum length of an estimate rule note (Requirement 15.1). */
 export const ESTIMATE_RULE_NOTE_MAX_LENGTH = 500;
+/** Maximum length of the base address used for routing (mirrors the model). */
+export const BASE_ADDRESS_MAX_LENGTH = 300;
+/** Service radius bounds, in kilometres. A blank value means "no limit". */
+export const SERVICE_RADIUS_MIN = 0;
+export const SERVICE_RADIUS_MAX = 500;
 
 /** The coat-condition values an estimate rule may target (matches the model). */
 export const COAT_CONDITIONS = [
@@ -162,6 +167,27 @@ export const settingsSchema = z.object({
   estimateRules: z.array(estimateRuleSchema),
 
   logoUrl: z.string().trim().optional().or(z.literal('')),
+
+  // --- Service area (routing). Both optional; a blank radius means no limit. ---
+  baseAddress: z
+    .string()
+    .trim()
+    .max(BASE_ADDRESS_MAX_LENGTH, {
+      message: `Base address must be at most ${BASE_ADDRESS_MAX_LENGTH} characters.`,
+    })
+    .optional()
+    .or(z.literal('')),
+
+  serviceRadiusKm: z.coerce
+    .number({ message: 'Enter a service radius in kilometres.' })
+    .min(SERVICE_RADIUS_MIN, {
+      message: `Service radius must be at least ${SERVICE_RADIUS_MIN} km.`,
+    })
+    .max(SERVICE_RADIUS_MAX, {
+      message: `Service radius must be at most ${SERVICE_RADIUS_MAX} km.`,
+    })
+    .optional()
+    .or(z.literal('')),
 });
 
 /**

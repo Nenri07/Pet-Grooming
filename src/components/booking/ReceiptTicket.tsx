@@ -109,13 +109,13 @@ export function ReceiptTicket({ data, id = 'pp-receipt' }: ReceiptTicketProps) {
       {/* Header band: Pawxis logo + business name, with document title */}
       <header className="flex items-center justify-between gap-3 bg-base-200/60 px-6 py-5">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-base-100 shadow-card">
+          <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-base-100 shadow-card">
             <Image
               src="/pawxis2.png"
               alt="Pawxis"
               fill
               className="object-contain p-1"
-              sizes="40px"
+              sizes="48px"
             />
           </span>
           {data.logoUrl && (

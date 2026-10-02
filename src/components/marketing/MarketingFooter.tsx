@@ -33,15 +33,14 @@ export function MarketingFooter() {
       <div className="mx-auto max-w-6xl px-gutter py-section">
         <div className="grid gap-10 md:grid-cols-4">
           <div className="md:col-span-1">
-            <Link href="/" className="inline-flex items-center gap-2 text-xl font-bold text-primary">
+            <Link href="/" className="inline-flex items-center text-primary">
               <Image
                 src="/pawxis2.png"
                 alt="Pawxis"
-                width={32}
-                height={32}
-                className="h-8 w-8 object-contain"
+                width={40}
+                height={40}
+                className="h-10 w-10 object-contain"
               />
-              Pawxis
             </Link>
             <p className="mt-3 max-w-xs text-sm text-base-content/70">
               Luxury mobile pet grooming, booked in seconds and brought right to

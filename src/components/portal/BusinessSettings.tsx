@@ -25,6 +25,9 @@ import {
   PRICE_ADJUSTMENT_MAX,
   ESTIMATE_RULE_NOTE_MAX_LENGTH,
   COAT_CONDITIONS,
+  BASE_ADDRESS_MAX_LENGTH,
+  SERVICE_RADIUS_MIN,
+  SERVICE_RADIUS_MAX,
 } from '@/lib/validators/settings';
 
 /**
@@ -84,6 +87,9 @@ function toFormValues(settings: BusinessSettingsData): ServiceSettingsInput {
       note: rule.note ?? '',
     })),
     logoUrl: settings.logoUrl,
+    baseAddress: settings.baseAddress,
+    serviceRadiusKm:
+      settings.serviceRadiusKm ?? ('' as unknown as number),
   };
 }
 
@@ -269,6 +275,67 @@ function BusinessProfileForm({ initialSettings }: BusinessSettingsProps) {
             </p>
           )}
         </div>
+
+        {/* Service area — base address + radius drive the routing engine. */}
+        <fieldset className="rounded-2xl border border-base-300 p-4">
+          <legend className="px-1 text-sm font-medium text-base-content">Service area</legend>
+
+          <div className="form-control">
+            <label className="label" htmlFor="settings-base-address">
+              <span className="label-text">Base address</span>
+            </label>
+            <input
+              id="settings-base-address"
+              type="text"
+              maxLength={BASE_ADDRESS_MAX_LENGTH}
+              autoComplete="street-address"
+              placeholder="Where you start your day, e.g. 123 Main St, Lahore"
+              className={cx(
+                'input input-bordered min-h-[44px] w-full',
+                errors.baseAddress && 'input-error'
+              )}
+              aria-invalid={errors.baseAddress ? 'true' : 'false'}
+              {...register('baseAddress')}
+            />
+            {errors.baseAddress ? (
+              <p className="mt-1 text-sm text-error" role="alert">
+                {errors.baseAddress.message}
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-base-content/60">
+                We use this to measure drive time and show smarter booking slots.
+              </p>
+            )}
+          </div>
+
+          <div className="form-control mt-3">
+            <label className="label" htmlFor="settings-service-radius">
+              <span className="label-text">Service radius (km)</span>
+            </label>
+            <input
+              id="settings-service-radius"
+              type="number"
+              inputMode="numeric"
+              min={SERVICE_RADIUS_MIN}
+              max={SERVICE_RADIUS_MAX}
+              step={1}
+              placeholder="e.g. 25"
+              className={cx(
+                'input input-bordered min-h-[44px] w-full sm:max-w-xs',
+                errors.serviceRadiusKm && 'input-error'
+              )}
+              aria-invalid={errors.serviceRadiusKm ? 'true' : 'false'}
+              {...register('serviceRadiusKm')}
+            />
+            {errors.serviceRadiusKm ? (
+              <p className="mt-1 text-sm text-error" role="alert">
+                {errors.serviceRadiusKm.message}
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-base-content/60">Leave blank for no limit.</p>
+            )}
+          </div>
+        </fieldset>
 
         {/* Estimate rules */}
         <div className="form-control">

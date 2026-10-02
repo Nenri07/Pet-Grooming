@@ -24,17 +24,16 @@ export default function AuthLayout({
       <Container size="sm" className="flex flex-col items-center">
         <Link
           href="/"
-          className="mb-6 inline-flex items-center gap-2 text-2xl font-bold text-primary"
+          className="mb-6 inline-flex items-center text-primary"
         >
           <Image
             src="/pawxis2.png"
             alt="Pawxis"
-            width={32}
-            height={32}
-            className="h-8 w-8 object-contain"
+            width={56}
+            height={56}
+            className="h-14 w-14 object-contain"
             priority
           />
-          Pawxis
         </Link>
         <Card className="w-full max-w-md">{children}</Card>
       </Container>

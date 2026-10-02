@@ -70,12 +70,98 @@ export class NullGeocodeProvider implements GeocodeProvider {
 }
 
 /**
- * Factory returning the geocoder to use. Today this is always the null
- * provider. When a vendor key is configured, return the real provider here.
+ * OpenStreetMap Nominatim geocoder — free, no API key (§10.1, §15).
+ *
+ * Resolves an address to `{ lat, lng }` using the public Nominatim search
+ * endpoint. It is deliberately defensive: EVERY failure path (empty input,
+ * network error, timeout, malformed/out-of-range result) resolves to `null`
+ * rather than throwing, so routing degrades to a safe pass-through and booking
+ * keeps working with an unknown location.
+ *
+ * Caching mirrors {@link NullGeocodeProvider}: on a cache hit we return the
+ * stored coordinate; on a successful network resolve we write it back under
+ * `geo:{sha1(address)}` for 30 days (§10.1). Both cache steps are best-effort —
+ * a Redis hiccup never fails a geocode.
+ *
+ * Per Nominatim usage policy we send a descriptive `User-Agent`, request a
+ * single result, and bound the call with a 6s timeout.
+ */
+export class NominatimGeocodeProvider implements GeocodeProvider {
+  async geocode(address: string): Promise<LatLng | null> {
+    if (!address || !address.trim()) return null;
+
+    // 1. Cache hit? (same pattern as the null provider.)
+    if (isRedisConfigured()) {
+      const cached = await cacheGet<LatLng>(keys.geocode(addressHash(address))).catch(() => null);
+      if (cached && typeof cached.lat === 'number' && typeof cached.lng === 'number') {
+        return cached;
+      }
+    }
+
+    // 2. Network resolve. Any failure → null (never throw).
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 6000);
+
+      const url =
+        'https://nominatim.openstreetmap.org/search?format=jsonc&limit=1&q=' +
+        encodeURIComponent(address);
+
+      let res: Response;
+      try {
+        res = await fetch(url, {
+          headers: {
+            // Required by Nominatim's usage policy.
+            'User-Agent': 'Pawxis/1.0 (pet grooming scheduler)',
+            'Accept-Language': 'en',
+          },
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timeout);
+      }
+
+      if (!res.ok) return null;
+
+      const body = (await res.json()) as unknown;
+      const first = Array.isArray(body) ? body[0] : undefined;
+      if (!first || typeof first !== 'object') return null;
+
+      const lat = Number((first as { lat?: unknown }).lat);
+      const lng = Number((first as { lon?: unknown }).lon);
+
+      const valid =
+        Number.isFinite(lat) &&
+        Number.isFinite(lng) &&
+        lat >= -90 &&
+        lat <= 90 &&
+        lng >= -180 &&
+        lng <= 180;
+      if (!valid) return null;
+
+      const coord: LatLng = { lat, lng };
+
+      // 3. Best-effort cache write.
+      if (isRedisConfigured()) {
+        await cacheSet(keys.geocode(addressHash(address)), coord, TTL.GEOCODE).catch(() => {});
+      }
+
+      return coord;
+    } catch {
+      // Timeout, DNS/network error, bad JSON, etc. → degrade to pass-through.
+      return null;
+    }
+  }
+}
+
+/**
+ * Factory returning the geocoder to use. Defaults to the free Nominatim
+ * provider (no API key). When a vendor key is configured, return the real
+ * provider here.
  */
 export function getGeocodeProvider(): GeocodeProvider {
   // TODO(geocoder): if (process.env.MAPBOX_TOKEN) return new MapboxGeocodeProvider();
-  return new NullGeocodeProvider();
+  return new NominatimGeocodeProvider();
 }
 
 /**

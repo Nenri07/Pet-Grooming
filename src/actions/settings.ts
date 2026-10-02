@@ -35,6 +35,7 @@ import { connectDB } from '@/lib/db/connect';
 import { GroomerProfile } from '@/lib/db/models/groomer-profile';
 import { isValidSlugFormat } from '@/lib/validators/slug';
 import { settingsSchema, type ServiceSettingsInput } from '@/lib/validators/settings';
+import { getGeocodeProvider } from '@/lib/routing';
 import type { CoatCondition, EstimateRule } from '@/types';
 
 // ---------------------------------------------------------------------------
@@ -59,6 +60,10 @@ export interface BusinessSettingsData {
   estimateRules: SettingsEstimateRule[];
   logoUrl: string;
   groomerSlug: string;
+  /** Where the groomer starts their day — used by routing to score slots. */
+  baseAddress: string;
+  /** Service radius in km, or `null` for "no limit". */
+  serviceRadiusKm: number | null;
 }
 
 /** Result envelope returned by {@link getBusinessSettings}. */
@@ -106,6 +111,8 @@ function toSettingsData(profile: {
   estimateRules?: EstimateRule[];
   logoUrl?: string;
   groomerSlug?: string;
+  baseAddress?: string;
+  serviceRadiusKm?: number;
 }): BusinessSettingsData {
   return {
     businessName: profile.businessName ?? '',
@@ -121,6 +128,8 @@ function toSettingsData(profile: {
     })),
     logoUrl: profile.logoUrl ?? '',
     groomerSlug: profile.groomerSlug ?? '',
+    baseAddress: profile.baseAddress ?? '',
+    serviceRadiusKm: profile.serviceRadiusKm ?? null,
   };
 }
 
@@ -181,7 +190,7 @@ export async function getBusinessSettings(): Promise<GetBusinessSettingsResult> 
 
     const profile = await GroomerProfile.findOne({ userId: session.user.id })
       .select(
-        'businessName phone businessEmail depositAmount estimateRules logoUrl groomerSlug'
+        'businessName phone businessEmail depositAmount estimateRules logoUrl groomerSlug baseAddress serviceRadiusKm'
       )
       .lean();
 
@@ -235,22 +244,59 @@ export async function updateBusinessSettings(
   try {
     await connectDB();
 
+    // Read current base-location state so we only re-geocode when the address
+    // actually changed (or coordinates are missing). Lightweight projection.
+    const current = await GroomerProfile.findOne({ userId: session.user.id })
+      .select('baseAddress baseLocation')
+      .lean();
+
+    const baseAddress = (data.baseAddress ?? '').trim();
+    const serviceRadiusKm =
+      typeof data.serviceRadiusKm === 'number' ? data.serviceRadiusKm : null;
+
+    // Build the $set additively alongside the existing fields.
+    const set: Record<string, unknown> = {
+      businessName: data.businessName,
+      phone: data.phone ? data.phone : undefined,
+      businessEmail: data.businessEmail ? data.businessEmail : undefined,
+      depositAmount: data.depositAmount,
+      estimateRules: data.estimateRules.map(toPersistedRule),
+      logoUrl: data.logoUrl ? data.logoUrl : undefined,
+      baseAddress,
+    };
+    // A blank radius means "no limit" → remove any stored value; otherwise set it.
+    const unset: Record<string, unknown> = {};
+    if (serviceRadiusKm === null) {
+      unset.serviceRadiusKm = '';
+    } else {
+      set.serviceRadiusKm = serviceRadiusKm;
+    }
+
+    // Geocode on save: resolve coordinates when the address is non-empty AND it
+    // changed from the stored value (or we have no stored location yet). A
+    // geocoder failure NEVER blocks the save — routing stays pass-through.
+    if (baseAddress) {
+      const changed = (current?.baseAddress ?? '').trim() !== baseAddress;
+      const missingLocation = !current?.baseLocation;
+      if (changed || missingLocation) {
+        try {
+          const coord = await getGeocodeProvider().geocode(baseAddress);
+          if (coord) {
+            set.baseLocation = { lat: coord.lat, lng: coord.lng };
+          }
+        } catch {
+          // Geocoder error must never fail the settings update.
+        }
+      }
+    }
+
     const updated = await GroomerProfile.findOneAndUpdate(
       { userId: session.user.id },
-      {
-        $set: {
-          businessName: data.businessName,
-          phone: data.phone ? data.phone : undefined,
-          businessEmail: data.businessEmail ? data.businessEmail : undefined,
-          depositAmount: data.depositAmount,
-          estimateRules: data.estimateRules.map(toPersistedRule),
-          logoUrl: data.logoUrl ? data.logoUrl : undefined,
-        },
-      },
+      Object.keys(unset).length ? { $set: set, $unset: unset } : { $set: set },
       { new: true }
     )
       .select(
-        'businessName phone businessEmail depositAmount estimateRules logoUrl groomerSlug'
+        'businessName phone businessEmail depositAmount estimateRules logoUrl groomerSlug baseAddress serviceRadiusKm'
       )
       .lean();
 

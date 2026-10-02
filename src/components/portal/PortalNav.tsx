@@ -184,12 +184,11 @@ export function PortalNav() {
           <Image
             src="/pawxis2.png"
             alt="Pawxis"
-            width={28}
-            height={28}
-            className="h-7 w-7 shrink-0 object-contain"
+            width={40}
+            height={40}
+            className="h-10 w-10 shrink-0 object-contain"
             priority
           />
-          <span className="truncate">Pawxis</span>
         </Link>
         <div className="ml-auto flex min-w-0 items-center gap-2">
           <SmsCreditsPill />
@@ -220,12 +219,11 @@ export function PortalNav() {
               <Image
                 src="/pawxis2.png"
                 alt="Pawxis"
-                width={32}
-                height={32}
-                className="h-8 w-8 shrink-0 object-contain"
+                width={44}
+                height={44}
+                className="h-11 w-11 shrink-0 object-contain"
                 priority
               />
-              <span className="truncate">Pawxis</span>
             </Link>
           )}
           {collapsed && (
