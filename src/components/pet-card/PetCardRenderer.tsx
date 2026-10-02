@@ -19,18 +19,15 @@
  * _Requirements: 17.1, 17.2, 17.3, 17.4, 17.5, 17.6_
  */
 import { useState } from 'react';
-import Image from 'next/image';
 import { toast } from 'sonner';
 import {
   Link as LinkIcon,
   Download,
-  PawPrint,
-  Phone,
-  Mail,
   CalendarClock,
   Loader2,
 } from 'lucide-react';
 import type { PetCardData } from '@/types';
+import { AnimatedPetCard } from './AnimatedPetCard';
 
 /**
  * Wire form of the card data as received by the client. Dates cross the
@@ -71,12 +68,6 @@ function formatDate(value: SerializedDate | undefined): string {
     month: 'short',
     day: 'numeric',
   });
-}
-
-/** Capitalize an enum-like word for display. */
-function titleCase(value: string): string {
-  if (!value) return value;
-  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 /** Rebuild the canonical `PetCardData` (with real Date objects) for the PDF. */
@@ -148,117 +139,26 @@ export function PetCardRenderer({ data, shareUrl }: PetCardRendererProps) {
     }
   }
 
-  const { branding } = data;
   const nextDate = formatDate(data.nextRecommendedDate);
 
   return (
     <div className="mx-auto w-full max-w-xl">
-      <article className="overflow-hidden rounded-2xl bg-base-100 shadow-card">
-        {/* Groomer branding header */}
-        <header className="flex items-center gap-3 border-b border-base-300 bg-base-200/50 px-5 py-4">
-          {branding.logoUrl ? (
-            <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-base-100">
-              <Image
-                src={branding.logoUrl}
-                alt={`${branding.businessName || 'Business'} logo`}
-                fill
-                className="object-cover"
-                sizes="48px"
-              />
-            </span>
-          ) : (
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <PawPrint aria-hidden="true" className="h-6 w-6" />
-            </span>
-          )}
-          <div className="min-w-0">
-            <h1 className="truncate text-lg font-bold text-primary">
-              {branding.businessName || 'Pet Grooming'}
-            </h1>
-            <div className="mt-0.5 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-base-content/60">
-              {branding.phone && (
-                <span className="inline-flex items-center gap-1">
-                  <Phone aria-hidden="true" className="h-3 w-3" />
-                  {branding.phone}
-                </span>
-              )}
-              {branding.businessEmail && (
-                <span className="inline-flex items-center gap-1">
-                  <Mail aria-hidden="true" className="h-3 w-3" />
-                  {branding.businessEmail}
-                </span>
-              )}
-            </div>
-          </div>
-        </header>
+      {/* Flagship animated hero card (motion + QR + gif-like ambient life) */}
+      <AnimatedPetCard data={data} shareUrl={shareUrl} />
 
-        {/* Pet identity + core details */}
-        <section className="flex flex-col gap-4 p-5 sm:flex-row">
-          {data.photoUrl ? (
-            <span className="relative mx-auto h-32 w-32 shrink-0 overflow-hidden rounded-2xl bg-base-200 sm:mx-0">
-              <Image
-                src={data.photoUrl}
-                alt={data.name}
-                fill
-                className="object-cover"
-                sizes="128px"
-              />
-            </span>
-          ) : (
-            <span
-              className="mx-auto flex h-32 w-32 shrink-0 items-center justify-center rounded-2xl bg-base-200 text-base-content/30 sm:mx-0"
-              aria-label="No photo available"
-            >
-              <PawPrint aria-hidden="true" className="h-16 w-16" />
-            </span>
-          )}
-
-          <div className="min-w-0 flex-1 text-center sm:text-left">
-            <h2 className="text-2xl font-bold text-base-content">{data.name}</h2>
-            <p className="mt-1 text-sm text-base-content/60">
-              {data.breed} • {data.weight} {data.weightUnit} • {data.age}{' '}
-              {data.age === 1 ? 'year' : 'years'}
-            </p>
-
-            <dl className="mt-3 grid grid-cols-1 gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
-              <div className="flex justify-between gap-2 sm:justify-start">
-                <dt className="font-semibold">Temperament</dt>
-                <dd className="text-base-content/70">
-                  {titleCase(data.temperament)}
-                </dd>
-              </div>
-              <div className="flex justify-between gap-2 sm:justify-start">
-                <dt className="font-semibold">Coat</dt>
-                <dd className="text-base-content/70">
-                  {titleCase(data.coatCondition)}
-                </dd>
-              </div>
-            </dl>
-
-            {data.notes && (
-              <p className="mt-3 text-sm text-base-content/70">
-                <span className="font-semibold">Coat notes: </span>
-                {data.notes}
-              </p>
-            )}
-
-            {data.specialFlags.length > 0 && (
-              <div className="mt-3 flex flex-wrap justify-center gap-1.5 sm:justify-start">
-                {data.specialFlags.map((flag) => (
-                  <span
-                    key={flag}
-                    className="badge badge-secondary badge-outline"
-                  >
-                    {flag}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
+      {/* Supporting detail: coat notes, service history, next visit */}
+      <article className="mt-4 overflow-hidden rounded-2xl border border-base-content/10 bg-base-100 shadow-card">
+        {data.notes && (
+          <section className="border-b border-base-content/10 px-5 py-4">
+            <h3 className="mb-1 text-base font-semibold text-primary">
+              Coat notes
+            </h3>
+            <p className="text-sm text-base-content/70">{data.notes}</p>
+          </section>
+        )}
 
         {/* Service history (Requirement 17.6: omit + message when empty) */}
-        <section className="border-t border-base-300 px-5 py-4">
+        <section className="px-5 py-4">
           <h3 className="mb-3 text-base font-semibold text-primary">
             Service History
           </h3>
@@ -289,7 +189,7 @@ export function PetCardRenderer({ data, shareUrl }: PetCardRendererProps) {
 
         {/* Next recommended grooming date */}
         {nextDate && (
-          <section className="border-t border-base-300 px-5 py-4">
+          <section className="border-t border-base-content/10 px-5 py-4">
             <p className="inline-flex items-center gap-2 rounded-xl bg-accent/10 px-3 py-2 text-sm text-base-content">
               <CalendarClock aria-hidden="true" className="h-4 w-4 text-accent" />
               <span>

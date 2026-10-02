@@ -20,11 +20,6 @@ import {
   Download,
   Printer,
   Loader2,
-  CalendarDays,
-  Clock,
-  MapPin,
-  Scissors,
-  User,
   CheckCircle2,
 } from 'lucide-react';
 import type { ReceiptData } from './ReceiptPDF';
@@ -76,28 +71,14 @@ function formatCurrency(amount: number, currency: string): string {
   }
 }
 
-/** A single labelled row in the details grid. */
-function Detail({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: React.ReactNode;
-}) {
-  if (!value) return null;
-  return (
-    <div className="flex items-start gap-3">
-      <span className="mt-0.5 text-primary" aria-hidden="true">
-        {icon}
-      </span>
-      <div className="min-w-0">
-        <div className="text-xs text-base-content/60">{label}</div>
-        <div className="text-sm font-medium text-base-content">{value}</div>
-      </div>
-    </div>
-  );
+/** Short issue date, e.g. "Jun 3, 2025". */
+function formatIssueDate(value: string | Date | null | undefined): string {
+  const date = toDate(value) ?? new Date();
+  return date.toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
 }
 
 export function BookingReceipt({ data }: BookingReceiptProps) {
@@ -105,6 +86,8 @@ export function BookingReceipt({ data }: BookingReceiptProps) {
 
   const dateStr = formatDate(data.scheduledDate);
   const timeStr = formatTime(data.scheduledDate);
+  const issueDate = formatIssueDate(data.bookedOn);
+  const whenLine = [dateStr, timeStr].filter(Boolean).join(' · ');
 
   // When the caller supplies the full service price, surface the balance still
   // owed on the day (price − deposit). Additive: deposit-only bookings show 0.
@@ -155,117 +138,168 @@ export function BookingReceipt({ data }: BookingReceiptProps) {
     <div className="mx-auto w-full max-w-md">
       <article
         id="pp-receipt"
-        className="overflow-hidden rounded-2xl border border-base-content/10 bg-base-100 shadow-card"
+        className="overflow-hidden rounded-box border border-base-content/10 bg-base-100 shadow-card"
       >
-        {/* Gradient / accent header */}
-        <header className="flex items-center justify-between gap-3 bg-gradient-to-r from-primary to-accent px-5 py-4 text-primary-content">
+        {/* Header band: Pawxis logo + business name, with document title */}
+        <header className="flex items-center justify-between gap-3 bg-base-200/60 px-6 py-5">
           <div className="flex min-w-0 items-center gap-3">
-            {data.logoUrl ? (
-              <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl bg-base-100/20">
+            <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-base-100 shadow-card">
+              <Image
+                src="/pawxis2.png"
+                alt="Pawxis"
+                fill
+                className="object-contain p-1"
+                sizes="40px"
+              />
+            </span>
+            {data.logoUrl && (
+              <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-base-100">
                 <Image
                   src={data.logoUrl}
                   alt={`${data.businessName || 'Business'} logo`}
                   fill
                   className="object-cover"
-                  sizes="44px"
+                  sizes="40px"
                 />
-              </span>
-            ) : (
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-base-100/20">
-                <PawPrint aria-hidden="true" className="h-6 w-6" />
               </span>
             )}
             <div className="min-w-0">
-              <h3 className="truncate text-base font-bold">
+              <h3 className="truncate text-base font-bold text-base-content">
                 {data.businessName || 'Pet Grooming'}
               </h3>
-              <p className="text-xs opacity-90">Pet Grooming</p>
+              <p className="text-xs text-base-content/50">
+                Powered by Pawxis
+              </p>
             </div>
           </div>
-          <span className="shrink-0 text-right text-[0.6rem] font-semibold uppercase leading-tight tracking-widest opacity-90">
-            Booking Receipt
-            <br />/ Invoice
+          <span className="shrink-0 text-right text-[0.6rem] font-semibold uppercase leading-tight tracking-[0.2em] text-primary">
+            Booking
+            <br />
+            Receipt
           </span>
         </header>
 
-        {/* Prominent, boxed reference number */}
-        <div className="px-5 pt-5">
-          <div className="rounded-2xl border border-primary/30 bg-primary/5 px-4 py-4 text-center">
-            <div className="text-[0.65rem] font-semibold uppercase tracking-widest text-primary/70">
-              Booking Reference
+        {/* Accent band — recolors with the active theme */}
+        <div aria-hidden="true" className="h-1 bg-primary" />
+
+        <div className="px-6 py-6">
+          {/* Invoice meta: reference no. + issue date */}
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="text-[0.6rem] font-semibold uppercase tracking-[0.2em] text-base-content/50">
+                Reference
+              </div>
+              <div className="mt-1 font-mono text-xl font-bold tracking-widest text-primary">
+                {data.bookingRef || '—'}
+              </div>
             </div>
-            <div className="mt-1 font-mono text-3xl font-bold tracking-widest text-primary">
-              {data.bookingRef || '—'}
+            <div className="text-right">
+              <div className="text-[0.6rem] font-semibold uppercase tracking-[0.2em] text-base-content/50">
+                Issued
+              </div>
+              <div className="mt-1 text-sm font-semibold text-base-content">
+                {issueDate}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Details */}
-        <div className="grid grid-cols-1 gap-3 px-5 py-5 sm:grid-cols-2">
-          <Detail
-            icon={<CalendarDays className="h-4 w-4" />}
-            label="Date"
-            value={dateStr || 'In your email'}
-          />
-          <Detail icon={<Clock className="h-4 w-4" />} label="Time" value={timeStr} />
-          <Detail
-            icon={<PawPrint className="h-4 w-4" />}
-            label="Pet"
-            value={data.petName}
-          />
-          <Detail
-            icon={<Scissors className="h-4 w-4" />}
-            label="Service"
-            value={data.serviceName}
-          />
-          <Detail
-            icon={<User className="h-4 w-4" />}
-            label="Client"
-            value={data.clientName}
-          />
-          <Detail
-            icon={<MapPin className="h-4 w-4" />}
-            label="Service address"
-            value={data.serviceAddress}
-          />
-        </div>
-
-        {/* Totals: deposit paid + status (+ balance note when a price is known) */}
-        <div className="mx-5 mb-5 rounded-2xl border border-base-300 px-4 py-3">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <div className="text-[0.65rem] font-semibold uppercase tracking-widest text-base-content/50">
-                Paid today
+          {/* Billed to */}
+          {(data.clientName || data.serviceAddress) && (
+            <div className="mt-6 border-t border-base-content/10 pt-4">
+              <div className="text-[0.6rem] font-semibold uppercase tracking-[0.2em] text-base-content/50">
+                Billed to
               </div>
-              <div className="text-lg font-bold text-base-content">
+              {data.clientName && (
+                <div className="mt-1 text-sm font-semibold text-base-content">
+                  {data.clientName}
+                </div>
+              )}
+              {data.serviceAddress && (
+                <div className="text-sm text-base-content/60">
+                  {data.serviceAddress}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Itemized line: service — date/time — amount */}
+          <div className="mt-6 overflow-hidden rounded-box border border-base-content/10">
+            <div className="flex items-center justify-between gap-3 bg-base-200/60 px-4 py-2.5">
+              <span className="text-[0.6rem] font-semibold uppercase tracking-[0.15em] text-base-content/50">
+                Description
+              </span>
+              <span className="text-[0.6rem] font-semibold uppercase tracking-[0.15em] text-base-content/50">
+                Amount
+              </span>
+            </div>
+            <div className="flex items-start justify-between gap-3 px-4 py-4">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 text-sm font-semibold text-base-content">
+                  <PawPrint
+                    aria-hidden="true"
+                    className="h-4 w-4 shrink-0 text-primary"
+                  />
+                  <span className="truncate">
+                    {data.serviceName || 'Grooming service'}
+                  </span>
+                </div>
+                <div className="mt-1 pl-6 text-xs text-base-content/60">
+                  {data.petName ? `${data.petName} · ` : ''}
+                  {whenLine || 'Scheduled — details in your email'}
+                </div>
+                <div className="mt-1 pl-6 text-xs text-base-content/50">
+                  Deposit toward total
+                </div>
+              </div>
+              <div className="shrink-0 text-right font-mono text-sm font-semibold tabular-nums text-base-content">
                 {formatCurrency(data.depositAmount, data.currency)}
               </div>
-              <div className="text-xs text-base-content/60">
-                Deposit paid ({data.currency.toUpperCase()})
-              </div>
             </div>
-            <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-3 py-1 text-xs font-semibold text-success">
-              <CheckCircle2 aria-hidden="true" className="h-3.5 w-3.5" />
-              Deposit received
-            </span>
           </div>
-          {balanceDue > 0 && (
-            <p className="mt-2 border-t border-base-300 pt-2 text-right text-xs text-base-content/60">
-              Balance due on the day:{' '}
-              <span className="font-semibold text-base-content">
-                {formatCurrency(balanceDue, data.currency)}
+
+          {/* Totals block */}
+          <div className="mt-5 space-y-2 border-t border-base-content/10 pt-4">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-base-content/60">Deposit received</span>
+              <span className="font-mono tabular-nums text-base-content">
+                {formatCurrency(data.depositAmount, data.currency)}
               </span>
+            </div>
+            {balanceDue > 0 && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-base-content/60">Balance due on the day</span>
+                <span className="font-mono tabular-nums text-base-content">
+                  {formatCurrency(balanceDue, data.currency)}
+                </span>
+              </div>
+            )}
+            <div className="flex items-center justify-between gap-3 border-t border-base-content/10 pt-3">
+              <div>
+                <div className="text-[0.6rem] font-semibold uppercase tracking-[0.2em] text-base-content/50">
+                  Paid today
+                </div>
+                <div className="text-lg font-bold text-base-content">
+                  {formatCurrency(data.depositAmount, data.currency)}
+                  <span className="ml-1 text-xs font-normal text-base-content/50">
+                    {data.currency.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+              <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-3 py-1 text-xs font-semibold text-success">
+                <CheckCircle2 aria-hidden="true" className="h-3.5 w-3.5" />
+                Deposit received
+              </span>
+            </div>
+          </div>
+
+          {data.paymentIntentId && (
+            <p className="mt-4 font-mono text-[0.65rem] text-base-content/40">
+              Payment ID: {data.paymentIntentId}
             </p>
           )}
         </div>
 
-        {data.paymentIntentId && (
-          <p className="px-5 pb-4 text-[0.65rem] text-base-content/40">
-            Payment ID: {data.paymentIntentId}
-          </p>
-        )}
-
-        <p className="border-t border-base-300 px-5 py-3 text-center text-xs text-base-content/60">
+        <p className="border-t border-base-content/10 bg-base-200/40 px-6 py-3 text-center text-xs text-base-content/60">
           Present this reference when your groomer arrives.
         </p>
       </article>
