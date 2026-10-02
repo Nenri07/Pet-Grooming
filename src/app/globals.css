@@ -125,24 +125,12 @@ body {
 }
 
 
-/* ----------------------------------------------------------------------------
-   Dark-theme <select> flash fix.
-   On dark DaisyUI themes a native <select> could paint a white control box on
-   first render (before color-scheme is inherited), which showed as a white box
-   behind the dropdown until the first interaction. Pin every select to the
-   theme's own surface tokens and inherit color-scheme so the browser renders
-   the control (and its options popup) in the active theme from the first paint.
-   ---------------------------------------------------------------------------- */
-select,
-select.select {
-  color-scheme: inherit;
-  background-color: hsl(var(--b1));
-  color: hsl(var(--bc));
-}
-
-/* The native options popup follows the theme surface too (where supported). */
-select option {
-  background-color: hsl(var(--b1));
-  color: hsl(var(--bc));
+/* dark-theme select color-scheme: render native <select> controls (and the
+   options popup) in dark mode on the dark themes only, so no white control
+   box flashes behind the dropdown. No background override — DaisyUI's own
+   .select theming still owns the colors. */
+[data-theme='pawport_dark'] select,
+[data-theme='pawport_charcoal'] select {
+  color-scheme: dark;
 }
 
