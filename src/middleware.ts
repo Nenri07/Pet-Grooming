@@ -39,6 +39,7 @@ const PORTAL_ROUTES = [
   '/calendar',
   '/inbox',
   '/billing',
+  '/start-trial',
 ] as const;
 
 /** The auth pages a signed-in user should be redirected AWAY from. */

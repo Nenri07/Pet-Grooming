@@ -92,6 +92,22 @@ export const TTL = {
   // §11.4 uses `/rebook/{token}` — give it a generous 30-day life so a nudge
   // link stays valid across the reminder cycle.
   REBOOK: 30 * 24 * 60 * 60, // rebook:{token}          EX 30d (§11.4)
+  // --- Billing Phase 2: trial abuse-prevention + email verification ---
+  // Phone OTP code (OtpSmsProvider fallback only; Twilio Verify stores its own).
+  // `otp:{phoneHash}` → {codeHash,attempts}, ~10 min (R10.4).
+  OTP: 10 * 60, // otp:{phoneHash}             EX 600 (10 min)
+  // OTP resend rate-limit window. A short fixed window throttles resends per
+  // phone identity; the window is configurable per R10.4 — this const is the
+  // default (60s). `otp:rl:{phoneHash}` EX 60.
+  OTP_RATE: 60, // otp:rl:{phoneHash}          EX 60 (resend window)
+  // Device/IP velocity counter window (R12.1/12.2). INCR+EXPIRE; >threshold
+  // flags (does not block — R12.3/12.5). Default 24h; overridable at the call
+  // site via config `TRIAL_VELOCITY_WINDOW_HOURS` (this const is the default).
+  VELOCITY: 24 * 60 * 60, // vel:dev:{fp} / vel:ip:{maskedIp} EX 86400 (24h default)
+  // Email-verification token (R7.1). `evf:{token}` → {normalizedEmail}, ~30 min.
+  // Overridable at the call site via config `EMAIL_VERIFICATION_TTL_MIN` (this
+  // const is the default).
+  EMAIL_VERIFY: 30 * 60, // evf:{token}             EX 1800 (30 min default)
 } as const;
 
 export const keys = {
@@ -114,6 +130,19 @@ export const keys = {
   track: (token: string) => `track:${token}`,
   // §11.4 rebook link token → {gid,clientId,petId}, EX 30d.
   rebook: (token: string) => `rebook:${token}`,
+  // --- Billing Phase 2: trial abuse-prevention + email verification ---
+  // R10.4 phone OTP code (OtpSmsProvider fallback) → {codeHash,attempts}, EX 600.
+  // Keyed by the hashed phone (never the raw E.164) to match the IdentityBinding.
+  otp: (phoneHash: string) => `otp:${phoneHash}`,
+  // R10.4 OTP resend rate-limit marker, keyed per phone identity, EX 60.
+  otpRate: (phoneHash: string) => `otp:rl:${phoneHash}`,
+  // R12.1/12.2 device velocity counter, keyed by opaque fingerprint hash, EX 24h.
+  velDevice: (fingerprint: string) => `vel:dev:${fingerprint}`,
+  // R12.1/12.2 IP velocity counter, keyed by masked IP (last octet/low bits
+  // zeroed — a coarse signal, not precise tracking), EX 24h.
+  velIp: (maskedIp: string) => `vel:ip:${maskedIp}`,
+  // R7.1 email-verification token → {normalizedEmail}, EX 30 min.
+  emailVerify: (token: string) => `evf:${token}`,
 } as const;
 
 /** The value stored under a `claim:{token}` key (§11.1). */
@@ -136,6 +165,21 @@ export interface RebookRecord {
   gid: string;
   clientId: string;
   petId: string;
+}
+
+/**
+ * The value stored under an `otp:{phoneHash}` key (R10.4, OtpSmsProvider fallback).
+ * The code is stored hashed; `attempts` increments on each wrong submission so
+ * the provider can enforce a max-attempts cap. Twilio Verify stores its own.
+ */
+export interface OtpRecord {
+  codeHash: string;
+  attempts: number;
+}
+
+/** The value stored under an `evf:{token}` key (R7.1). */
+export interface EmailVerifyRecord {
+  normalizedEmail: string;
 }
 
 // ---------------------------------------------------------------------------

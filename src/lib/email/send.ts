@@ -359,3 +359,64 @@ export async function sendTrialEndingEmail(
     return false;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Email verification link (Billing/Trial-abuse R7.1 — tokened verify link)
+// ---------------------------------------------------------------------------
+
+/**
+ * Send the email-verification link to a registrant (R7.1).
+ *
+ * Best-effort and guarded exactly like the other sends in this module: it
+ * no-ops and returns `false` when Resend / the from address are not configured,
+ * never throws, and retries up to 3 times. The caller (the
+ * `requestEmailVerification` server action) treats a `false` return as a
+ * dev-friendly degrade — the verification token is already stored, so the link
+ * can still be surfaced another way — rather than an error.
+ *
+ * The `link` is a fully-qualified `${NEXT_PUBLIC_APP_URL}/verify-email?token=…`
+ * URL built by the caller; it is only interpolated into an `href`, never echoed
+ * as untrusted text.
+ *
+ * @param to The registrant's email address.
+ * @param link The absolute verification URL carrying the one-time token.
+ * @returns `true` on a successful send; `false` on any failure / missing config.
+ */
+export async function sendEmailVerification(to: string, link: string): Promise<boolean> {
+  const resend = getResend();
+  const from = getFromAddress();
+  if (!resend || !from || !to) return false;
+
+  const businessName = process.env.NEXT_PUBLIC_BUSINESS_NAME?.trim() || 'Pawxis';
+  const body = `
+    <p style="margin:0 0 16px;font-size:14px;line-height:1.5;">
+      Please confirm your email address to continue setting up your
+      ${escapeHtml(businessName)} account.
+    </p>
+    <p style="margin:24px 0;">
+      <a href="${escapeHtml(link)}"
+         style="display:inline-block;padding:12px 20px;border-radius:999px;background:#4338ca;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;">
+        Verify my email
+      </a>
+    </p>
+    <p style="margin:16px 0 0;font-size:13px;color:#6b7280;line-height:1.5;">
+      This link expires shortly for your security. If you didn't request this,
+      you can safely ignore this email.
+    </p>`;
+
+  try {
+    await withRetry(async () => {
+      const { error } = await resend.emails.send({
+        from,
+        to,
+        subject: `Verify your email for ${businessName}`,
+        html: emailShell(businessName, 'Confirm your email', body),
+      });
+      if (error) throw error;
+    });
+    return true;
+  } catch (err) {
+    console.error('[email] Failed to send email-verification link:', err);
+    return false;
+  }
+}

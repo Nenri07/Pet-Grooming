@@ -13,7 +13,6 @@ import {
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import {
-  startTrial,
   createCheckoutSession,
   openBillingPortal,
   buySmsTopup,
@@ -308,14 +307,14 @@ export function BillingView(props: BillingViewProps) {
               {pending === 'portal' ? 'Opening…' : 'Manage subscription'}
             </button>
             {status !== 'trialing' && !active && (
-              <button
-                type="button"
-                disabled={!billingConfigured || pending !== null}
-                onClick={() => void run('trial', startTrial)}
-                className="btn btn-ghost btn-sm min-h-[44px]"
-              >
-                {pending === 'trial' ? 'Starting…' : 'Start free trial'}
-              </button>
+              // Primary path for starting a FRESH trial now runs the gated
+              // verification flow at /start-trial (email + phone OTP) before
+              // provisioning. The direct `startTrial` action is kept imported
+              // and available for other callers, but the user-facing CTA links
+              // to the gated surface (task 10.1).
+              <a href="/start-trial" className="btn btn-ghost btn-sm min-h-[44px]">
+                Start free trial
+              </a>
             )}
           </div>
         </Card>

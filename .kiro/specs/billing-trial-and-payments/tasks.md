@@ -85,72 +85,72 @@ Convert the feature design into a series of prompts for a code-generation LLM th
     - Add a one-off backfill (script or lazy on-read defaulting) that derives `trialDeadline`/`trialStartedAt` for existing rows from `trialEndsAt` so legacy trialing rows lock out correctly; ensure read paths treat a null `trialDeadline` safely (fail-open to entitlements default).
     - _Requirements: 1.2, 3.1_ — Design: Data Models
 
-- [-] 6. Phase 1 verification gate
+- [x] 6. Phase 1 verification gate
   - Verify phase: run `npx tsc --noEmit`, `npm test -- --run`, and `npm run build`; fix any failures; commit. Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 7. Phase 2 config + identity pure core (PURE + property tests)
-  - [~] 7.1 Add Phase 2 env vars to the env example and placeholder-aware config
+- [x] 7. Phase 2 config + identity pure core (PURE + property tests)
+  - [x] 7.1 Add Phase 2 env vars to the env example and placeholder-aware config
     - Add `IDENTITY_PHONE_PEPPER`, `TWILIO_VERIFY_SERVICE_SID`, `DISPOSABLE_DOMAINS_SOURCE`, `TRIAL_VELOCITY_THRESHOLD` (default 3), `TRIAL_VELOCITY_WINDOW_HOURS` (default 24), and email-verify settings to `.env.example`, each `isSet`-aware (placeholder ⇒ Not_Configured_State / documented fail policy).
     - _Requirements: 13.1, 19.4_ — Design: Configuration / Environment
-  - [~] 7.2 Implement email normalization + disposable-domain pure functions
+  - [x] 7.2 Implement email normalization + disposable-domain pure functions
     - Create `src/lib/identity/email.ts` with `normalizeEmail(email)` (lowercase/trim; Gmail/googlemail: strip local-part dots and drop `+tag`; idempotent) and `isDisposableDomain(domain, blocklist: ReadonlySet<string>)` (pure membership over an injected Set; loader is a separate I/O concern).
     - _Requirements: 8.1, 8.3, 9.1, 9.2, 9.3, 9.4_ — Design: Pure Functions → `email.ts`
-  - [ ]* 7.3 Write property tests for email functions (PURE + TEST)
+  - [x]* 7.3 Write property tests for email functions (PURE + TEST)
     - Add `tests/properties/email.test.ts`.
     - **Property 6: idempotency** — `normalizeEmail(normalizeEmail(x)) === normalizeEmail(x)`.
     - **Property 7: Gmail aliases collapse** — inserting dots / appending `+tag` doesn't change the result; two dot/tag variants map to the same canonical email; non-Gmail unchanged examples.
     - **Property 8: disposable check** — `true` iff lowercased domain ∈ blocklist, using the normalized email's domain.
     - _Requirements: 8.1, 8.3, 9.1, 9.3_
-  - [~] 7.4 Implement phone canonicalization pure function
+  - [x] 7.4 Implement phone canonicalization pure function
     - Create `src/lib/identity/phone.ts` with `normalizePhoneE164(input, defaultRegion)` (strip formatting, apply default region for national input, return canonical E.164 or `null` when implausible; idempotent on canonical input).
     - _Requirements: 10.5_ — Design: Pure Functions → `phone.ts`
-  - [ ]* 7.5 Write property test for phone canonicalization (PURE + TEST)
+  - [x]* 7.5 Write property test for phone canonicalization (PURE + TEST)
     - Add `tests/properties/phone.test.ts`.
     - **Property 9: format-invariant + idempotent** — all formatting variants of a valid number normalize to the same E.164; idempotent on canonical input; invalid → `null` example.
     - _Requirements: 10.5_
-  - [~] 7.6 Implement identity-binding + velocity pure decisions
+  - [x] 7.6 Implement identity-binding + velocity pure decisions
     - Create `src/lib/identity/binding.ts` with `BindingView`, `identityConsumedTrial(binding|null, now)` (true iff binding exists AND (`bindingExpiresAt` null OR `now < bindingExpiresAt`)). Add `shouldFlagVelocity(count, threshold)` (true iff `count > threshold`) in the velocity helper.
     - _Requirements: 11.2, 11.3, 12.2, 12.3_ — Design: Pure Functions → `binding.ts`, Abuse-Prevention Pipeline
-  - [ ]* 7.7 Write property tests for binding + velocity (PURE + TEST)
+  - [x]* 7.7 Write property tests for binding + velocity (PURE + TEST)
     - Add `tests/properties/binding.test.ts`.
     - **Property 10: identityConsumedTrial expiry boundary** — true iff binding exists and not expired; `false` for null and for `now >= bindingExpiresAt`; boundary case `now == expiry`.
     - **Property 15: shouldFlagVelocity** — `true` iff `count > threshold`; flagged attempts still return allow (`flagged: true`) under default policy.
     - _Requirements: 11.2, 11.3, 12.2, 12.3_
 
-- [ ] 8. Phase 2 persistence + verification provider seam
-  - [~] 8.1 Create the `IdentityBinding` model
+- [x] 8. Phase 2 persistence + verification provider seam
+  - [x] 8.1 Create the `IdentityBinding` model
     - Create `src/lib/db/models/identity-binding.ts` per design: `normalizedEmail`, `phoneHash` (sha256(E.164+pepper)), `firstTrialAt`, optional `bindingExpiresAt`, `deviceFingerprints[]`, masked `ips[]`. Unique index on `phoneHash`, secondary index on `normalizedEmail`. Persisted independently of the account so deletion doesn't remove it.
     - _Requirements: 11.1, 11.4, 12.4, 19.1_ — Design: Data Models → IdentityBinding (+ PII handling)
-  - [~] 8.2 Add Redis keys/TTLs for OTP, velocity, and email-verify tokens
+  - [x] 8.2 Add Redis keys/TTLs for OTP, velocity, and email-verify tokens
     - In `src/lib/redis.ts`, add key builders + TTLs: `otp:{phoneHash}`, `otp:rl:{phoneHash}`, `vel:dev:{fingerprint}`, `vel:ip:{maskedIp}` (24h configurable), `evf:{token}` (~30 min). Fail-open when Redis is unavailable.
     - _Requirements: 10.4, 12.1, 12.2, 12.5, 7.1_ — Design: OTP + velocity storage
-  - [~] 8.3 Implement the `VerificationProvider` seam
+  - [x] 8.3 Implement the `VerificationProvider` seam
     - Create `src/lib/verification/provider.ts` with the interface, `isVerificationConfigured()` (placeholder-aware), and `getVerificationProvider()` factory returning `TwilioVerifyProvider` when `TWILIO_VERIFY_SERVICE_SID` set, else `OtpSmsProvider` (code in Redis, send via existing `SmsProvider`) when SMS configured, else `NoopVerificationProvider`. Never throws; typed envelopes.
     - _Requirements: 10.2, 10.3, 10.4, 13.1, 13.2, 13.4, 19.1_ — Design: VerificationProvider seam
-  - [ ]* 8.4 Write provider-selection + Noop tests (TEST)
+  - [x]* 8.4 Write provider-selection + Noop tests (TEST)
     - Assert `getVerificationProvider()` picks the impl by config and `NoopVerificationProvider` returns `not_configured` envelopes without throwing.
     - _Requirements: 13.1, 18.3_
 
-- [ ] 9. Phase 2 verification actions + gated trial pipeline
-  - [~] 9.1 Implement verification server actions
+- [x] 9. Phase 2 verification actions + gated trial pipeline
+  - [x] 9.1 Implement verification server actions
     - Create `src/actions/verification.ts` with `requestPhoneOtp({ phone })` and `confirmPhoneOtp({ phone, code })` (scoped to `session.user.id`, delegate to `VerificationProvider`, apply Redis rate limits), plus `requestEmailVerification()` / `confirmEmailVerification(token)` reusing the existing Resend email seam and recording `User.emailVerifiedAt`. Typed envelopes; user-safe messages (no provider internals).
     - _Requirements: 7.1, 7.3, 7.4, 10.1, 10.2, 10.3, 10.4, 13.2, 13.3, 13.4_ — Design: New server actions
-  - [~] 9.2 Wire the ordered abuse-gate pipeline into `startTrialGated`
+  - [x] 9.2 Wire the ordered abuse-gate pipeline into `startTrialGated`
     - Extend `src/actions/trial.ts` to run the ordered pipeline before provisioning: normalize email → disposable check (fail-open on load failure) → email verified (fail-closed) → phone OTP verified (fail-closed on wrong/expired, degraded when provider down) → velocity flag (fail-open, flag-not-block) → `identityConsumedTrial` (fail-closed) → provision `Subscription` + insert `IdentityBinding`. Resolve double-submit races via the unique `phoneHash` index (loser treated as already-consumed). Store device fingerprint (opaque) + masked IP; increment velocity counters.
     - _Requirements: 1.1, 1.4, 7.1, 7.2, 8.1, 8.4, 10.1, 11.1, 11.2, 12.1, 12.2, 12.3, 12.5_ — Design: Abuse-Prevention Pipeline
-  - [~] 9.3 Add the client device-fingerprint lib
+  - [x] 9.3 Add the client device-fingerprint lib
     - Create `src/lib/identity/fingerprint.client.ts` computing an opaque, non-PII hash from stable browser signals, submitted with the trial-start request; pipeline proceeds if omitted.
     - _Requirements: 12.1, 12.4, 12.5_ — Design: Abuse-Prevention Pipeline
-  - [ ]* 9.4 Write IdentityBinding persistence/integration tests (TEST)
+  - [x]* 9.4 Write IdentityBinding persistence/integration tests (TEST)
     - DB-backed (`isDbAvailable()`-guarded): a binding survives account deletion and still blocks a new trial for the same phone identity; a consumed identity declines a second trial.
     - _Requirements: 11.2, 11.3, 11.4, 1.4_
 
-- [ ] 10. Phase 2 UI — email-verify + phone-OTP in the registration/trial-start flow
-  - [~] 10.1 Build email-verify + phone-OTP UI
+- [x] 10. Phase 2 UI — email-verify + phone-OTP in the registration/trial-start flow
+  - [x] 10.1 Build email-verify + phone-OTP UI
     - Add the email-verification and phone-OTP steps to the registration/trial-start flow (request/confirm OTP, resend within rate limit, labelled Not_Configured_State when a provider is unavailable, user-safe error messages). DaisyUI theme tokens, WCAG 2.1 AA, 44px touch targets.
     - _Requirements: 7.1, 10.1, 10.2, 10.3, 10.4, 13.1, 13.4_ — Design: UI
 
-- [~] 11. Phase 2 verification gate
+- [-] 11. Phase 2 verification gate
   - Verify phase: run `npx tsc --noEmit`, `npm test -- --run`, and `npm run build`; fix any failures; commit. Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 12. Phase 3 config + fee pure core (PURE + property tests)

@@ -7,6 +7,14 @@
     "2.4 Write property tests for `evaluateAccess` (PURE + TEST)": {
       "status": "passed",
       "lastRunTimestamp": 1790946139165
+    },
+    "7.7 Write property tests for binding + velocity (PURE + TEST)": {
+      "status": "passed",
+      "lastRunTimestamp": 1790948924962
+    },
+    "7.3 Write property tests for email functions (PURE + TEST)": {
+      "status": "passed",
+      "lastRunTimestamp": 1790948935932
     }
   },
   "executionHistory": {
@@ -248,6 +256,11 @@
         "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
         "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
         "timestamp": 1790947560139
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790948547379
       }
     ],
     "7.1 Add Phase 2 env vars to the env example and placeholder-aware config": [
@@ -255,6 +268,16 @@
         "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
         "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
         "timestamp": 1790945800395
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790948564080
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790948743062
       }
     ],
     "7.2 Implement email normalization + disposable-domain pure functions": [
@@ -262,6 +285,16 @@
         "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
         "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
         "timestamp": 1790945800516
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790948560331
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790948739664
       }
     ],
     "7.4 Implement phone canonicalization pure function": [
@@ -269,6 +302,16 @@
         "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
         "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
         "timestamp": 1790945800676
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790948561610
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790948740707
       }
     ],
     "7.6 Implement identity-binding + velocity pure decisions": [
@@ -276,6 +319,16 @@
         "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
         "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
         "timestamp": 1790945800768
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790948562922
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790948742034
       }
     ],
     "8.1 Create the `IdentityBinding` model": [
@@ -283,6 +336,11 @@
         "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
         "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
         "timestamp": 1790945800837
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790948966383
       }
     ],
     "8.2 Add Redis keys/TTLs for OTP, velocity, and email-verify tokens": [
@@ -290,6 +348,11 @@
         "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
         "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
         "timestamp": 1790945800925
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790948965297
       }
     ],
     "8.3 Implement the `VerificationProvider` seam": [
@@ -297,6 +360,11 @@
         "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
         "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
         "timestamp": 1790945801026
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790949174826
       }
     ],
     "9.1 Implement verification server actions": [
@@ -304,6 +372,16 @@
         "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
         "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
         "timestamp": 1790945801100
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790949177302
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790949550379
       }
     ],
     "9.2 Wire the ordered abuse-gate pipeline into `startTrialGated`": [
@@ -311,6 +389,16 @@
         "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
         "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
         "timestamp": 1790945801261
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790949553794
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790949846799
       }
     ],
     "9.3 Add the client device-fingerprint lib": [
@@ -318,6 +406,16 @@
         "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
         "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
         "timestamp": 1790945801358
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790949178302
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790949552754
       }
     ],
     "10.1 Build email-verify + phone-OTP UI": [
@@ -325,6 +423,16 @@
         "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
         "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
         "timestamp": 1790945801431
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790949843751
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790950190002
       }
     ],
     "11. Phase 2 verification gate": [
@@ -332,6 +440,11 @@
         "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
         "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
         "timestamp": 1790945801508
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790950191556
       }
     ],
     "12.1 Implement the application-fee pure function": [
@@ -477,6 +590,79 @@
         "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
         "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
         "timestamp": 1790947559255
+      }
+    ],
+    "7. Phase 2 config + identity pure core (PURE + property tests)": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790948743363
+      }
+    ],
+    "7.5 Write property test for phone canonicalization (PURE + TEST)": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790948961498
+      }
+    ],
+    "7.3 Write property tests for email functions (PURE + TEST)": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790948962434
+      }
+    ],
+    "7.7 Write property tests for binding + velocity (PURE + TEST)": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790948964077
+      }
+    ],
+    "8. Phase 2 persistence + verification provider seam": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790949175016
+      }
+    ],
+    "8.4 Write provider-selection + Noop tests (TEST)": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790949175912
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790949551665
+      }
+    ],
+    "9.4 Write IdentityBinding persistence/integration tests (TEST)": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790949846625
+      },
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790950192292
+      }
+    ],
+    "9. Phase 2 verification actions + gated trial pipeline": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790949847036
+      }
+    ],
+    "10. Phase 2 UI — email-verify + phone-OTP in the registration/trial-start flow": [
+      {
+        "executionId": "4b839e14-897f-4190-a61c-7274c1fc2294",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1790950190143
       }
     ]
   }

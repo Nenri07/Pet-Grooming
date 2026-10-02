@@ -23,6 +23,7 @@ import '@/lib/db/models/subscription';
 import '@/lib/db/models/sms-message';
 import '@/lib/db/models/waitlist';
 import '@/lib/db/models/fill-event';
+import '@/lib/db/models/identity-binding';
 
 /** Force-evaluate the side-effect imports above. */
 export function registerModels(): void {

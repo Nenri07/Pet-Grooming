@@ -6,7 +6,7 @@
  * null and carry a `googleId` instead. Failed-login tracking fields support the
  * account-lockout policy enforced by the auth layer.
  *
- * _Requirements: 1.7, 22.1, 22.4, 22.5, 22.6_
+ * _Requirements: 1.7, 22.1, 22.4, 22.5, 22.6; Billing/Trial-abuse R7.3, R7.4_
  */
 import { Schema, model, models, type Model, type Types } from 'mongoose';
 
@@ -20,6 +20,14 @@ export interface IUser {
   isActive: boolean;
   failedLoginAttempts: number;
   lockedUntil?: Date | null;
+  /**
+   * When this user's email address was verified via the email-verification
+   * link flow (`confirmEmailVerification`). `null` until verified. Additive,
+   * non-breaking: existing rows default to `null` and are treated as
+   * unverified by the abuse-prevention pipeline (Billing/Trial-abuse R7.3,
+   * R7.4).
+   */
+  emailVerifiedAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -41,6 +49,9 @@ const userSchema = new Schema<IUser>(
     isActive: { type: Boolean, default: false },
     failedLoginAttempts: { type: Number, default: 0 },
     lockedUntil: { type: Date, default: null },
+    // Email-verification timestamp (R7.3/7.4). Additive; defaults to null so
+    // legacy rows read as "not yet verified".
+    emailVerifiedAt: { type: Date, default: null },
   },
   { timestamps: true }
 );
