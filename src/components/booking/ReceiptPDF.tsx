@@ -25,20 +25,22 @@ import {
   StyleSheet,
 } from '@react-pdf/renderer';
 
-/** Refined palette approximating the DaisyUI pawport theme (primary/accent/ink). */
+// Ivory + soft-blue palette matched to the Pawxis theme; literal hex because @react-pdf can't read CSS vars
 const COLORS = {
-  primary: '#3E7CB1',
-  primaryDeep: '#2C5E88',
-  accent: '#7EC8C8',
-  ink: '#1A2432',
-  text: '#26313F',
-  muted: '#6B7683',
-  faint: '#98A2AF',
-  hairline: '#E6EAEF',
-  rowAlt: '#F6F8FB',
-  band: '#EEF5FB',
-  success: '#15803D',
-  successBg: '#DCFCE7',
+  primary: '#5B9BD5',
+  primaryDeep: '#3E6E9E',
+  accent: '#8CC7C2',
+  ink: '#2B2B28',
+  text: '#44433E',
+  muted: '#8A887F',
+  faint: '#B4B1A6',
+  hairline: '#ECE7DC',
+  rowAlt: '#FBF9F3',
+  band: '#FBF9F3',
+  bandText: '#44433E',
+  cardBg: '#FFFDF8',
+  badgeBg: '#EAF3F2',
+  badgeText: '#3E6E9E',
   white: '#FFFFFF',
 };
 
@@ -49,6 +51,7 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     fontFamily: 'Helvetica',
     lineHeight: 1.5,
+    backgroundColor: COLORS.cardBg,
   },
 
   /* Header band across the top. */
@@ -92,10 +95,10 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     textTransform: 'uppercase',
   },
-  /* Thin accent rule directly under the band. */
+  /* Thin hairline rule directly under the band. */
   accentRule: {
-    height: 4,
-    backgroundColor: COLORS.accent,
+    height: 1,
+    backgroundColor: COLORS.hairline,
   },
 
   body: {
@@ -153,24 +156,24 @@ const styles = StyleSheet.create({
     color: COLORS.muted,
   },
 
-  /* Itemized table. */
+  /* Itemized table — flat on the ivory surface, hairline top & bottom. */
   table: {
-    borderWidth: 1,
-    borderColor: COLORS.hairline,
-    borderRadius: 8,
-    overflow: 'hidden',
     marginBottom: 16,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: COLORS.hairline,
   },
   thead: {
     flexDirection: 'row',
-    backgroundColor: COLORS.band,
     paddingVertical: 8,
     paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.hairline,
   },
   th: {
     fontSize: 7.5,
     letterSpacing: 1,
-    color: COLORS.primaryDeep,
+    color: COLORS.bandText,
     fontFamily: 'Helvetica-Bold',
     textTransform: 'uppercase',
   },
@@ -244,14 +247,16 @@ const styles = StyleSheet.create({
   statusPill: {
     alignSelf: 'flex-end',
     marginTop: 8,
-    backgroundColor: COLORS.successBg,
-    color: COLORS.success,
+    backgroundColor: COLORS.badgeBg,
+    color: COLORS.badgeText,
     fontFamily: 'Helvetica-Bold',
     fontSize: 8,
     letterSpacing: 0.5,
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: 999,
+    borderWidth: 1,
+    borderColor: COLORS.accent,
   },
   balanceNote: {
     fontSize: 8.5,
