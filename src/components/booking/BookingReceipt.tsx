@@ -42,7 +42,7 @@ export function BookingReceipt({ data }: BookingReceiptProps) {
       const link = document.createElement('a');
       link.href = url;
       const safeRef = (data.bookingRef || 'receipt').replace(/[^a-z0-9-_]+/gi, '_');
-      link.download = `pawport-booking-${safeRef}.pdf`;
+      link.download = `pawxis-booking-${safeRef}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

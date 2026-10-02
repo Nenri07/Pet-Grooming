@@ -432,7 +432,7 @@ export function AppointmentDetail({ appointment }: AppointmentDetailProps) {
           petName={pet.name}
           beforePhotoUrl={appointment.beforePhotoUrl ?? null}
           afterPhotoUrl={appointment.afterPhotoUrl ?? null}
-          business={appointment.branding?.business ?? 'PawPort'}
+          business={appointment.branding?.business ?? 'Pawxis'}
           logoUrl={appointment.branding?.logoUrl ?? null}
           bookingUrl={appointment.branding?.bookingUrl ?? null}
         />

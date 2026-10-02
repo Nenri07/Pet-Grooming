@@ -19,8 +19,8 @@ const metadataBase = new URL(
 export const metadata: Metadata = {
   metadataBase,
   title: {
-    default: 'PawPort — Mobile pet grooming booking software',
-    template: '%s · PawPort',
+    default: 'Pawxis — Mobile pet grooming booking software',
+    template: '%s · Pawxis',
   },
   description,
   keywords: [
@@ -33,19 +33,19 @@ export const metadata: Metadata = {
     'booking page for groomers',
     'solo mobile groomer',
   ],
-  applicationName: 'PawPort',
+  applicationName: 'Pawxis',
   alternates: { canonical: '/' },
   openGraph: {
-    title: 'PawPort — Groom more dogs. Drive less.',
+    title: 'Pawxis — Groom more dogs. Drive less.',
     description,
     type: 'website',
-    siteName: 'PawPort',
+    siteName: 'Pawxis',
     url: '/',
-    images: [{ url: '/og.jpg', width: 1200, height: 630, alt: 'PawPort' }],
+    images: [{ url: '/og.jpg', width: 1200, height: 630, alt: 'Pawxis' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'PawPort — Groom more dogs. Drive less.',
+    title: 'Pawxis — Groom more dogs. Drive less.',
     description,
     images: ['/og.jpg'],
   },

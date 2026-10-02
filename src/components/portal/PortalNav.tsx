@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
@@ -176,10 +177,21 @@ export function PortalNav() {
     <>
       {/* ---- Top bar (all sizes) ---- */}
       <header className="sticky top-0 z-30 flex items-center gap-2 border-b border-base-content/10 bg-base-100/80 px-3 py-2 backdrop-blur supports-[backdrop-filter]:bg-base-100/60 sm:px-4 md:hidden">
-        <Link href="/dashboard" className="font-display text-xl font-bold text-primary">
-          PawPort
+        <Link
+          href="/dashboard"
+          className="inline-flex min-w-0 items-center gap-2 font-display text-xl font-bold text-primary"
+        >
+          <Image
+            src="/pawxis2.png"
+            alt="Pawxis"
+            width={28}
+            height={28}
+            className="h-7 w-7 shrink-0 object-contain"
+            priority
+          />
+          <span className="truncate">Pawxis</span>
         </Link>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex min-w-0 items-center gap-2">
           <SmsCreditsPill />
           <ThemeMenu />
           <LogoutButton variant="icon" />
@@ -190,7 +202,7 @@ export function PortalNav() {
       {/* ---- Desktop / tablet collapsible sidebar (md+) ---- */}
       <aside
         className={cx(
-          'sticky top-0 hidden h-screen shrink-0 flex-col border-r border-base-content/10 bg-base-100 p-3 transition-[width] duration-200 ease-out md:flex',
+          'sticky top-0 hidden h-screen max-h-screen shrink-0 flex-col overflow-hidden border-r border-base-content/10 bg-base-100 p-3 transition-[width] duration-200 ease-out md:flex',
           collapsed ? 'w-[76px]' : 'w-64'
         )}
       >
@@ -203,9 +215,27 @@ export function PortalNav() {
           {!collapsed && (
             <Link
               href="/dashboard"
-              className="font-display text-2xl font-bold text-primary"
+              className="inline-flex min-w-0 items-center gap-2 font-display text-2xl font-bold text-primary"
             >
-              PawPort
+              <Image
+                src="/pawxis2.png"
+                alt="Pawxis"
+                width={32}
+                height={32}
+                className="h-8 w-8 shrink-0 object-contain"
+                priority
+              />
+              <span className="truncate">Pawxis</span>
+            </Link>
+          )}
+          {collapsed && (
+            <Link
+              href="/dashboard"
+              aria-label="Pawxis — Dashboard"
+              title="Pawxis"
+              className="sr-only"
+            >
+              Pawxis
             </Link>
           )}
           <button
@@ -224,7 +254,10 @@ export function PortalNav() {
           </button>
         </div>
 
-        <nav className="flex flex-1 flex-col gap-1" aria-label="Portal">
+        <nav
+          className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overflow-x-hidden"
+          aria-label="Portal"
+        >
           {SIDEBAR_ITEMS.map(({ label, href, icon: Icon }) => {
             const active = isActive(pathname, href);
             return (
@@ -248,15 +281,28 @@ export function PortalNav() {
           })}
         </nav>
 
-        {/* Sidebar footer: SMS pill + theme + avatar (calm, tokenized). */}
+        {/* Sidebar footer: SMS pill + theme + avatar (calm, tokenized).
+            Expanded: controls wrap so they never push past the w-64 width.
+            Collapsed: stack vertically, centered, on the icons-only rail. */}
         <div
           className={cx(
-            'mt-3 flex flex-wrap items-center gap-2 border-t border-base-content/10 pt-3',
-            collapsed ? 'flex-col' : 'justify-between'
+            'mt-3 flex shrink-0 gap-2 border-t border-base-content/10 pt-3',
+            collapsed
+              ? 'flex-col items-center'
+              : 'flex-col items-stretch'
           )}
         >
-          {!collapsed && <SmsCreditsPill />}
-          <div className={cx('flex items-center gap-1', collapsed && 'flex-col')}>
+          {!collapsed && (
+            <div className="min-w-0 max-w-full">
+              <SmsCreditsPill />
+            </div>
+          )}
+          <div
+            className={cx(
+              'flex min-w-0 items-center gap-1',
+              collapsed ? 'flex-col' : 'flex-wrap justify-end'
+            )}
+          >
             <ThemeMenu align={collapsed ? 'start' : 'end'} />
             <LogoutButton variant="icon" />
             <AvatarMenu />

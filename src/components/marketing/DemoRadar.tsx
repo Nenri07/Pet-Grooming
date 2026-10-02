@@ -191,7 +191,7 @@ export function DemoRadar({ demo }: { demo: Demo }) {
           Tap a booking to see the detour
         </h3>
         <p className="mt-3 text-base-content/70">
-          Sample bookings around {demo.city}. PawPort ranks each one by how well
+          Sample bookings around {demo.city}. Pawxis ranks each one by how well
           it fits your route — the exact same math your live booking page uses.
         </p>
 
@@ -262,7 +262,7 @@ export function DemoRadar({ demo }: { demo: Demo }) {
             </>
           ) : (
             <p className="text-base-content/70">
-              This booking falls outside a workable gap in the day — PawPort would
+              This booking falls outside a workable gap in the day — Pawxis would
               flag it or suggest a better time.
             </p>
           )}

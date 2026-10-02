@@ -1,6 +1,7 @@
 'use client';
 import * as React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { LayoutDashboard } from 'lucide-react';
 import { useGsapContext } from '@/lib/animation';
@@ -43,8 +44,16 @@ export function MarketingHeader() {
         data-header
         className="fixed inset-x-0 top-0 z-50 flex h-20 items-center justify-between px-gutter transition-[height,background-color,box-shadow] duration-300 [&.is-scrolled]:h-16 [&.is-scrolled]:bg-base-100/80 [&.is-scrolled]:shadow-soft [&.is-scrolled]:backdrop-blur"
       >
-        <Link href="/" className="text-xl font-bold text-primary">
-          PawPort
+        <Link href="/" className="inline-flex items-center gap-2 text-xl font-bold text-primary">
+          <Image
+            src="/pawxis2.png"
+            alt="Pawxis"
+            width={32}
+            height={32}
+            className="h-8 w-8 object-contain"
+            priority
+          />
+          Pawxis
         </Link>
 
         <nav className="flex items-center gap-4 md:gap-6">

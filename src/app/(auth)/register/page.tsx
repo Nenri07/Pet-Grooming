@@ -20,7 +20,7 @@ import { RegisterForm } from './RegisterForm';
  * _Requirements: 1.1, 1.3, 1.4, 21.1, 21.2, 21.3_
  */
 export const metadata: Metadata = {
-  title: 'Create your account · PawPort',
+  title: 'Create your account · Pawxis',
 };
 
 interface RegisterPageProps {

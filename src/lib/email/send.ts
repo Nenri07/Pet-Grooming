@@ -177,7 +177,7 @@ function emailShell(businessName: string, heading: string, body: string): string
         </div>
       </div>
       <p style="text-align:center;color:#6b7280;font-size:12px;margin-top:16px;">
-        Sent by ${escapeHtml(businessName)} via PawPort
+        Sent by ${escapeHtml(businessName)} via Pawxis
       </p>
     </div>
   </body>
@@ -260,7 +260,7 @@ export async function sendGroomerNotificationEmail(
   const to = process.env.BUSINESS_EMAIL;
   if (!resend || !from || !to) return false;
 
-  const businessName = process.env.NEXT_PUBLIC_BUSINESS_NAME?.trim() || 'PawPort';
+  const businessName = process.env.NEXT_PUBLIC_BUSINESS_NAME?.trim() || 'Pawxis';
   const servicesText = details.services.length ? details.services.join(', ') : '—';
 
   const body = `
@@ -326,10 +326,10 @@ export async function sendTrialEndingEmail(
   const from = getFromAddress();
   if (!resend || !from || !to) return false;
 
-  const businessName = process.env.NEXT_PUBLIC_BUSINESS_NAME?.trim() || 'PawPort';
+  const businessName = process.env.NEXT_PUBLIC_BUSINESS_NAME?.trim() || 'Pawxis';
   const body = `
     <p style="margin:0 0 16px;font-size:14px;line-height:1.5;">
-      Your PawPort Pro trial ends on <strong>${escapeHtml(details.trialEndsOn)}</strong>.
+      Your Pawxis Pro trial ends on <strong>${escapeHtml(details.trialEndsOn)}</strong>.
       Add a payment method to keep Order Radar, Fill My Day, live ETA, rebooking
       autopilot and the rest of Pro without interruption.
     </p>
@@ -348,7 +348,7 @@ export async function sendTrialEndingEmail(
       const { error } = await resend.emails.send({
         from,
         to,
-        subject: `Your PawPort trial ends ${details.trialEndsOn}`,
+        subject: `Your Pawxis trial ends ${details.trialEndsOn}`,
         html: emailShell(businessName, 'Your trial ends soon', body),
       });
       if (error) throw error;

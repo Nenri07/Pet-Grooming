@@ -105,7 +105,7 @@ export function OrderRadarShowcase() {
               Every booking, ranked by your route
             </h2>
             <p className="mt-4 text-lg text-base-content/70">
-              When a new booking comes in, PawPort shows exactly how far it is
+              When a new booking comes in, Pawxis shows exactly how far it is
               from your other stops and how much driving it adds — so you can say
               yes to the ones that fit.
             </p>

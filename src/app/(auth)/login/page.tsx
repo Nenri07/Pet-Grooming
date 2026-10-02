@@ -12,7 +12,7 @@ import { LoginForm } from './LoginForm';
  * _Requirements: 1.2, 1.3, 1.7, 21.1, 21.2, 21.3_
  */
 export const metadata: Metadata = {
-  title: 'Log in · PawPort',
+  title: 'Log in · Pawxis',
 };
 
 export default function LoginPage() {

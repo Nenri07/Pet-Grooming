@@ -31,7 +31,7 @@ export function organizationJsonLd() {
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: 'PawPort',
+    name: 'Pawxis',
     url,
     logo: absoluteUrl('/icon.svg'),
     description:
@@ -53,7 +53,7 @@ export function softwareApplicationJsonLd() {
   return {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
-    name: 'PawPort',
+    name: 'Pawxis',
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'Web',
     url,
@@ -121,12 +121,12 @@ export function bundleProductJsonLd() {
   return {
     '@context': 'https://schema.org',
     '@type': 'Product',
-    name: 'PawPort — pet grooming website + booking system',
+    name: 'Pawxis — pet grooming website + booking system',
     url,
     category: 'BusinessApplication',
     description:
       'A bundle for solo mobile pet groomers: your own branded website plus the booking, deposits, routing, two-way SMS and digital pet records behind it — one subscription.',
-    brand: { '@type': 'Brand', name: 'PawPort' },
+    brand: { '@type': 'Brand', name: 'Pawxis' },
     offers: {
       '@type': 'AggregateOffer',
       priceCurrency: 'USD',

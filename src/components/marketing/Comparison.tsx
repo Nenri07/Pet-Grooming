@@ -48,14 +48,14 @@ export function Comparison() {
         <SectionHeading
           eyebrow="How we compare"
           title="Built for the road, not the salon"
-          subtitle="Most grooming tools were made for a fixed shop. PawPort is made for a single van on the move."
+          subtitle="Most grooming tools were made for a fixed shop. Pawxis is made for a single van on the move."
         />
 
         <Reveal className="mt-14">
           <div className="overflow-x-auto rounded-box border border-base-content/10 bg-base-100 shadow-card">
             <table className="w-full min-w-[30rem] border-collapse text-left">
               <caption className="sr-only" id="comparison-heading">
-                PawPort compared with typical grooming software
+                Pawxis compared with typical grooming software
               </caption>
               <thead>
                 <tr className="border-b border-base-content/10">
@@ -63,7 +63,7 @@ export function Comparison() {
                     Capability
                   </th>
                   <th scope="col" className="p-4 text-center font-display text-base font-bold text-primary">
-                    PawPort
+                    Pawxis
                   </th>
                   <th scope="col" className="p-4 text-center text-sm font-medium text-base-content/60">
                     {comparison.otherLabel}

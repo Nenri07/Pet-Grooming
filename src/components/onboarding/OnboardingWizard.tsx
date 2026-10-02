@@ -668,7 +668,7 @@ function StepCalendar({
       </div>
 
       <p className="text-sm text-base-content/70">
-        PawPort has its own built-in calendar — no external calendar to connect.
+        Pawxis has its own built-in calendar — no external calendar to connect.
         Every booking lands here automatically. When you&apos;re set up, you can
         subscribe to a read-only feed of your appointments in Apple, Google, or
         Outlook calendar from your Availability settings.
@@ -963,7 +963,7 @@ export function OnboardingWizard({
       setFinishing(false);
       return;
     }
-    toast.success("You're all set! Welcome to PawPort.");
+    toast.success("You're all set! Welcome to Pawxis.");
     router.push('/dashboard');
   }, [router]);
 

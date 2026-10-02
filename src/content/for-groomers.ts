@@ -157,7 +157,7 @@ export const forGroomers: ForGroomersContent = {
   hero: {
     eyebrow: 'For solo mobile groomers',
     headline: 'Your own branded website — plus the booking engine behind it.',
-    sub: 'PawPort gives you a professional website at your own link and the booking, deposits and routing that run behind it. One subscription, set up in an afternoon.',
+    sub: 'Pawxis gives you a professional website at your own link and the booking, deposits and routing that run behind it. One subscription, set up in an afternoon.',
     primaryCta: { label: 'Start free — 14 days', href: '/register' },
     secondaryCta: { label: 'See a live demo', href: '/demo/happy-paws' },
     trust: 'No card required · Your own booking link in minutes',
@@ -207,7 +207,7 @@ export const forGroomers: ForGroomersContent = {
       {
         title: 'Downloadable receipts',
         description:
-          'The moment a deposit is paid, PawPort generates a branded receipt clients can download and keep.',
+          'The moment a deposit is paid, Pawxis generates a branded receipt clients can download and keep.',
         icon: 'receipt',
       },
       {
@@ -223,14 +223,14 @@ export const forGroomers: ForGroomersContent = {
     eyebrow: 'One bundle, not a pile of tools',
     title: 'Stop juggling three or four separate tools',
     subtitle:
-      'Most groomers stitch together a website builder, a booking tool, a texting service and a spreadsheet for pet notes. PawPort is all of that in one place, on one bill, that actually talk to each other.',
+      'Most groomers stitch together a website builder, a booking tool, a texting service and a spreadsheet for pet notes. Pawxis is all of that in one place, on one bill, that actually talk to each other.',
     replaces: [
       { label: 'Website builder', role: 'Your public site', icon: 'globe' },
       { label: 'Booking tool', role: 'Scheduling + deposits', icon: 'calendar-check' },
       { label: 'SMS / texting service', role: 'Reminders + chat', icon: 'message-square' },
       { label: 'Pet records spreadsheet', role: 'Client & pet notes', icon: 'id-card' },
     ],
-    bundleLabel: 'PawPort',
+    bundleLabel: 'Pawxis',
     note: 'Instead of paying for and wiring up several separate tools, you get one subscription where booking, texting, routing and your website already work together.',
   },
 
@@ -270,7 +270,7 @@ export const forGroomers: ForGroomersContent = {
     {
       question: 'Do I get my own domain?',
       answer:
-        'You get your own branded booking link straight away, and you can point a custom domain you own at your PawPort site so clients see your name, not ours. There is no separate hosting bill on top.',
+        'You get your own branded booking link straight away, and you can point a custom domain you own at your Pawxis site so clients see your name, not ours. There is no separate hosting bill on top.',
     },
     {
       question: 'Can clients book without downloading an app?',

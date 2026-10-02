@@ -185,7 +185,7 @@ export function PetCardPDF({ data }: PetCardPDFProps) {
   return (
     <Document
       title={`${data.name}'s Pet Card`}
-      author={branding.businessName || 'PawPort'}
+      author={branding.businessName || 'Pawxis'}
     >
       <Page size="A5" style={styles.page}>
         {/* Groomer branding */}

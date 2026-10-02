@@ -1,5 +1,6 @@
 import * as React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Container } from '@/components/ui/Container';
 import { Card } from '@/components/ui/Card';
 
@@ -9,7 +10,7 @@ import { Card } from '@/components/ui/Card';
  * Renders a centered, premium card layout shared by the login and register
  * pages. Vertically and horizontally centers a single Card on a full-height,
  * base-200 canvas so the auth forms feel focused and branded, matching the
- * PawPort aesthetic (rounded-2xl, soft shadow).
+ * Pawxis aesthetic (rounded-2xl, soft shadow).
  *
  * _Requirements: 19.1, 19.2_
  */
@@ -25,7 +26,15 @@ export default function AuthLayout({
           href="/"
           className="mb-6 inline-flex items-center gap-2 text-2xl font-bold text-primary"
         >
-          PawPort
+          <Image
+            src="/pawxis2.png"
+            alt="Pawxis"
+            width={32}
+            height={32}
+            className="h-8 w-8 object-contain"
+            priority
+          />
+          Pawxis
         </Link>
         <Card className="w-full max-w-md">{children}</Card>
       </Container>

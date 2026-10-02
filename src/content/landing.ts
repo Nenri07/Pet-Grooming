@@ -346,7 +346,7 @@ export const landing: Landing = {
         body: 'They pick a service and a time on your branded page and pay a deposit — no back-and-forth texts.',
       },
       {
-        title: 'PawPort routes it',
+        title: 'Pawxis routes it',
         body: 'Order Radar ranks the booking against your day, so you only say yes to the stops that fit.',
       },
       {
@@ -360,7 +360,7 @@ export const landing: Landing = {
     eyebrow: 'Branded receipts',
     title: 'Every booking comes with a receipt clients can keep',
     subtitle:
-      'The moment a deposit is paid, PawPort generates a branded booking receipt clients can download and show on arrival.',
+      'The moment a deposit is paid, Pawxis generates a branded booking receipt clients can download and show on arrival.',
     downloadLabel: 'Download receipt',
     sample: {
       reference: 'PP-XK4T9M',

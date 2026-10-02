@@ -1,6 +1,7 @@
 'use client';
 import * as React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useTheme } from 'next-themes';
 import { Moon, Sun, Github, Twitter, Instagram } from 'lucide-react';
 import { ThemeMenu } from '@/components/portal/ThemeMenu';
@@ -32,8 +33,15 @@ export function MarketingFooter() {
       <div className="mx-auto max-w-6xl px-gutter py-section">
         <div className="grid gap-10 md:grid-cols-4">
           <div className="md:col-span-1">
-            <Link href="/" className="text-xl font-bold text-primary">
-              PawPort
+            <Link href="/" className="inline-flex items-center gap-2 text-xl font-bold text-primary">
+              <Image
+                src="/pawxis2.png"
+                alt="Pawxis"
+                width={32}
+                height={32}
+                className="h-8 w-8 object-contain"
+              />
+              Pawxis
             </Link>
             <p className="mt-3 max-w-xs text-sm text-base-content/70">
               Luxury mobile pet grooming, booked in seconds and brought right to
@@ -118,7 +126,7 @@ export function MarketingFooter() {
         </div>
 
         <div className="mt-10 flex flex-col gap-2 border-t border-base-300 pt-6 text-sm text-base-content/60 sm:flex-row sm:items-center sm:justify-between">
-          <span>&copy; {year} PawPort. All rights reserved.</span>
+          <span>&copy; {year} Pawxis. All rights reserved.</span>
           <span>
             Photography:{' '}
             <a
