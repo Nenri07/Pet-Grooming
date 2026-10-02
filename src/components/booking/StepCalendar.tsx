@@ -122,14 +122,16 @@ function CalendarSkeleton() {
   );
 }
 
-export function StepCalendar({ dispatch, services, groomerSlug }: BookingStepProps) {
+export function StepCalendar({ state, dispatch, services, groomerSlug }: BookingStepProps) {
   const [ui, setUi] = React.useState<CalendarUiState>({ status: 'loading' });
   const [conflictMessage, setConflictMessage] = React.useState<string | null>(null);
   // Guards against the effect running twice re-triggering an in-flight select.
   const [selecting, setSelecting] = React.useState(false);
 
-  // Use the first active service's estimated duration to size the slots.
-  const serviceDurationMinutes = services[0]?.durationMinutes ?? 0;
+  // Use the CLIENT-CHOSEN service's estimated duration to size the slots,
+  // falling back to the first service if the index is out of range.
+  const chosenService = services[state.selectedServiceIndex] ?? services[0];
+  const serviceDurationMinutes = chosenService?.durationMinutes ?? 0;
 
   /**
    * Fetch available slots for the next 14 days. Returns the fresh slot list on

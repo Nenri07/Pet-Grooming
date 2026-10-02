@@ -62,6 +62,13 @@ export const TOTAL_PROGRESS_STEPS = 5;
 export interface BookingState {
   currentStep: BookingStep;
   stepIndex: number;
+  /**
+   * Index into the groomer's `services` array of the service the client chose
+   * (Step 1). Drives the estimate base price, the calendar slot duration, and
+   * the confirmation receipt. Defaults to 0 (the first service) so a groomer
+   * with a single service needs no explicit pick. Navigation never clears it.
+   */
+  selectedServiceIndex: number;
   petInfo: PetInfoInput | null;
   ownerDetails: OwnerDetailsInput | null;
   /**
@@ -76,6 +83,7 @@ export interface BookingState {
 }
 
 export type BookingAction =
+  | { type: 'SELECT_SERVICE'; payload: number }
   | { type: 'SUBMIT_PET_INFO'; payload: PetInfoInput }
   | { type: 'SUBMIT_OWNER_DETAILS'; payload: OwnerDetailsInput; smsConsent?: boolean }
   | { type: 'CONFIRM_ESTIMATE'; payload: EstimateResult }
@@ -88,6 +96,7 @@ export type BookingAction =
 export const initialBookingState: BookingState = {
   currentStep: 'pet-info',
   stepIndex: 0,
+  selectedServiceIndex: 0,
   petInfo: null,
   ownerDetails: null,
   smsConsent: false,
@@ -115,6 +124,10 @@ export function bookingReducer(
   action: BookingAction
 ): BookingState {
   switch (action.type) {
+    case 'SELECT_SERVICE':
+      // Cursor-independent: only records which service is chosen. Never touches
+      // currentStep/stepIndex or any captured step data.
+      return { ...state, selectedServiceIndex: Math.max(0, Math.trunc(action.payload)) };
     case 'SUBMIT_PET_INFO':
       return {
         ...state,

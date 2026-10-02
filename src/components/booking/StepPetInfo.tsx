@@ -19,6 +19,20 @@ import { COAT_CONDITION_OPTIONS } from '@/config/coat-conditions';
 import { SPECIAL_FLAG_OPTIONS } from '@/config/special-flags';
 import { ImageUpload } from '@/components/ui/ImageUpload';
 
+/** Format a service price as a plain USD amount for the picker labels. */
+function formatServicePrice(amount: number): string {
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  } catch {
+    return `$${Math.round(amount)}`;
+  }
+}
+
 /**
  * Shared props contract for every booking step component.
  *
@@ -121,7 +135,7 @@ function toPetInfoInput(values: PetInfoFormValues): PetInfoInput {
  *
  * _Requirements: 3.2, 3.3, 3.4, 3.6_
  */
-export function StepPetInfo({ state, dispatch }: BookingStepProps) {
+export function StepPetInfo({ state, dispatch, services }: BookingStepProps) {
   const {
     register,
     handleSubmit,
@@ -160,6 +174,50 @@ export function StepPetInfo({ state, dispatch }: BookingStepProps) {
         <h2 className="text-xl font-semibold text-base-content">Tell us about your pet</h2>
         <p className="text-sm text-base-content/60">Step 1 of 5 — Pet information</p>
       </div>
+
+      {/* Service picker — the chosen service drives the estimate price and
+          the calendar slot duration. A single service is shown read-only; a
+          calm notice shows when the groomer has configured none. */}
+      {services.length === 0 ? (
+        <div className="alert rounded-2xl" role="status">
+          <span>
+            This groomer hasn&apos;t added any bookable services yet. Please
+            contact them directly to arrange an appointment.
+          </span>
+        </div>
+      ) : services.length === 1 ? (
+        <div className="rounded-2xl border border-base-300 bg-base-200/60 p-3 text-sm">
+          <span className="text-base-content/60">Service: </span>
+          <span className="font-medium text-base-content">{services[0].name}</span>
+          <span className="text-base-content/60">
+            {' '}
+            · {formatServicePrice(services[0].basePrice)} · {services[0].durationMinutes} min
+          </span>
+        </div>
+      ) : (
+        <div className="form-control">
+          <label className="label" htmlFor="booking-service">
+            <span className="label-text">Service</span>
+          </label>
+          <select
+            id="booking-service"
+            className="select select-bordered min-h-[44px] w-full"
+            value={state.selectedServiceIndex}
+            onChange={(e) =>
+              dispatch({ type: 'SELECT_SERVICE', payload: Number(e.target.value) })
+            }
+          >
+            {services.map((svc, i) => (
+              <option key={i} value={i}>
+                {svc.name} — {formatServicePrice(svc.basePrice)} · {svc.durationMinutes} min
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-base-content/60">
+            Your estimate and available times are based on the service you pick.
+          </p>
+        </div>
+      )}
 
       {/* Name */}
       <div className="form-control">

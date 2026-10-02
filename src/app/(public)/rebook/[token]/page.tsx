@@ -129,6 +129,7 @@ async function resolveRebook(token: string): Promise<ResolvedRebook | null> {
   const initialState: BookingInitialState = {
     currentStep: 'estimate',
     stepIndex: 2,
+    selectedServiceIndex: 0,
     petInfo,
     ownerDetails,
     smsConsent: false,

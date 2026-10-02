@@ -49,8 +49,10 @@ export function StepEstimate({ state, dispatch, services, groomerSlug }: Booking
   const petInfo = state.petInfo;
   const weight = petInfo?.weight ?? null;
   const coatCondition = petInfo?.coatCondition ?? null;
-  // Use the first active service's base price as the chosen/default service.
-  const serviceBasePrice = services[0]?.basePrice ?? null;
+  // Use the CLIENT-CHOSEN service's base price (Step 1 picker), falling back
+  // to the first service for safety if the index is out of range.
+  const chosenService = services[state.selectedServiceIndex] ?? services[0];
+  const serviceBasePrice = chosenService?.basePrice ?? null;
 
   React.useEffect(() => {
     let cancelled = false;

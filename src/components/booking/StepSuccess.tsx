@@ -64,7 +64,8 @@ export function StepSuccess({
   const payment = state.paymentResult;
   const address = state.ownerDetails?.address ?? null;
 
-  const selectedServiceName = services.length > 0 ? services[0].name : '';
+  const chosenService = services[state.selectedServiceIndex] ?? services[0];
+  const selectedServiceName = chosenService?.name ?? '';
   const depositCurrency = payment?.currency ?? 'USD';
 
   // A locally-derived receipt built purely from flow state — used as the dev /
