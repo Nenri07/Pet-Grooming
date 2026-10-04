@@ -126,7 +126,10 @@ export function BeforeAfterCard({
     <div className="flex flex-col gap-4">
       {/* On-screen preview: the export card scaled down. The inner node keeps
           its true 1080×1350 size so html-to-image exports at full resolution. */}
-      <div className="mx-auto w-full max-w-[270px] overflow-hidden rounded-box border border-base-content/10 shadow-card">
+      <div
+        className="mx-auto overflow-hidden rounded-box border border-base-content/10 shadow-card"
+        style={{ width: 270, height: 338 }}
+      >
         <div
           style={{
             width: CARD_W,

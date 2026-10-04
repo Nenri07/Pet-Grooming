@@ -802,7 +802,7 @@ function DayView({
                   transition={{ duration: 0.2, delay: Math.min(idx * 0.03, 0.2) }}
                   onClick={() => setOpenId(a.id)}
                   className={cx(
-                    'absolute z-10 flex flex-col gap-0.5 overflow-hidden rounded-box border-l-4 px-2.5 py-2 text-left shadow-card transition-transform hover:scale-[1.01]',
+                    'absolute z-10 flex flex-col gap-0.5 overflow-hidden rounded-md border-l-4 px-2.5 py-2 text-left transition-transform hover:scale-[1.01]',
                     statusClasses(a.status)
                   )}
                   style={{ top, height, left, width }}
@@ -1246,7 +1246,7 @@ function WeekBlock({
       ref={move.setNodeRef}
       data-block
       className={cx(
-        'absolute left-0.5 right-0.5 z-10 select-none overflow-hidden rounded-btn border-l-4 text-[11px] leading-tight shadow-card',
+        'absolute left-0.5 right-0.5 z-10 select-none overflow-hidden rounded-md border-l-4 text-[11px] leading-tight',
         statusClasses(appt.status),
         activeDrag ? 'opacity-90 ring-2 ring-primary' : ''
       )}

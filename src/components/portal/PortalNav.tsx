@@ -15,6 +15,7 @@ import {
   Settings,
   CreditCard,
   MessageSquare,
+  PawPrint,
   Search,
   PanelLeftClose,
   PanelLeftOpen,
@@ -58,6 +59,7 @@ const SIDEBAR_ITEMS: NavItem[] = [
   { label: 'Appointments', href: '/appointments', icon: CalendarDays },
   { label: 'Inbox', href: '/inbox', icon: MessageSquare },
   { label: 'Clients', href: '/clients', icon: Users },
+  { label: 'Pets', href: '/pets', icon: PawPrint },
   { label: 'Services', href: '/services', icon: Scissors },
   { label: 'Availability', href: '/availability', icon: Clock },
   { label: 'Analytics', href: '/analytics', icon: BarChart3 },
@@ -76,6 +78,7 @@ const BOTTOM_TABS: NavItem[] = [
 /** Secondary destinations surfaced through the mobile "More" sheet. */
 const MORE_ITEMS: NavItem[] = [
   { label: 'Appointments', href: '/appointments', icon: CalendarDays },
+  { label: 'Pets', href: '/pets', icon: PawPrint },
   { label: 'Services', href: '/services', icon: Scissors },
   { label: 'Availability', href: '/availability', icon: Clock },
   { label: 'Analytics', href: '/analytics', icon: BarChart3 },

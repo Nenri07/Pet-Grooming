@@ -17,6 +17,7 @@ import {
   RefreshCw,
   Lock,
   Sparkles,
+  PawPrint,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Card } from '@/components/ui/Card';
@@ -856,6 +857,29 @@ function RebookingCard() {
   );
 }
 
+/**
+ * Pet Cards entry-point card — a static affordance that routes to the Pets
+ * list, where a shareable Digital Pet Card can be created for any pet (§11.3).
+ */
+function PetCardsCard() {
+  return (
+    <Card>
+      <div className="mb-3 flex items-center gap-2">
+        <PawPrint className="h-5 w-5 text-primary" aria-hidden="true" />
+        <h2 className="font-display text-lg font-semibold text-base-content">
+          Pet Cards
+        </h2>
+      </div>
+      <p className="text-sm text-base-content/60">
+        Create a shareable Digital Pet Card for any pet — add it after a groom.
+      </p>
+      <Link href="/pets" className="btn btn-primary btn-sm mt-3 min-h-[44px]">
+        View pets
+      </Link>
+    </Card>
+  );
+}
+
 function SmsCreditsCard({ used, included }: { used: number; included: number }) {
   const pct = included > 0 ? Math.min(100, Math.round((used / included) * 100)) : 0;
   return (
@@ -979,6 +1003,10 @@ export function DashboardView({ data }: DashboardViewProps) {
         </Reveal>
 
         <Reveal y={12} duration={0.28} delay={0.24}>
+          <PetCardsCard />
+        </Reveal>
+
+        <Reveal y={12} duration={0.28} delay={0.28}>
           <SmsCreditsCard used={smsUsed} included={smsIncluded} />
         </Reveal>
       </div>

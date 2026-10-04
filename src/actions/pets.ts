@@ -77,6 +77,16 @@ export interface PetProfile {
   digitalCardId?: string;
 }
 
+/** A serializable row for the Pets list page. */
+export interface PetListItem {
+  id: string;
+  name: string;
+  breed: string;
+  clientId: string | null;
+  clientName: string | null;
+  hasCard: boolean;
+}
+
 /** Result envelope returned by {@link getPet}. */
 export type GetPetResult =
   | { ok: true; pet: PetProfile; serviceHistory: PetServiceHistoryEntry[] }
@@ -188,6 +198,64 @@ export async function getPet(petId: string): Promise<GetPetResult> {
   } catch (error) {
     console.error('getPet failed:', error);
     return { ok: false, error: "We couldn't load this pet. Please try again." };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// listPets
+// ---------------------------------------------------------------------------
+
+/**
+ * List the authenticated groomer's pets for the Pets list page, scoped to
+ * `groomerId: session.user.id` so one groomer never sees another's pets. Pets
+ * are returned alphabetically (by name), capped at 200, with the owning
+ * client's name populated. `hasCard` reflects whether a Digital Pet Card has
+ * already been generated for the pet.
+ *
+ * Returns an empty array (rather than throwing) when the caller is not
+ * authenticated — the page handles the redirect to /login.
+ */
+export async function listPets(): Promise<PetListItem[]> {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return [];
+  }
+
+  try {
+    await connectDB();
+
+    const pets = await Pet.find({ groomerId: session.user.id })
+      .sort({ name: 1 })
+      .limit(200)
+      .populate('clientId', 'name')
+      .lean();
+
+    return pets.map((pet) => {
+      // `clientId` is populated to `{ _id, name }` when the client still
+      // exists; it may be a bare ObjectId or null otherwise.
+      const client = pet.clientId as unknown;
+      let clientId: string | null = null;
+      let clientName: string | null = null;
+      if (client && typeof client === 'object' && '_id' in client) {
+        const ref = client as { _id: unknown; name?: unknown };
+        clientId = String(ref._id);
+        clientName = typeof ref.name === 'string' ? ref.name : null;
+      } else if (client) {
+        clientId = String(client);
+      }
+
+      return {
+        id: String(pet._id),
+        name: pet.name,
+        breed: pet.breed,
+        clientId,
+        clientName,
+        hasCard: Boolean(pet.digitalCardId),
+      };
+    });
+  } catch (error) {
+    console.error('listPets failed:', error);
+    return [];
   }
 }
 
