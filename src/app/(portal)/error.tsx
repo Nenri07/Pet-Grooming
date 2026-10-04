@@ -41,6 +41,18 @@ export default function PortalError({
       >
         Try again
       </button>
+      {/* Correlation id so a masked production error can be matched to the
+          server log; the message is only shown outside production. */}
+      {error.digest && (
+        <p className="mt-4 font-mono text-xs text-base-content/40">
+          Ref: {error.digest}
+        </p>
+      )}
+      {process.env.NODE_ENV !== 'production' && error.message && (
+        <pre className="mt-2 max-w-full overflow-auto whitespace-pre-wrap text-left font-mono text-xs text-error">
+          {error.message}
+        </pre>
+      )}
     </div>
   );
 }
