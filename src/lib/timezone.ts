@@ -15,10 +15,24 @@
  */
 import { fromZonedTime, formatInTimeZone } from 'date-fns-tz';
 
-/** Fall back to UTC for an absent/blank timezone so callers never pass undefined. */
+/**
+ * Resolve a usable IANA timezone, falling back to UTC for anything absent,
+ * blank, OR invalid. This is critical: `formatInTimeZone`/`fromZonedTime`
+ * throw `RangeError: Invalid time value` on a non-IANA string (e.g. a stored
+ * "PKT", "GMT+5", or even "Asia/Lahore" which isn't canonical), which would
+ * crash EVERY server-rendered portal page that formats a time. We validate the
+ * zone with `Intl` and degrade to UTC instead of throwing.
+ */
 function tzOf(timezone: string | null | undefined): string {
   const t = (timezone ?? '').trim();
-  return t.length > 0 ? t : 'UTC';
+  if (t.length === 0) return 'UTC';
+  try {
+    // Throws RangeError for an invalid IANA zone; succeeds for a valid one.
+    new Intl.DateTimeFormat('en-US', { timeZone: t });
+    return t;
+  } catch {
+    return 'UTC';
+  }
 }
 
 /**
