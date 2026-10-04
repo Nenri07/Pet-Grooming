@@ -95,7 +95,14 @@ export interface RadarItem {
 
 export interface MonthSummary {
   bookings: number;
+  /** Deposits actually collected (succeeded transactions). */
   revenue: number;
+  /**
+   * Estimated service revenue earned this month = sum of each COMPLETED
+   * appointment's service price. Shown ALONGSIDE `revenue` (deposits), not
+   * merged. Uses Service.basePrice as the stand-in (no final-price field yet).
+   */
+  estimatedServiceRevenue: number;
   noShowRate: number;
   bookingsDiffPct: number | null;
   revenueDiffPct: number | null;
@@ -697,7 +704,7 @@ function ThisMonthCard({ summary }: { summary: MonthSummary }) {
           This month
         </h2>
       </div>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <Metric
           label="Bookings"
           diff={<DiffPill value={summary.bookingsDiffPct} />}
@@ -705,10 +712,13 @@ function ThisMonthCard({ summary }: { summary: MonthSummary }) {
           <NumberTicker value={summary.bookings} />
         </Metric>
         <Metric
-          label="Revenue"
+          label="Deposits collected"
           diff={<DiffPill value={summary.revenueDiffPct} />}
         >
           <NumberTicker value={summary.revenue} prefix="$" decimals={0} />
+        </Metric>
+        <Metric label="Est. service revenue" diff={null}>
+          <NumberTicker value={summary.estimatedServiceRevenue} prefix="$" decimals={0} />
         </Metric>
         <Metric
           label="No-show rate"

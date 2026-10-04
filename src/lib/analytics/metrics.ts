@@ -136,6 +136,50 @@ export function computeRevenue(
   return Number(total.toFixed(2));
 }
 
+/**
+ * The minimal shape the estimated-service-revenue sum needs: a completed-or-not
+ * appointment status plus the price to attribute to it.
+ *
+ * `servicePrice` is the stand-in for 'what the groomer earns' for a completed
+ * appointment. NOTE (bugfix sprint, item 9b): the Appointment model stores
+ * neither the booking-time estimate (`estimate.max`) NOR a groomer-entered
+ * final price, so neither is queryable. The dashboard therefore passes the
+ * linked Service's `basePrice` as the stand-in. A real, editable 'final price'
+ * field on the appointment is a future improvement, explicitly NOT part of
+ * this fix.
+ */
+export interface CompletedServiceLike {
+  status: AppointmentStatus;
+  /** Price to attribute to this appointment when completed (major units). */
+  servicePrice: number | null | undefined;
+}
+
+/**
+ * Sum the service price across COMPLETED appointments — the groomer's
+ * estimated service revenue for the period, shown ALONGSIDE (not replacing)
+ * the deposits-collected `revenue` metric.
+ *
+ * Only `status === 'completed'` rows contribute; a null/undefined/non-finite
+ * `servicePrice` contributes 0. Rounded to two decimals to avoid float noise.
+ *
+ * _Bugfix sprint: Cluster 3, item 9b._
+ */
+export function computeEstimatedServiceRevenue(
+  appointments: ReadonlyArray<CompletedServiceLike>
+): number {
+  let total = 0;
+  for (const appt of appointments) {
+    if (
+      appt.status === 'completed' &&
+      typeof appt.servicePrice === 'number' &&
+      Number.isFinite(appt.servicePrice)
+    ) {
+      total += appt.servicePrice;
+    }
+  }
+  return Number(total.toFixed(2));
+}
+
 /** The three headline metrics computed for a single month. */
 export interface MonthlyMetrics {
   /** Total number of appointments (bookings) in the month. */

@@ -17,6 +17,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildMonthlySeries,
+  computeEstimatedServiceRevenue,
+  type CompletedServiceLike,
   type DatedAppointment,
   type DatedTransaction,
 } from '@/lib/analytics/metrics';
@@ -129,3 +131,41 @@ describe('buildMonthlySeries', () => {
     expect(may.noShowRate).toBe(50);
   });
 });
+
+
+describe('computeEstimatedServiceRevenue (bugfix sprint 9b)', () => {
+  const row = (
+    status: CompletedServiceLike['status'],
+    servicePrice: number | null | undefined
+  ): CompletedServiceLike => ({ status, servicePrice });
+
+  it('sums servicePrice only across completed appointments', () => {
+    const rows: CompletedServiceLike[] = [
+      row('completed', 60),
+      row('completed', 40),
+      row('upcoming', 100), // not completed -> excluded
+      row('cancelled', 50), // not completed -> excluded
+      row('in-progress', 30), // not completed -> excluded
+    ];
+    expect(computeEstimatedServiceRevenue(rows)).toBe(100);
+  });
+
+  it('treats null/undefined/non-finite prices on completed rows as 0', () => {
+    const rows: CompletedServiceLike[] = [
+      row('completed', null),
+      row('completed', undefined),
+      row('completed', Number.NaN),
+      row('completed', 25),
+    ];
+    expect(computeEstimatedServiceRevenue(rows)).toBe(25);
+  });
+
+  it('returns 0 for an empty list', () => {
+    expect(computeEstimatedServiceRevenue([])).toBe(0);
+  });
+
+  it('rounds the sum to two decimals', () => {
+    expect(computeEstimatedServiceRevenue([row('completed', 10.1), row('completed', 20.2)])).toBe(30.3);
+  });
+});
+

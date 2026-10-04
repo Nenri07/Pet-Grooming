@@ -87,6 +87,12 @@ const styles = StyleSheet.create({
     marginTop: 2,
     textTransform: 'uppercase',
   },
+  poweredBy: {
+    fontSize: 7,
+    color: COLORS.white,
+    opacity: 0.7,
+    marginTop: 2,
+  },
   docTitle: {
     fontSize: 11,
     letterSpacing: 1.5,
@@ -413,6 +419,7 @@ export function ReceiptPDF({ data }: ReceiptPDFProps) {
             <View>
               <Text style={styles.businessName}>{business}</Text>
               <Text style={styles.bandTag}>Pet Grooming</Text>
+              <Text style={styles.poweredBy}>Powered by Pawxis</Text>
             </View>
           </View>
           <Text style={styles.docTitle}>Booking Receipt{'\n'}/ Invoice</Text>
