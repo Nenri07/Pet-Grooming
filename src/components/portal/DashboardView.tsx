@@ -705,7 +705,7 @@ function ThisMonthCard({ summary }: { summary: MonthSummary }) {
           This month
         </h2>
       </div>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <Metric
           label="Bookings"
           diff={<DiffPill value={summary.bookingsDiffPct} />}
@@ -958,10 +958,10 @@ export function DashboardView({ data }: DashboardViewProps) {
         </p>
       </header>
 
-      {/* Bento: 1 col mobile → 2–3 cols md+. Today's Route spans two rows on
-          desktop so the timeline has room. */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <Reveal className="md:row-span-2" y={12} duration={0.28}>
+      {/* Bento: masonry-style columns that pack automatically and reflow as
+          cards appear/disappear. 1 col mobile → 2 (md) → 3 (xl). */}
+      <div className="columns-1 gap-4 md:columns-2 xl:columns-3 [&>*]:mb-4 [&>*]:break-inside-avoid">
+        <Reveal y={12} duration={0.28}>
           <TodaysRouteCard
             stops={stops}
             onOpen={handleOpen}

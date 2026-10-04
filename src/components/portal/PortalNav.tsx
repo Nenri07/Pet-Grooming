@@ -195,7 +195,7 @@ export function PortalNav() {
         </Link>
         <div className="ml-auto flex min-w-0 items-center gap-2">
           <SmsCreditsPill />
-          <ThemeMenu />
+          <ThemeMenu direction="down" />
           <LogoutButton variant="icon" />
           <AvatarMenu />
         </div>

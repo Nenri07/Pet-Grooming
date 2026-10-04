@@ -74,7 +74,7 @@ export function BundlePricing() {
         </div>
 
         {/* Billing cycle toggle. */}
-        <div className="mt-8 flex items-center justify-center gap-3">
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 px-4">
           <span
             className={
               cycle === 'monthly'

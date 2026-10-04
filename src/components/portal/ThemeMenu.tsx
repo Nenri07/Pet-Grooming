@@ -19,7 +19,13 @@ import { THEMES, defaultTheme } from '@/styles/themes';
  *
  * Requirements: 18.2, 18.3, 19.2.
  */
-export function ThemeMenu({ align = 'end' }: { align?: 'start' | 'end' }) {
+export function ThemeMenu({
+  align = 'end',
+  direction = 'up',
+}: {
+  align?: 'start' | 'end';
+  direction?: 'up' | 'down';
+}) {
   const [mounted, setMounted] = React.useState(false);
   const [open, setOpen] = React.useState(false);
   const { theme, setTheme } = useTheme();
@@ -68,7 +74,8 @@ export function ThemeMenu({ align = 'end' }: { align?: 'start' | 'end' }) {
           role="menu"
           aria-label="Color theme"
           className={[
-            'absolute bottom-full z-50 mb-2 max-h-[70vh] w-60 overflow-auto rounded-box border border-base-content/10 bg-base-100 p-2 shadow-card',
+            'absolute z-50 max-h-[70vh] w-60 overflow-auto rounded-box border border-base-content/10 bg-base-100 p-2 shadow-card',
+            direction === 'down' ? 'top-full mt-2' : 'bottom-full mb-2',
             align === 'end' ? 'right-0' : 'left-0',
           ].join(' ')}
         >
