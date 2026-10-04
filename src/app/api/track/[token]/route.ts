@@ -31,6 +31,7 @@ export async function GET(
       destination: data.destination,
       etaMinutes: data.etaMinutes,
       ended: data.ended,
+      liveUnavailable: data.liveUnavailable,
     },
     { status: 200 }
   );

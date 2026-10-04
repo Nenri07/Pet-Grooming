@@ -30,6 +30,13 @@ export type LiveEtaState = 'idle' | 'sharing' | 'starting' | 'error';
 interface UseLiveEtaResult {
   state: LiveEtaState;
   error: string | null;
+  /**
+   * Non-blocking notice shown while a trip IS active but the groomer's device
+   * can't share its position (geolocation denied/unavailable). The trip still
+   * started and the client still got the link — but the van won't move until
+   * location access is granted. Distinct from `error`, which blocks the start.
+   */
+  warning: string | null;
   start: () => Promise<void>;
   stop: () => Promise<void>;
 }
@@ -74,6 +81,7 @@ export function useLiveEta(
     initialSharing ? 'sharing' : 'idle'
   );
   const [error, setError] = React.useState<string | null>(null);
+  const [warning, setWarning] = React.useState<string | null>(null);
   const intervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
 
   const clearTimer = React.useCallback(() => {
@@ -87,7 +95,15 @@ export function useLiveEta(
     clearTimer();
     intervalRef.current = setInterval(async () => {
       const pos = await getPosition();
-      if (!pos) return;
+      if (!pos) {
+        // Keep sharing (the trip is live) but tell the groomer their location
+        // isn't being read, so this never looks like a silent failure.
+        setWarning(
+          "Can't read your location — allow location access so the client can see your van move."
+        );
+        return;
+      }
+      setWarning(null);
       await postTrack(appointmentId, { action: 'position', lat: pos.lat, lng: pos.lng }).catch(
         () => {}
       );
@@ -102,6 +118,7 @@ export function useLiveEta(
 
   const start = React.useCallback(async () => {
     setError(null);
+    setWarning(null);
     setState('starting');
     const pos = await getPosition();
     try {
@@ -121,6 +138,11 @@ export function useLiveEta(
         return;
       }
       setState('sharing');
+      if (!pos) {
+        setWarning(
+          "Started — but we couldn't read your location. Allow location access so the client can watch your van approach."
+        );
+      }
       beginPositionLoop();
     } catch {
       setState('error');
@@ -130,6 +152,7 @@ export function useLiveEta(
 
   const stop = React.useCallback(async () => {
     clearTimer();
+    setWarning(null);
     try {
       await postTrack(appointmentId, { action: 'stop' });
     } catch {
@@ -138,7 +161,7 @@ export function useLiveEta(
     setState('idle');
   }, [appointmentId, clearTimer]);
 
-  return { state, error, start, stop };
+  return { state, error, warning, start, stop };
 }
 
 export default useLiveEta;

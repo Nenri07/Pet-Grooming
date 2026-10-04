@@ -71,6 +71,8 @@ interface TrackerPayload {
   destination: { lat: number; lng: number } | null;
   etaMinutes: number | null;
   ended: boolean;
+  /** True when the server can't store/read live positions (Redis off). */
+  liveUnavailable?: boolean;
 }
 
 interface TrackerViewProps {
@@ -185,15 +187,26 @@ export function TrackerView({ token, initial }: TrackerViewProps) {
                 )
               ) : (
                 <div className="flex h-72 w-full flex-col items-center justify-center rounded-box border border-base-content/10 bg-base-200 p-5 text-center sm:h-80">
-                  <span className="h-3 w-3 animate-pulse rounded-full bg-primary" aria-hidden="true" />
-                  <p className="mt-3 text-sm italic text-base-content/60">
-                    Waiting for the van to start sharing…
-                  </p>
+                  {data.liveUnavailable ? (
+                    <p className="text-sm text-base-content/70">
+                      Live location isn&apos;t available for this trip. Your groomer
+                      is on the way — hang tight, or call/text them below.
+                    </p>
+                  ) : (
+                    <>
+                      <span className="h-3 w-3 animate-pulse rounded-full bg-primary" aria-hidden="true" />
+                      <p className="mt-3 text-sm italic text-base-content/60">
+                        Waiting for the van to start sharing…
+                      </p>
+                    </>
+                  )}
                 </div>
               )}
-              <p className="mt-2 text-center text-xs text-base-content/50">
-                Location updates automatically every few seconds.
-              </p>
+              {!data.liveUnavailable && (
+                <p className="mt-2 text-center text-xs text-base-content/50">
+                  Location updates automatically every few seconds.
+                </p>
+              )}
             </div>
           </>
         )}

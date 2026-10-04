@@ -32,6 +32,12 @@ export interface TrackerData {
   etaMinutes: number | null;
   /** Whether the trip has ended (arrived / expired). */
   ended: boolean;
+  /**
+   * True when live positions CAN'T be stored/read server-side (Redis is not
+   * configured), so the van will never appear. Lets the public page show an
+   * honest 'live location unavailable' message instead of waiting forever.
+   */
+  liveUnavailable: boolean;
 }
 
 /**
@@ -73,10 +79,15 @@ export async function resolveTracker(token: string): Promise<TrackerData | null>
     a.location ?? (client as { location?: LatLng } | null)?.location ?? null;
 
   // Current van position from Redis (may be null before the first ping).
+  // `liveUnavailable` is true when Redis isn't configured — positions can
+  // never be stored, so the public page should say so rather than wait.
   let van: LatLng | null = null;
+  let liveUnavailable = false;
   try {
     const { isRedisConfigured, getTrack } = await import('@/lib/redis');
-    if (isRedisConfigured()) {
+    if (!isRedisConfigured()) {
+      liveUnavailable = true;
+    } else {
       const rec = await getTrack(token);
       if (rec) van = { lat: rec.lat, lng: rec.lng };
     }
@@ -109,7 +120,7 @@ export async function resolveTracker(token: string): Promise<TrackerData | null>
 
   return {
     business:
-      (typeof profile?.businessName === 'string' && profile.businessName.trim()) || 'PawPort',
+      (typeof profile?.businessName === 'string' && profile.businessName.trim()) || 'Pawxis',
     logoUrl: (profile as { logoUrl?: string } | null)?.logoUrl ?? null,
     petName: (pet as { name?: string } | null)?.name ?? null,
     groomerPhone: (profile as { phone?: string } | null)?.phone ?? null,
@@ -117,5 +128,6 @@ export async function resolveTracker(token: string): Promise<TrackerData | null>
     destination,
     etaMinutes,
     ended: Boolean(a.tracking?.arrivedAt),
+    liveUnavailable,
   };
 }

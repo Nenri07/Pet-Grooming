@@ -32,7 +32,7 @@ export function LiveEtaControl({
   initialSharing,
   disabled = false,
 }: LiveEtaControlProps) {
-  const { state, error, start, stop } = useLiveEta(appointmentId, initialSharing);
+  const { state, error, warning, start, stop } = useLiveEta(appointmentId, initialSharing);
 
   if (disabled) return null;
 
@@ -86,6 +86,12 @@ export function LiveEtaControl({
       {error && (
         <p className="mt-3 text-sm text-error" role="alert">
           {error}
+        </p>
+      )}
+
+      {warning && !error && (
+        <p className="mt-3 text-sm text-warning" role="status">
+          {warning}
         </p>
       )}
     </Card>

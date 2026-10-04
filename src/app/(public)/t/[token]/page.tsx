@@ -36,6 +36,7 @@ export default async function TrackerPage({ params }: { params: { token: string 
               destination: data.destination,
               etaMinutes: data.etaMinutes,
               ended: data.ended,
+              liveUnavailable: data.liveUnavailable,
             }}
           />
         ) : (
