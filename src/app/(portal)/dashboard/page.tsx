@@ -8,6 +8,7 @@ import {
   endOfMonth,
   subMonths,
 } from 'date-fns';
+import { timeLabelInTz, dateLabelInTz, startOfDayInTz, endOfDayInTz } from '@/lib/timezone';
 import { authOptions } from '@/lib/auth/config';
 import { connectDB } from '@/lib/db/connect';
 import { Appointment } from '@/lib/db/models/appointment';
@@ -102,18 +103,14 @@ function routeLabel(meta: LeanRouteMeta | null | undefined): string | null {
   return null;
 }
 
-/** Format a Date to a short local time label (server-side, stable). */
-function timeLabel(d: Date): string {
-  return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+/** Short time label for a UTC instant, in the groomer's timezone. */
+function timeLabel(d: Date, tz: string): string {
+  return timeLabelInTz(d, tz);
 }
 
-/** Format a Date to a short local date label (e.g. "Mon, Jun 3"). */
-function dateLabel(d: Date): string {
-  return d.toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-  });
+/** Short date label for a UTC instant, in the groomer's timezone. */
+function dateLabel(d: Date, tz: string): string {
+  return dateLabelInTz(d, tz);
 }
 
 /** Percentage diff helper for the month summary. Returns null when undefined. */
@@ -132,8 +129,6 @@ export default async function DashboardPage() {
   await connectDB();
 
   const now = new Date();
-  const todayStart = startOfDay(now);
-  const todayEnd = endOfDay(now);
   const weekEnd = addDays(now, 7);
 
   // Groomer profile drives travel-chip math + booking mode (Order Radar).
@@ -144,6 +139,7 @@ export default async function DashboardPage() {
       roadFactor?: number;
       parkingMin?: number;
       bookingMode?: BookingMode;
+      timezone?: string;
     }>()
     .exec();
 
@@ -153,6 +149,11 @@ export default async function DashboardPage() {
     parkingMin: profile?.parkingMin ?? DEFAULT_TRAVEL_CFG.parkingMin,
   });
   const bookingMode: BookingMode = profile?.bookingMode ?? 'instant';
+
+  // Groomer-timezone-aware day window + labels (bugfix: times were UTC).
+  const tz = profile?.timezone ?? 'UTC';
+  const todayStart = startOfDayInTz(now, tz);
+  const todayEnd = endOfDayInTz(now, tz);
 
   // ---- Today's stops (non-cancelled, time-ordered) ----
   const todayDocs = await Appointment.find({
@@ -204,7 +205,7 @@ export default async function DashboardPage() {
       serviceName: doc.serviceId?.name ?? null,
       serviceAddress: doc.serviceAddress ?? null,
       scheduledDate: start.toISOString(),
-      timeLabel: timeLabel(start),
+      timeLabel: timeLabel(start, tz),
       status: doc.status,
       travelToNext,
       // A trip is "active" once started and not yet arrived (seeds Live ETA).
@@ -238,8 +239,8 @@ export default async function DashboardPage() {
       serviceName: doc.serviceId?.name ?? null,
       serviceAddress: doc.serviceAddress ?? null,
       scheduledDate: start.toISOString(),
-      dateLabel: dateLabel(start),
-      timeLabel: timeLabel(start),
+      dateLabel: dateLabel(start, tz),
+      timeLabel: timeLabel(start, tz),
       status: doc.status,
     };
   });
@@ -264,7 +265,7 @@ export default async function DashboardPage() {
       petName: doc.petId?.name ?? null,
       clientName: doc.clientId?.name ?? null,
       scheduledDate: start.toISOString(),
-      timeLabel: timeLabel(start),
+      timeLabel: timeLabel(start, tz),
       fromPrevKm:
         typeof doc.routeMeta?.fromPrevKm === 'number'
           ? Number(doc.routeMeta.fromPrevKm.toFixed(1))
@@ -348,7 +349,7 @@ export default async function DashboardPage() {
       fillGap = {
         startMs: endMs,
         endMs: nextStartMs,
-        label: `${timeLabel(new Date(endMs))} – ${timeLabel(new Date(nextStartMs))}`,
+        label: `${timeLabel(new Date(endMs), tz)} – ${timeLabel(new Date(nextStartMs), tz)}`,
       };
     }
   }

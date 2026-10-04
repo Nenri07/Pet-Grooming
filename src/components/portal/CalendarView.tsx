@@ -47,6 +47,7 @@ import {
   type ManualBookingService,
 } from '@/actions/appointments';
 import type { AppointmentStatus } from '@/types';
+import { formatInTz } from '@/lib/timezone';
 
 /**
  * CalendarView — the portal calendar (Master Spec §9.6).
@@ -150,18 +151,20 @@ const STATUS_OPTIONS: AppointmentStatus[] = [
   'cancelled',
 ];
 
+/**
+ * The groomer's business timezone, set once per render by the root CalendarView
+ * from `profile.timezone` so the module-level formatters below show appointment
+ * instants in the groomer's local time (not the viewer's browser zone).
+ */
+let calendarTz = 'UTC';
+
 function fmtTime(ms: number): string {
-  return new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  return formatInTz(new Date(ms), calendarTz, 'h:mm a');
 }
 
 /** Full date label for the detail panel (e.g. "Mon, Jun 3, 2024"). */
 function fmtDate(ms: number): string {
-  return new Date(ms).toLocaleDateString([], {
-    weekday: 'short',
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
+  return formatInTz(new Date(ms), calendarTz, 'EEE, MMM d, yyyy');
 }
 
 /** Google Maps directions URL to an address (empty string → no link). */
@@ -224,6 +227,8 @@ const HOUR_LINES = Array.from(
 // ===========================================================================
 
 export function CalendarView({ appointments, profile }: CalendarViewProps) {
+  // Point the module-level formatters at the groomer's timezone for this render.
+  calendarTz = profile.timezone || 'UTC';
   const router = useRouter();
 
   // Responsive default: Day on mobile, Week on desktop.

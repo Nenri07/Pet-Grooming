@@ -20,7 +20,8 @@
  *
  * _Requirements: 6.1, 6.2_
  */
-import { eachDayOfInterval, isAfter, isBefore, setHours, setMinutes, setSeconds, setMilliseconds } from 'date-fns';
+import { eachDayOfInterval, isAfter, isBefore } from 'date-fns';
+import { wallTimeToUtc } from '@/lib/timezone';
 import type { AvailabilityQuery, TimeSlot } from '@/types';
 
 const SLOT_INCREMENT_MINUTES = 15;
@@ -105,7 +106,8 @@ export function generateCandidateSlots(
   blocks: TimeBlock[],
   startDate: Date,
   endDate: Date,
-  serviceDurationMinutes: number
+  serviceDurationMinutes: number,
+  timezone?: string | null
 ): TimeSlot[] {
   const slots: TimeSlot[] = [];
 
@@ -126,9 +128,11 @@ export function generateCandidateSlots(
       const [startH, startM] = window.startTime.split(':').map(Number);
       const [endH, endM] = window.endTime.split(':').map(Number);
 
-      // Anchor window boundaries to this specific day, zeroing sub-minute parts.
-      let slotStart = setMilliseconds(setSeconds(setMinutes(setHours(day, startH), startM), 0), 0);
-      const windowEnd = setMilliseconds(setSeconds(setMinutes(setHours(day, endH), endM), 0), 0);
+      // Anchor window boundaries to this day AT THE GROOMER'S WALL-CLOCK time
+      // (interpreted in their timezone), so '09:00' means 9am in their city —
+      // not 9am in the server's zone (UTC on Vercel). Falls back to UTC.
+      let slotStart = wallTimeToUtc(day, startH, startM, timezone);
+      const windowEnd = wallTimeToUtc(day, endH, endM, timezone);
 
       while (true) {
         const slotEnd = new Date(slotStart.getTime() + durationMs);
@@ -210,7 +214,8 @@ export async function getAvailableSlots(query: AvailabilityQuery): Promise<TimeS
     blocks,
     startDate,
     endDate,
-    serviceDurationMinutes
+    serviceDurationMinutes,
+    profile.timezone
   );
 
   const now = new Date();
