@@ -653,9 +653,27 @@ function DigitalCardPanel({ petId }: { petId: string }) {
 // Root component
 // ---------------------------------------------------------------------------
 
+/**
+ * next/image throws during render for a non-allowlisted src (our config only
+ * permits https remote hosts). A pet photo loaded from legacy/manual data may
+ * be an http URL, a relative path, a data: URI, or malformed — any of which
+ * crashes the page. Only treat a value as a usable image src when it is an
+ * absolute https URL; otherwise callers fall back to the placeholder.
+ */
+function safeHttpsImageSrc(url: string | undefined): string | null {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:' ? url : null;
+  } catch {
+    return null;
+  }
+}
+
 export function PetProfile({ pet: initialPet, serviceHistory }: PetProfileProps) {
   const [pet, setPet] = React.useState<PetProfileData>(initialPet);
   const [editing, setEditing] = React.useState(false);
+  const photoSrc = safeHttpsImageSrc(pet.photoUrl);
 
   const handleSaved = React.useCallback(
     (values: PetEditFormValues) => {
@@ -685,9 +703,9 @@ export function PetProfile({ pet: initialPet, serviceHistory }: PetProfileProps)
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-base-200">
-              {pet.photoUrl ? (
+              {photoSrc ? (
                 <Image
-                  src={pet.photoUrl}
+                  src={photoSrc}
                   alt={`${pet.name}'s photo`}
                   fill
                   sizes="80px"
