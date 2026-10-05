@@ -41,6 +41,21 @@ function cx(...parts: Array<string | false | null | undefined>): string {
   return parts.filter(Boolean).join(' ');
 }
 
+/**
+ * next/image throws during render for a non-allowlisted src (the app config
+ * only permits https remote hosts). A legacy/manual photoUrl may be http, a
+ * relative path, a data: URI, or malformed — any of which would crash this
+ * public shareable card. Only treat an absolute https URL as usable.
+ */
+function safeHttpsImageSrc(url: string | undefined): string | null {
+  if (!url) return null;
+  try {
+    return new URL(url).protocol === 'https:' ? url : null;
+  } catch {
+    return null;
+  }
+}
+
 type SerializedDate = Date | string;
 
 function toDate(value: SerializedDate | undefined): Date | null {
@@ -188,7 +203,7 @@ export function AnimatedPetCard({
       >
         {/* ---- Full-cover pet photo (ambient parallax drift) -------------- */}
         <div className="absolute inset-0 overflow-hidden">
-          {data.photoUrl ? (
+          {safeHttpsImageSrc(data.photoUrl) ? (
             <motion.div
               className="absolute inset-0"
               animate={photoAmbient}
@@ -196,7 +211,7 @@ export function AnimatedPetCard({
               style={{ willChange: 'transform' }}
             >
               <Image
-                src={data.photoUrl}
+                src={safeHttpsImageSrc(data.photoUrl) as string}
                 alt={name}
                 fill
                 priority

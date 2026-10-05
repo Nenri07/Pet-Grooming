@@ -56,12 +56,17 @@ export const petInfoSchema = z.object({
       message: `Pet name must be at most ${PET_NAME_MAX_LENGTH} characters.`,
     }),
 
-  // Photo upload integration (UploadThing) is wired in task 18. For now we
-  // accept an optional URL string and treat empty input as "no photo".
+  // Pet photos are uploaded to Cloudinary, which always returns an https
+  // `secure_url`. Require https (not just any URL) so a non-https value can
+  // never be persisted — next/image throws at render time for a non-allowlisted
+  // (non-https) src, which previously crashed the pet detail page.
   photoUrl: z
     .string()
     .trim()
     .url({ message: 'Enter a valid image URL.' })
+    .refine((u) => u.startsWith('https://'), {
+      message: 'Image URL must use https.',
+    })
     .optional()
     .or(z.literal('')),
 
