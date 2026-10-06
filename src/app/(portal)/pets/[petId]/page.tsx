@@ -3,7 +3,8 @@ import { redirect, notFound } from 'next/navigation';
 import { authOptions } from '@/lib/auth/config';
 import { connectDB } from '@/lib/db/connect';
 import { getPet } from '@/actions/pets';
-import { PetProfile, toSerializableHistory } from '@/components/portal/PetProfile';
+import { PetProfile } from '@/components/portal/PetProfile';
+import { toSerializableHistory } from '@/components/portal/pet-profile-serialize';
 
 /**
  * Pet profile page (server component).
@@ -14,6 +15,12 @@ import { PetProfile, toSerializableHistory } from '@/components/portal/PetProfil
  * groomer's scope the page renders `notFound()`; otherwise it projects the
  * service-history dates into JSON-safe ISO strings and hands the data to the
  * `PetProfile` client component.
+ *
+ * NOTE: `toSerializableHistory` is imported from the framework-neutral
+ * `pet-profile-serialize` module, NOT from the `'use client'` PetProfile
+ * component. Calling a client-module export during server render turns it into
+ * a client-reference proxy and throws `TypeError: <fn> is not a function`
+ * (the production-masked digest crash this page previously hit).
  *
  * _Requirements: 11.1, 11.2, 11.5, 11.6_
  */
@@ -38,42 +45,17 @@ export default async function PetProfilePage({ params }: PetPageProps) {
 
   await connectDB();
 
-  // TEMP DIAGNOSTIC: catch any throw in this render and surface the REAL error
-  // message/stack to the page. Production normally redacts server-render errors
-  // behind a digest; this bypasses that so the actual cause is visible. REMOVE
-  // once the root cause is identified and fixed.
-  try {
-    const result = await getPet(params.petId);
-    if (!result.ok) {
-      notFound();
-    }
-
-    return (
-      <PetProfile
-        pet={result.pet}
-        serviceHistory={toSerializableHistory(result.serviceHistory)}
-      />
-    );
-  } catch (err) {
-    // Re-throw Next.js control-flow signals (notFound/redirect) untouched.
-    const digest = (err as { digest?: string } | null)?.digest;
-    if (typeof digest === 'string' && (digest === 'NEXT_NOT_FOUND' || digest.startsWith('NEXT_REDIRECT'))) {
-      throw err;
-    }
-    const message = err instanceof Error ? err.message : String(err);
-    const stack = err instanceof Error ? err.stack ?? '' : '';
-    return (
-      <div className="mx-auto w-full max-w-3xl p-6">
-        <h1 className="mb-2 text-xl font-bold text-error">Pet page error (diagnostic)</h1>
-        <p className="mb-2 text-sm text-base-content/70">
-          Temporary diagnostic output — the real server error is shown below.
-        </p>
-        <pre className="overflow-auto whitespace-pre-wrap rounded-box bg-base-200 p-4 text-xs text-error">
-{message}
-
-{stack}
-        </pre>
-      </div>
-    );
+  const result = await getPet(params.petId);
+  if (!result.ok) {
+    // Pet not found within the groomer's scope (or unauthorized) -> render the
+    // not-found page rather than crashing.
+    notFound();
   }
+
+  return (
+    <PetProfile
+      pet={result.pet}
+      serviceHistory={toSerializableHistory(result.serviceHistory)}
+    />
+  );
 }

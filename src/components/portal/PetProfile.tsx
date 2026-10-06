@@ -18,7 +18,8 @@ import {
 import { Card } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { updatePet, generateDigitalPetCard } from '@/actions/pets';
-import type { PetProfile as PetProfileData, PetServiceHistoryEntry } from '@/actions/pets';
+import type { PetProfile as PetProfileData } from '@/actions/pets';
+import type { SerializableServiceHistoryEntry } from './pet-profile-serialize';
 import {
   petEditSchema,
   type PetEditFormInput,
@@ -49,44 +50,9 @@ import { SPECIAL_FLAG_OPTIONS } from '@/config/special-flags';
  * _Requirements: 11.1, 11.2, 11.5, 11.6_
  */
 
-/** JSON-safe service-history entry (date serialized to an ISO string). */
-export interface SerializableServiceHistoryEntry {
-  appointmentId: string;
-  date: string;
-  serviceName: string;
-  notes?: string;
-  status: string;
-}
-
 interface PetProfileProps {
   pet: PetProfileData;
   serviceHistory: SerializableServiceHistoryEntry[];
-}
-
-/**
- * Convert a server `PetServiceHistoryEntry` into the serializable shape.
- *
- * A missing or malformed `date` must NOT crash the render: `new Date(bad)` is
- * an Invalid Date and `.toISOString()` on it throws `RangeError: Invalid time
- * value`, which (in a server component) surfaces as the masked production
- * digest crash. We coerce each date defensively and emit an empty string for an
- * invalid one; the client's `formatDate` already renders '' / 'Unknown date'
- * for a non-parseable value.
- */
-export function toSerializableHistory(
-  entries: PetServiceHistoryEntry[]
-): SerializableServiceHistoryEntry[] {
-  return entries.map((e) => {
-    const d = e.date instanceof Date ? e.date : new Date(e.date as unknown as string);
-    const date = Number.isNaN(d.getTime()) ? '' : d.toISOString();
-    return {
-      appointmentId: e.appointmentId,
-      date,
-      serviceName: e.serviceName,
-      notes: e.notes,
-      status: e.status,
-    };
-  });
 }
 
 function cx(...classes: Array<string | false | null | undefined>): string {
