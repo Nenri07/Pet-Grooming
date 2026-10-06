@@ -25,7 +25,8 @@ import { GoogleButton } from '@/components/ui/GoogleButton';
  *  2. On field errors, map them back onto the form; on a generic failure show a
  *     top-level error (Requirement 1.4 — no email-existence leak).
  *  3. On success, sign the user in with credentials (redirect:false) then push
- *     to /onboarding (Requirement 1.1).
+ *     to /verify-pending — the user is unverified, so they land on the
+ *     verification-pending screen (Requirements 1.1, 1.2, 10.4).
  *
  * The "Continue with Google" button renders only when `googleEnabled` is true
  * (Requirement 1.3).
@@ -103,7 +104,13 @@ export function RegisterForm({
       return;
     }
 
-    router.push(onboardingUrl);
+    // After registration the user is unverified, so send them straight to the
+    // verification-pending screen (Req 1.1, 1.2, 10.4). The middleware would
+    // bounce an unverified user here anyway; pushing directly avoids a flash.
+    // Note: the claim slug is currently only preserved through the Google path
+    // (via `callbackUrl={onboardingUrl}`), matching today's behavior where the
+    // credentials path simply landed on /onboarding.
+    router.push('/verify-pending');
   }
 
   return (

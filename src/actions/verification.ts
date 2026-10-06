@@ -49,6 +49,7 @@ import {
   cacheDel,
   cacheGet,
   cacheSet,
+  getRedis,
   isRedisConfigured,
   keys,
   type EmailVerifyRecord,
@@ -98,6 +99,8 @@ const MSG_EMAIL_LINK_INVALID =
   'That verification link is invalid or has expired. Please request a new one.';
 const MSG_EMAIL_VERIFIED = 'Your email address has been verified.';
 const MSG_NO_EMAIL = 'We could not find an email address for your account.';
+const MSG_RESEND_COOLDOWN =
+  'Please wait a moment before requesting another link.';
 
 // ---------------------------------------------------------------------------
 // Envelope types
@@ -132,6 +135,18 @@ export type RequestEmailVerificationResult =
 /** Result of {@link confirmEmailVerification}. */
 export type ConfirmEmailVerificationResult =
   | { ok: true; message: string }
+  | { ok: false; reason: VerificationFailureReason; message: string };
+
+/**
+ * Result of {@link resendEmailVerification}. On success it mirrors
+ * {@link RequestEmailVerificationResult}'s `delivered` + `message`; the
+ * `cooldown` failure additionally carries `retryAfterSec` (remaining seconds in
+ * the Redis-backed resend window), and every other failure mirrors
+ * {@link requestEmailVerification}'s `reason` + `message`.
+ */
+export type ResendCooldownResult =
+  | { ok: true; delivered: boolean; message: string }
+  | { ok: false; reason: 'cooldown'; retryAfterSec: number; message: string }
   | { ok: false; reason: VerificationFailureReason; message: string };
 
 // ---------------------------------------------------------------------------
@@ -420,6 +435,84 @@ export async function confirmEmailVerification(input: {
     return { ok: true, message: MSG_EMAIL_VERIFIED };
   } catch (err) {
     console.error('[verification] confirmEmailVerification failed:', err);
+    return { ok: false, reason: 'unexpected', message: MSG_UNEXPECTED };
+  }
+}
+
+/**
+ * Resend the email-verification link with a Redis-backed cooldown (R3.3, R3.4,
+ * R9.3, R10.1).
+ *
+ * This is a thin wrapper over {@link requestEmailVerification}. It adds exactly
+ * one thing: a per-identity resend cooldown so a user can't spam the resend
+ * button and so the limit holds across Vercel's serverless runtime.
+ *
+ * Flow:
+ *   1. Resolve the session (must be signed in → `not_signed_in` envelope).
+ *   2. Load the user's email and compute the canonical {@link normalizeEmail}.
+ *   3. If Redis is configured, atomically `SET NX EX 60` the cooldown marker on
+ *      `keys.emailVerifyResend(normalizedEmail)` (keyed on the NORMALIZED email,
+ *      R9.5). If the marker already exists (cooldown active), read its remaining
+ *      TTL and reject with `reason:'cooldown'` and a non-negative
+ *      `retryAfterSec` — WITHOUT sending another link.
+ *      If Redis is NOT configured, FAIL OPEN: skip the cooldown entirely and
+ *      delegate, so a Redis outage never traps the user (R9.2). The underlying
+ *      {@link requestEmailVerification} still enforces its own `not_configured`
+ *      behavior.
+ *   4. Delegate to {@link requestEmailVerification} and map its envelope onto
+ *      {@link ResendCooldownResult} (its `ok:true` carries `delivered` +
+ *      `message`; its `ok:false` carries `reason` + `message`).
+ *
+ * Never throws.
+ */
+export async function resendEmailVerification(): Promise<ResendCooldownResult> {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return { ok: false, reason: 'not_signed_in', message: MSG_NOT_SIGNED_IN };
+    }
+
+    await connectDB();
+    const user = await User.findById(session.user.id).select('email').lean<{
+      email?: string;
+    } | null>();
+    if (!user?.email) {
+      return { ok: false, reason: 'unexpected', message: MSG_NO_EMAIL };
+    }
+
+    const normalizedEmail = normalizeEmail(user.email);
+
+    // Enforce the resend cooldown ONLY when Redis is available. When it is not,
+    // fail open (skip the cooldown) so a Redis outage never leaves the user with
+    // no path forward (R9.2); the delegated send still handles `not_configured`.
+    if (isRedisConfigured()) {
+      const cooldownKey = keys.emailVerifyResend(normalizedEmail);
+      const acquired = await getRedis().set(cooldownKey, '1', {
+        nx: true,
+        ex: TTL.EMAIL_VERIFY_RESEND,
+      });
+
+      if (acquired !== 'OK') {
+        // Cooldown already active — do NOT send another link (R3.4, R10.1).
+        const ttl = await getRedis().ttl(cooldownKey);
+        const retryAfterSec = ttl > 0 ? ttl : 0;
+        return {
+          ok: false,
+          reason: 'cooldown',
+          retryAfterSec,
+          message: MSG_RESEND_COOLDOWN,
+        };
+      }
+    }
+
+    // Cooldown passed (or skipped). Delegate the actual send + mirror its envelope.
+    const result = await requestEmailVerification();
+    if (result.ok) {
+      return { ok: true, delivered: result.delivered, message: result.message };
+    }
+    return { ok: false, reason: result.reason, message: result.message };
+  } catch (err) {
+    console.error('[verification] resendEmailVerification failed:', err);
     return { ok: false, reason: 'unexpected', message: MSG_UNEXPECTED };
   }
 }

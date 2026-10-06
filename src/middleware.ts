@@ -65,6 +65,21 @@ function isOnboardingRoute(pathname: string): boolean {
 }
 
 /**
+ * Verification routes that an authenticated-but-unverified user must always be
+ * able to reach: the pending screen (which offers resend) and the link
+ * confirmation page. These are NOT portal routes (they stay reachable while
+ * unverified) and NOT auth routes (a signed-in user is not bounced off them).
+ */
+const VERIFY_PENDING_ROUTE = '/verify-pending';
+const VERIFY_EMAIL_ROUTE = '/verify-email';
+
+/** True when `pathname` is (or is nested under) a verification route. */
+function isVerificationRoute(pathname: string): boolean {
+  return pathname === VERIFY_PENDING_ROUTE || pathname.startsWith(`${VERIFY_PENDING_ROUTE}/`)
+    || pathname === VERIFY_EMAIL_ROUTE || pathname.startsWith(`${VERIFY_EMAIL_ROUTE}/`);
+}
+
+/**
  * Pure redirect-resolution for the middleware.
  *
  * Returns the absolute path to redirect to, or `null` to let the request
@@ -85,30 +100,59 @@ function isOnboardingRoute(pathname: string): boolean {
  * claim has not been stamped yet) the lockout rule is skipped entirely, so the
  * middleware fails OPEN and existing callers stay backward compatible.
  *
- * _Requirements: 3.1, 3.2, 3.3, 3.5, 3.6_
+ * The `emailVerified` claim adds the email-verification gate (Requirement 2),
+ * inserted AFTER the auth-route rule and BEFORE the onboarding rule: an
+ * authenticated user whose email is not verified is routed to `/verify-pending`,
+ * except when the request is already on a verification route (`/verify-pending`
+ * or `/verify-email`), which must stay reachable so the user can verify. A
+ * verified user is unaffected — the rule is a no-op — so existing routing is
+ * byte-for-byte unchanged (R2.4, R5.2). `emailVerified` is treated as FALSE when
+ * undefined (route to pending): the safe default, since the backfill + jwt
+ * refresh give real users `true` quickly.
+ *
+ * _Requirements: 2.1, 2.2, 2.4, 2.5, 2.6, 3.1, 3.2, 3.3, 3.5, 3.6, 5.1, 5.2, 5.5_
  */
 export function resolveRedirect(params: {
   pathname: string;
   isAuthenticated: boolean;
   onboardingComplete: boolean | undefined;
+  /** Email-verification claim from the JWT; undefined is treated as FALSE (route to pending). */
+  emailVerified: boolean | undefined;
   /** Billing access decision derived from the JWT claim; omit to skip lockout. */
   access?: AccessDecision;
 }): string | null {
   const { pathname, isAuthenticated, access } = params;
   // Undefined onboarding status is treated as incomplete (defensive default).
   const onboardingComplete = params.onboardingComplete === true;
+  // Undefined verification status is treated as unverified (safe default).
+  const emailVerified = params.emailVerified === true;
 
   // Unauthenticated on a portal route -> login.
   if (!isAuthenticated && isPortalRoute(pathname)) {
     return pathname === '/login' ? null : '/login';
   }
 
-  // Signed-in users must NOT sit on the login/register pages. Send them to
-  // onboarding when incomplete, otherwise the dashboard.
+  // Signed-in users must NOT sit on the login/register pages. An unverified
+  // user is sent to the pending screen first (email verification gates ahead of
+  // onboarding); otherwise onboarding when incomplete, else the dashboard.
   if (isAuthenticated && isAuthRoute(pathname)) {
-    const dest = onboardingComplete ? '/dashboard' : '/onboarding';
+    const dest = !emailVerified
+      ? VERIFY_PENDING_ROUTE
+      : onboardingComplete
+        ? '/dashboard'
+        : '/onboarding';
     // Loop-guard: never redirect a path to itself.
     return pathname === dest ? null : dest;
+  }
+
+  // Signed-in but email NOT verified -> the pending screen, unless the request
+  // is already on a verification route (/verify-pending or /verify-email), which
+  // must stay reachable so the user can verify. Runs AFTER the auth-route rule
+  // and BEFORE the onboarding rule, so onboarding is gated behind verification.
+  // For a verified user this is a no-op (routing unchanged). The verification-
+  // route check preserves the no-self-redirect invariant.
+  if (isAuthenticated && !emailVerified && !isVerificationRoute(pathname)) {
+    return VERIFY_PENDING_ROUTE;
   }
 
   // Signed-in groomers with incomplete onboarding -> the wizard, unless they
@@ -160,6 +204,7 @@ export default withAuth(
       pathname,
       isAuthenticated: !!token,
       onboardingComplete: token?.onboardingComplete,
+      emailVerified: token?.emailVerified,
       access,
     });
 
@@ -181,6 +226,10 @@ export default withAuth(
         // Auth pages are reachable without a session (the middleware function
         // above redirects signed-in users away from them).
         if (isAuthRoute(pathname)) return true;
+
+        // Verification routes (/verify-pending, /verify-email) must stay
+        // reachable while unverified so the user can verify — never gate them.
+        if (isVerificationRoute(pathname)) return true;
 
         // The onboarding wizard requires a signed-in groomer.
         if (pathname.startsWith('/onboarding')) return !!token;

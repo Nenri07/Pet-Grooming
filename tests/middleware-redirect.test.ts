@@ -22,6 +22,7 @@ describe('resolveRedirect — loop guards', () => {
         pathname: '/onboarding',
         isAuthenticated: true,
         onboardingComplete: false,
+        emailVerified: true,
       })
     ).toBeNull();
   });
@@ -32,6 +33,7 @@ describe('resolveRedirect — loop guards', () => {
         pathname: '/onboarding',
         isAuthenticated: true,
         onboardingComplete: undefined,
+        emailVerified: true,
       })
     ).toBeNull();
   });
@@ -42,6 +44,7 @@ describe('resolveRedirect — loop guards', () => {
         pathname: '/dashboard',
         isAuthenticated: true,
         onboardingComplete: undefined,
+        emailVerified: true,
       })
     ).toBe('/onboarding');
   });
@@ -52,6 +55,7 @@ describe('resolveRedirect — loop guards', () => {
         pathname: '/login',
         isAuthenticated: true,
         onboardingComplete: false,
+        emailVerified: true,
       })
     ).toBe('/onboarding');
   });
@@ -62,6 +66,7 @@ describe('resolveRedirect — loop guards', () => {
         pathname: '/register',
         isAuthenticated: true,
         onboardingComplete: true,
+        emailVerified: true,
       })
     ).toBe('/dashboard');
   });
@@ -72,6 +77,7 @@ describe('resolveRedirect — loop guards', () => {
         pathname: '/dashboard',
         isAuthenticated: false,
         onboardingComplete: undefined,
+        emailVerified: undefined,
       })
     ).toBe('/login');
   });
@@ -82,6 +88,7 @@ describe('resolveRedirect — loop guards', () => {
         pathname: '/dashboard',
         isAuthenticated: true,
         onboardingComplete: true,
+        emailVerified: true,
       })
     ).toBeNull();
   });
@@ -92,6 +99,7 @@ describe('resolveRedirect — loop guards', () => {
         pathname: '/book/some-groomer',
         isAuthenticated: false,
         onboardingComplete: undefined,
+        emailVerified: undefined,
       })
     ).toBeNull();
   });
@@ -121,11 +129,13 @@ describe('resolveRedirect — never self-redirects', () => {
         pathArb,
         fc.boolean(),
         fc.constantFrom(true, false, undefined),
-        (pathname, isAuthenticated, onboardingComplete) => {
+        fc.constantFrom(true, false, undefined),
+        (pathname, isAuthenticated, onboardingComplete, emailVerified) => {
           const dest = resolveRedirect({
             pathname,
             isAuthenticated,
             onboardingComplete,
+            emailVerified,
           });
           if (dest !== null) {
             expect(dest).not.toBe(pathname);
@@ -162,6 +172,7 @@ describe('resolveRedirect — hard lockout (Feature: billing-trial-and-payments)
             pathname: '/dashboard',
             isAuthenticated: true,
             onboardingComplete: true,
+            emailVerified: true,
             access: locked,
           })
         ).toBe('/billing');
@@ -173,6 +184,7 @@ describe('resolveRedirect — hard lockout (Feature: billing-trial-and-payments)
             pathname: '/clients',
             isAuthenticated: true,
             onboardingComplete: true,
+            emailVerified: true,
             access: locked,
           })
         ).toBe('/billing');
@@ -184,6 +196,7 @@ describe('resolveRedirect — hard lockout (Feature: billing-trial-and-payments)
             pathname: '/billing',
             isAuthenticated: true,
             onboardingComplete: true,
+            emailVerified: true,
             access: locked,
           })
         ).toBeNull();
@@ -195,6 +208,7 @@ describe('resolveRedirect — hard lockout (Feature: billing-trial-and-payments)
             pathname: '/billing/invoices',
             isAuthenticated: true,
             onboardingComplete: true,
+            emailVerified: true,
             access: locked,
           })
         ).toBeNull();
@@ -213,6 +227,7 @@ describe('resolveRedirect — hard lockout (Feature: billing-trial-and-payments)
           pathname: '/login',
           isAuthenticated: true,
           onboardingComplete: true,
+          emailVerified: true,
           access: locked,
         });
         expect(dest).toBe('/dashboard');
@@ -225,6 +240,7 @@ describe('resolveRedirect — hard lockout (Feature: billing-trial-and-payments)
           pathname: '/register',
           isAuthenticated: true,
           onboardingComplete: true,
+          emailVerified: true,
           access: locked,
         });
         expect(dest).toBe('/dashboard');
@@ -238,6 +254,7 @@ describe('resolveRedirect — hard lockout (Feature: billing-trial-and-payments)
             pathname: '/book/foo',
             isAuthenticated: true,
             onboardingComplete: true,
+            emailVerified: true,
             access: locked,
           })
         ).toBeNull();
@@ -254,6 +271,7 @@ describe('resolveRedirect — hard lockout (Feature: billing-trial-and-payments)
           pathname: '/dashboard',
           isAuthenticated: true,
           onboardingComplete: true,
+          emailVerified: true,
           access: allow,
         })
       ).toBeNull();
@@ -264,12 +282,14 @@ describe('resolveRedirect — hard lockout (Feature: billing-trial-and-payments)
         pathname: '/dashboard',
         isAuthenticated: true,
         onboardingComplete: true,
+        emailVerified: true,
         access: allow,
       });
       const withoutAccess = resolveRedirect({
         pathname: '/dashboard',
         isAuthenticated: true,
         onboardingComplete: true,
+        emailVerified: true,
       });
       expect(withAllow).toBe(withoutAccess);
     });
@@ -282,6 +302,7 @@ describe('resolveRedirect — hard lockout (Feature: billing-trial-and-payments)
           pathname: '/dashboard',
           isAuthenticated: true,
           onboardingComplete: true,
+          emailVerified: true,
         })
       ).toBeNull();
     });
@@ -327,12 +348,14 @@ describe('resolveRedirect — never self-redirects WITH lockout (Feature: billin
         pathArb,
         fc.boolean(),
         fc.constantFrom(true, false, undefined),
+        fc.constantFrom(true, false, undefined),
         accessArb,
-        (pathname, isAuthenticated, onboardingComplete, access) => {
+        (pathname, isAuthenticated, onboardingComplete, emailVerified, access) => {
           const dest = resolveRedirect({
             pathname,
             isAuthenticated,
             onboardingComplete,
+            emailVerified,
             access,
           });
           if (dest !== null) {
@@ -360,6 +383,7 @@ describe('resolveRedirect — never self-redirects WITH lockout (Feature: billin
               pathname,
               isAuthenticated: true,
               onboardingComplete: true,
+              emailVerified: true,
               access,
             })
           ).toBeNull();
@@ -382,6 +406,7 @@ describe('resolveRedirect — never self-redirects WITH lockout (Feature: billin
             pathname,
             isAuthenticated: true,
             onboardingComplete: true,
+            emailVerified: true,
             access,
           });
           expect(dest).toBe('/dashboard');

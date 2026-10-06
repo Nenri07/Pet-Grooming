@@ -190,8 +190,15 @@ async function provisionGoogleUser(params: {
       user.googleId = googleId;
       await user.save();
     }
+    // Google asserts the email, so treat the account as verified. Only stamp
+    // when currently null/absent; leave an existing timestamp unchanged.
+    if (!user.emailVerifiedAt) {
+      user.emailVerifiedAt = new Date();
+      await user.save();
+    }
   } else {
-    // 2. No account yet — create an OAuth user (no password).
+    // 2. No account yet — create an OAuth user (no password). Google asserts
+    // the email, so stamp it verified at provision time.
     user = await User.create({
       name: params.name?.trim() || email,
       email,
@@ -199,6 +206,7 @@ async function provisionGoogleUser(params: {
       passwordHash: null,
       isActive: false,
       role: 'groomer',
+      emailVerifiedAt: new Date(),
     });
   }
 
@@ -302,6 +310,33 @@ export const authOptions: NextAuthOptions = {
         }
       }
 
+      // Stamp the email-verification status onto the token so the Edge
+      // middleware can gate unverified users to /verify-pending without a DB
+      // call. Mirror the onboarding refresh shape: re-read at sign-in, on an
+      // explicit `update()` (fired by the verify-email client after success),
+      // and while the email is still unverified — so the claim flips to true on
+      // the next token refresh once `emailVerifiedAt` is set. Once verified, we
+      // stop re-querying.
+      const needsVerifyRefresh =
+        !!user ||
+        trigger === 'update' ||
+        token.emailVerified !== true;
+
+      if (token.userId && needsVerifyRefresh) {
+        try {
+          await connectDB();
+          const u = await User.findById(token.userId)
+            .select('emailVerifiedAt')
+            .lean<{ emailVerifiedAt?: Date | null } | null>();
+          token.emailVerified = !!u?.emailVerifiedAt;
+        } catch (error) {
+          // Never throw out of the jwt callback (it would break auth). Leave the
+          // existing flag untouched and default anything missing safely.
+          console.error('Email-verification-status refresh failed:', error);
+          token.emailVerified = token.emailVerified ?? false;
+        }
+      }
+
       // Stamp the compact billing access claim (status + trial deadline +
       // pastDueSince as epoch ms) so the Edge middleware can decide the hard
       // lockout via `accessFromClaim` WITHOUT a per-request DB/Stripe call.
@@ -385,6 +420,7 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.userId as string;
         session.user.onboardingComplete = token.onboardingComplete ?? false;
         session.user.groomerSlug = token.groomerSlug ?? null;
+        session.user.emailVerified = token.emailVerified ?? false;
       }
       return session;
     },

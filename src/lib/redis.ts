@@ -108,6 +108,9 @@ export const TTL = {
   // Overridable at the call site via config `EMAIL_VERIFICATION_TTL_MIN` (this
   // const is the default).
   EMAIL_VERIFY: 30 * 60, // evf:{token}             EX 1800 (30 min default)
+  // Email-verification resend cooldown (R9.3, R10.1). `evf:rl:{email}` → '1',
+  // SET NX EX 60; first resend wins, subsequent rejected until expiry.
+  EMAIL_VERIFY_RESEND: 60, // evf:rl:{email}          EX 60 (resend cooldown)
 } as const;
 
 export const keys = {
@@ -143,6 +146,9 @@ export const keys = {
   velIp: (maskedIp: string) => `vel:ip:${maskedIp}`,
   // R7.1 email-verification token → {normalizedEmail}, EX 30 min.
   emailVerify: (token: string) => `evf:${token}`,
+  // R9.3/R10.1 email-verification resend cooldown marker, keyed on the
+  // normalized email (R9.5) so the limit holds across serverless invocations.
+  emailVerifyResend: (normalizedEmail: string) => `evf:rl:${normalizedEmail}`,
 } as const;
 
 /** The value stored under a `claim:{token}` key (§11.1). */

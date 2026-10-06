@@ -17,14 +17,24 @@
  * `User.emailVerifiedAt`. This component only surfaces the typed envelope; it
  * never throws and never shows provider internals (R7.3/7.4, R13.4).
  *
- * _Requirements: 7.3, 7.4 (confirm the token, record verified email), 13.4
- * (user-safe messages)._
- * _Design: UI → email-link confirmation page._
+ * On success it refreshes the live session and routes onward (R4.3, R5.3,
+ * R5.4): the app is wrapped in a NextAuth `SessionProvider` at the root layout,
+ * so `useSession().update()` is available here. Calling `await update()` forces
+ * a `jwt` callback refresh with `trigger === 'update'`, which re-reads
+ * `emailVerifiedAt` and flips `token.emailVerified` to true — so the middleware
+ * stops bouncing the now-verified user back to `/verify-pending` without a
+ * manual sign-out/in. We then `router.push('/onboarding')` and let the
+ * middleware route onward from there.
+ *
+ * _Requirements: 4.3, 4.4, 5.3, 5.4, 7.3, 7.4 (confirm the token, record and
+ * recognize the verified email, route onward), 13.4 (user-safe messages)._
+ * _Design: §7 Verify-email client; UI → email-link confirmation page._
  */
 
 import * as React from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { CheckCircle2, XCircle } from 'lucide-react';
 
 import { Card } from '@/components/ui/Card';
@@ -41,6 +51,8 @@ const MSG_MISSING_TOKEN =
 
 export function VerifyEmailClient() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const { update } = useSession();
   const token = searchParams.get('token') ?? '';
   const [phase, setPhase] = React.useState<Phase>({ kind: 'verifying' });
 
@@ -59,6 +71,18 @@ export function VerifyEmailClient() {
         if (cancelled) return;
         if (res.ok) {
           setPhase({ kind: 'success', message: MSG_SUCCESS });
+          // Flip the JWT `emailVerified` claim in the live session, then route
+          // onward. `update()` triggers a `jwt` refresh (trigger === 'update')
+          // that re-reads `emailVerifiedAt`, so the middleware recognizes the
+          // verified state without a forced re-login (R5.3, R5.4), then we hand
+          // off to the middleware via /onboarding (R4.3).
+          try {
+            await update();
+          } catch {
+            // A failed refresh must not strand the user on the success screen;
+            // the full navigation below re-runs the jwt callback regardless.
+          }
+          if (!cancelled) router.push('/onboarding');
         } else {
           setPhase({ kind: 'error', message: res.message });
         }
@@ -76,7 +100,7 @@ export function VerifyEmailClient() {
     return () => {
       cancelled = true;
     };
-  }, [token]);
+  }, [token, update, router]);
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center px-4">
@@ -97,7 +121,7 @@ export function VerifyEmailClient() {
             <p role="status" className="text-base-content/70">
               {phase.message}
             </p>
-            <Link href="/start-trial" className="btn btn-primary mt-2 min-h-[44px]">
+            <Link href="/onboarding" className="btn btn-primary mt-2 min-h-[44px]">
               Continue
             </Link>
           </div>
@@ -112,8 +136,8 @@ export function VerifyEmailClient() {
             <p role="alert" className="text-base-content/70">
               {phase.message}
             </p>
-            <Link href="/start-trial" className="btn btn-outline mt-2 min-h-[44px]">
-              Back to start trial
+            <Link href="/verify-pending" className="btn btn-outline mt-2 min-h-[44px]">
+              Request a new link
             </Link>
           </div>
         )}

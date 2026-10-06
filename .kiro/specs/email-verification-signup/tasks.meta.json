@@ -1,0 +1,289 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Augment NextAuth types with `emailVerified`": [
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791219162231
+      },
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791219179981
+      },
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791219415588
+      }
+    ],
+    "1.2 Stamp `emailVerified` in the jwt + session callbacks": [
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791219163538
+      },
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791219427251
+      },
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791219694996
+      }
+    ],
+    "2.1 Add verification-route helpers and the `emailVerified` rule to `resolveRedirect`": [
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791219163726
+      },
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791219728763
+      },
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791220274872
+      }
+    ],
+    "3. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791219164067
+      },
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791220288960
+      }
+    ],
+    "4.1 Add the resend-cooldown Redis key and TTL": [
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791219164165
+      },
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791219180715
+      },
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791219417178
+      }
+    ],
+    "4.2 Implement `resendEmailVerification` wrapper": [
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791219164284
+      },
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791219428671
+      },
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791219697094
+      }
+    ],
+    "5.1 Create the server shell `src/app/verify-pending/page.tsx`": [
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791219164636
+      },
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791220333544
+      },
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791220576672
+      }
+    ],
+    "5.2 Create `src/app/verify-pending/VerifyPendingClient.tsx`": [
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791219164732
+      },
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791220578558
+      },
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791220804280
+      }
+    ],
+    "6.1 Point registration at the pending screen": [
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791219164852
+      },
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791220335489
+      },
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791220572604
+      }
+    ],
+    "6.2 Refresh session and route after link confirmation": [
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791219165035
+      },
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791220336056
+      },
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791220574689
+      }
+    ],
+    "7.1 Set `emailVerifiedAt` in `provisionGoogleUser`": [
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791219165352
+      },
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791219182151
+      },
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791219418369
+      }
+    ],
+    "8.1 Make Gate 5 conditional on `isTwilioVerifyConfigured()`": [
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791219165457
+      },
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791219429665
+      },
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791219695828
+      }
+    ],
+    "9.1 Write `scripts/backfill-email-verified.ts`": [
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791219165625
+      },
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791219183087
+      },
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791219419506
+      }
+    ],
+    "10. Final checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791219165779
+      },
+      {
+        "executionId": "58c9337e-e3ff-428f-bf45-a370aa3b9a77",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791269246754
+      }
+    ],
+    "7. Google OAuth verified-at-provision": [
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791219418427
+      }
+    ],
+    "9. Grandfathering backfill": [
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791219419698
+      }
+    ],
+    "1. Add the `emailVerified` session claim": [
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791219695221
+      }
+    ],
+    "8. Trial pipeline: email required, phone conditional": [
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791219696067
+      }
+    ],
+    "4. Resend cooldown action + Redis key": [
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791219697302
+      }
+    ],
+    "2. Extend the middleware access gate": [
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791220275277
+      }
+    ],
+    "6. Wire registration and link-confirmation redirects": [
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791220574843
+      }
+    ],
+    "5. Verification-pending screen": [
+      {
+        "executionId": "5cd26f0c-5a7e-4b77-869c-3a239d7e4b2c",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1791220804407
+      }
+    ]
+  }
+}

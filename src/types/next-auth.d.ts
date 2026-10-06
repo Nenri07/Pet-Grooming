@@ -20,6 +20,8 @@ declare module 'next-auth' {
       onboardingComplete: boolean;
       /** The groomer's public booking slug, or null if not yet set. */
       groomerSlug: string | null;
+      /** Whether the user's email is verified (JWT-stamped, no DB read in middleware). */
+      emailVerified: boolean;
     } & DefaultSession['user'];
   }
 }
@@ -37,6 +39,8 @@ declare module 'next-auth/jwt' {
     onboardingComplete?: boolean;
     /** The groomer's public booking slug, or null if not yet set. */
     groomerSlug?: string | null;
+    /** Mirror of User.emailVerifiedAt != null, stamped by the jwt callback. */
+    emailVerified?: boolean;
     /**
      * Compact billing access claim (status + trial deadline + pastDueSince as
      * epoch ms), stamped by the jwt callback so the Edge middleware can decide

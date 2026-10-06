@@ -67,6 +67,7 @@ import {
   getPhonePepper,
   getVelocityThreshold,
   getVelocityWindowHours,
+  isTwilioVerifyConfigured,
 } from '@/lib/identity/config';
 import { emailDomain, isDisposableDomain, normalizeEmail } from '@/lib/identity/email';
 import { normalizePhoneE164 } from '@/lib/identity/phone';
@@ -255,6 +256,26 @@ function getDefaultPhoneRegion(): string {
 function computePhoneHash(phoneE164: string): string {
   const pepper = getPhonePepper();
   const material = pepper ? `${phoneE164}${pepper}` : phoneE164;
+  return createHash('sha256').update(material, 'utf8').digest('hex');
+}
+
+/**
+ * Compute an email-derived identity hash used as the identity key when the
+ * phone gate is SKIPPED (Twilio unconfigured — R6.3). This is stored in the
+ * SAME `IdentityBinding.phoneHash` field so the existing unique index keeps
+ * enforcing one-trial-per-identity without a phone (R6.4, R6.5).
+ *
+ * It mirrors {@link computePhoneHash} exactly — `sha256(material + pepper)`
+ * (pepper omitted when {@link getPhonePepper} returns `null`) — so the produced
+ * value shares the hash's length/format. A fixed `email:` namespace prefix is
+ * mixed in so an email-derived key can never coincide with the hash of a real
+ * E.164 phone, keeping the two identity spaces disjoint within the one unique
+ * index.
+ */
+function computeEmailIdentityHash(normalizedEmail: string): string {
+  const pepper = getPhonePepper();
+  const base = `email:${normalizedEmail}`;
+  const material = pepper ? `${base}${pepper}` : base;
   return createHash('sha256').update(material, 'utf8').digest('hex');
 }
 
@@ -449,22 +470,27 @@ async function recordVelocityAndFlag(
  *   3. Disposable-domain (R8)    — block disposable domains; FAIL-OPEN on a
  *                                  blocklist load failure (R8.4).
  *   4. Email verified (R7)       — fail-CLOSED: require `User.emailVerifiedAt`.
- *   5. Phone verified (R10)      — fail-CLOSED: require a non-empty canonical
- *                                  E.164 (re-normalized for safety).
+ *   5. Phone verified (R6/R10)   — CONDITIONAL on `isTwilioVerifyConfigured()`:
+ *                                  when configured, fail-CLOSED and require a
+ *                                  non-empty canonical E.164 (re-normalized for
+ *                                  safety); when unconfigured, SKIP the gate and
+ *                                  treat the phone as absent (R6.2, R6.3).
  *   6. Velocity (R12)            — fail-OPEN, flag-not-block: INCR device + IP
  *                                  counters, compute `flagged`, proceed.
  *   7. Identity binding (R11)    — fail-CLOSED: `identityConsumedTrial` → decline.
- *   8. Provision atomically      — insert `IdentityBinding` FIRST (unique
- *                                  `phoneHash` resolves double-submit races as
- *                                  `trial_already_used`), THEN provision the
- *                                  trial; on provisioning failure best-effort
- *                                  delete the just-inserted binding so a retry
- *                                  can succeed.
+ *   8. Provision atomically      — insert `IdentityBinding` FIRST (the unique
+ *                                  `phoneHash` field — holding the phone hash
+ *                                  when a phone is present, else an
+ *                                  email-derived identity hash — resolves
+ *                                  double-submit races as `trial_already_used`),
+ *                                  THEN provision the trial; on provisioning
+ *                                  failure best-effort delete the just-inserted
+ *                                  binding so a retry can succeed.
  *
  * Never throws; every branch returns a typed {@link StartTrialGatedResult}.
  *
- * _Requirements: 1.1, 1.4, 7.1, 7.2, 8.1, 8.4, 10.1, 11.1, 11.2, 12.1, 12.2,
- * 12.3, 12.5._
+ * _Requirements: 1.1, 1.4, 6.1, 6.2, 6.3, 6.4, 6.5, 7.1, 7.2, 8.1, 8.4, 9.4,
+ * 10.1, 11.1, 11.2, 12.1, 12.2, 12.3, 12.5._
  * _Design: Abuse-Prevention Pipeline._
  */
 export async function startTrialGated(
@@ -514,16 +540,24 @@ export async function startTrialGated(
       };
     }
 
-    // --- Gate 5: Phone verified (R10, fail-CLOSED) ------------------------
-    // The UI must have completed `confirmPhoneOtp`; we re-affirm trust by
-    // requiring a non-empty canonical E.164 (re-normalized for safety).
-    const phoneE164 = normalizePhoneE164(input?.phoneE164 ?? '', getDefaultPhoneRegion());
-    if (!phoneE164) {
-      return {
-        ok: false,
-        reason: 'phone_unverified',
-        message: 'Please verify your phone number first.',
-      };
+    // --- Gate 5: Phone verified (R6/R10, CONDITIONAL on Twilio) -----------
+    // The phone gate is enforced ONLY when Twilio Verify is configured
+    // (R6.2). In the launch environment Twilio is unconfigured, so the gate is
+    // SKIPPED entirely and the phone is treated as absent (R6.3) — `phoneE164`
+    // stays null and the remaining gates run unchanged (R6.4). When Twilio IS
+    // configured the gate is fail-CLOSED exactly as before: the UI must have
+    // completed `confirmPhoneOtp`, and we re-affirm trust by requiring a
+    // non-empty canonical E.164 (re-normalized for safety) (R6.2, R9.4).
+    let phoneE164: string | null = null;
+    if (isTwilioVerifyConfigured()) {
+      phoneE164 = normalizePhoneE164(input?.phoneE164 ?? '', getDefaultPhoneRegion());
+      if (!phoneE164) {
+        return {
+          ok: false,
+          reason: 'phone_unverified',
+          message: 'Please verify your phone number first.',
+        };
+      }
     }
 
     // --- Gate 6: Velocity (R12, fail-OPEN, flag-not-block) ----------------
@@ -532,9 +566,19 @@ export async function startTrialGated(
     const flagged = await recordVelocityAndFlag(fingerprint, maskedIp);
 
     // --- Gate 7: Identity-binding check (R11, fail-CLOSED) ----------------
+    // The identity key is the phone hash when a verified phone is present, else
+    // (phone gate skipped — Twilio unconfigured) an email-derived hash so the
+    // one-trial-per-identity guarantee still holds without a phone (R6.4,
+    // R6.5). Because the ledger's ONLY unique index is on `phoneHash`, the
+    // email-derived key is stored IN that same `phoneHash` field — the unique
+    // index then enforces uniqueness over whichever identity space applies, and
+    // the two spaces never collide (the email hash is namespaced with an
+    // `email:` prefix; see `computeEmailIdentityHash`).
     const now = new Date();
-    const phoneHash = computePhoneHash(phoneE164);
-    const existing = await IdentityBinding.findOne({ phoneHash })
+    const identityKey = phoneE164
+      ? computePhoneHash(phoneE164)
+      : computeEmailIdentityHash(normalizedEmail);
+    const existing = await IdentityBinding.findOne({ phoneHash: identityKey })
       .select('firstTrialAt bindingExpiresAt')
       .lean<BindingView | null>();
     if (identityConsumedTrial(existing, now)) {
@@ -552,7 +596,9 @@ export async function startTrialGated(
     try {
       await IdentityBinding.create({
         normalizedEmail,
-        phoneHash,
+        // Stored in the unique `phoneHash` field: a real phone hash when a
+        // phone is present, else the email-derived identity hash (R6.4, R6.5).
+        phoneHash: identityKey,
         firstTrialAt: now,
         bindingExpiresAt: null,
         deviceFingerprints: fingerprint ? [fingerprint] : [],
@@ -585,7 +631,7 @@ export async function startTrialGated(
         provisionErr
       );
       try {
-        await IdentityBinding.deleteOne({ phoneHash });
+        await IdentityBinding.deleteOne({ phoneHash: identityKey });
       } catch (rollbackErr) {
         console.error(
           '[trial] binding rollback failed; binding persists (retry will read as consumed):',
