@@ -35,26 +35,15 @@ import {
 } from 'lucide-react';
 import { useReducedMotion } from '@/lib/animation/useReducedMotion';
 import type { PetCardViewData } from './PetCardRenderer';
+import { safeHttpsImageSrc } from '@/lib/images';
 
 /** Tiny classnames join helper (no `@/lib/utils` `cn` in this project). */
 function cx(...parts: Array<string | false | null | undefined>): string {
   return parts.filter(Boolean).join(' ');
 }
 
-/**
- * next/image throws during render for a non-allowlisted src (the app config
- * only permits https remote hosts). A legacy/manual photoUrl may be http, a
- * relative path, a data: URI, or malformed — any of which would crash this
- * public shareable card. Only treat an absolute https URL as usable.
- */
-function safeHttpsImageSrc(url: string | undefined): string | null {
-  if (!url) return null;
-  try {
-    return new URL(url).protocol === 'https:' ? url : null;
-  } catch {
-    return null;
-  }
-}
+// safeHttpsImageSrc now lives in '@/lib/images' (shared across every
+// DB-sourced <Image> site) — see import above.
 
 type SerializedDate = Date | string;
 
@@ -276,10 +265,10 @@ export function AnimatedPetCard({
 
         {/* ---- Groomer branding header pill (top-left) -------------------- */}
         <div className="absolute left-3 top-3 z-10 flex items-center gap-2 rounded-full border border-base-content/10 bg-base-100/70 px-2.5 py-1.5 backdrop-blur-md">
-          {data.branding.logoUrl ? (
+          {safeHttpsImageSrc(data.branding.logoUrl) ? (
             <span className="relative h-6 w-6 shrink-0 overflow-hidden rounded-full bg-base-100">
               <Image
-                src={data.branding.logoUrl}
+                src={safeHttpsImageSrc(data.branding.logoUrl) as string}
                 alt={`${data.branding.businessName || 'Business'} logo`}
                 fill
                 className="object-cover"

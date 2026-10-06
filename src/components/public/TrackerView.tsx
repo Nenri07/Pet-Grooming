@@ -22,6 +22,7 @@ import * as React from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { Navigation, Phone, MessageSquare, PawPrint } from 'lucide-react';
+import { safeHttpsImageSrc } from '@/lib/images';
 
 /**
  * Shared loading fallback — mirrors the map's height so nothing jumps while
@@ -125,9 +126,9 @@ export function TrackerView({ token, initial }: TrackerViewProps) {
     <div className="overflow-hidden rounded-box border border-base-content/10 bg-base-100 shadow-card">
       {/* Branded header */}
       <div className="bg-hero px-6 py-7 text-center">
-        {data.logoUrl ? (
+        {safeHttpsImageSrc(data.logoUrl) ? (
           <Image
-            src={data.logoUrl}
+            src={safeHttpsImageSrc(data.logoUrl) as string}
             alt={data.business}
             width={56}
             height={56}

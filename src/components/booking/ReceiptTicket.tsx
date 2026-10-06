@@ -18,6 +18,7 @@
 import Image from 'next/image';
 import { PawPrint, CheckCircle2 } from 'lucide-react';
 import type { ReceiptData } from './ReceiptPDF';
+import { safeHttpsImageSrc } from '@/lib/images';
 
 export interface ReceiptTicketProps {
   data: ReceiptData;
@@ -118,10 +119,10 @@ export function ReceiptTicket({ data, id = 'pp-receipt' }: ReceiptTicketProps) {
               sizes="48px"
             />
           </span>
-          {data.logoUrl && (
+          {safeHttpsImageSrc(data.logoUrl) && (
             <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-base-100">
               <Image
-                src={data.logoUrl}
+                src={safeHttpsImageSrc(data.logoUrl) as string}
                 alt={`${data.businessName || 'Business'} logo`}
                 fill
                 className="object-cover"

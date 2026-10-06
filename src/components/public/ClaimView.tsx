@@ -15,6 +15,7 @@
 import * as React from 'react';
 import Image from 'next/image';
 import { CalendarClock, PawPrint } from 'lucide-react';
+import { safeHttpsImageSrc } from '@/lib/images';
 
 interface ClaimViewProps {
   token: string;
@@ -84,9 +85,9 @@ export function ClaimView({
     <div className="overflow-hidden rounded-box border border-base-content/10 bg-base-100 shadow-card">
       {/* Branded header */}
       <div className="bg-hero px-6 py-8 text-center">
-        {logoUrl ? (
+        {safeHttpsImageSrc(logoUrl) ? (
           <Image
-            src={logoUrl}
+            src={safeHttpsImageSrc(logoUrl) as string}
             alt={business}
             width={64}
             height={64}

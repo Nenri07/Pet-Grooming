@@ -6,6 +6,7 @@ import { connectDB } from '@/lib/db/connect';
 import { GroomerProfile } from '@/lib/db/models/groomer-profile';
 import { Service } from '@/lib/db/models/service';
 import { BookingFlow, type BookingGroomer } from '@/components/booking/BookingFlow';
+import { safeHttpsImageSrc } from '@/lib/images';
 
 /**
  * Public booking page — /book/[groomerSlug].
@@ -285,9 +286,9 @@ export default async function BookingPage({ params }: BookingPageProps) {
         />
       )}
       <div className="mx-auto mb-6 flex w-full max-w-xl flex-col items-center text-center">
-        {groomer.logoUrl ? (
+        {safeHttpsImageSrc(groomer.logoUrl) ? (
           <Image
-            src={groomer.logoUrl}
+            src={safeHttpsImageSrc(groomer.logoUrl) as string}
             alt={`${groomer.businessName} logo`}
             width={96}
             height={96}
