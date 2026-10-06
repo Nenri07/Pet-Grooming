@@ -158,7 +158,7 @@ export function resolveRedirect(params: {
   // Signed-in groomers with incomplete onboarding -> the wizard, unless they
   // are already on it. The explicit onboarding-route check makes the
   // no-self-redirect guarantee obvious even as the route set evolves.
-  if (isAuthenticated && !onboardingComplete && !isOnboardingRoute(pathname)) {
+  if (isAuthenticated && !onboardingComplete && !isOnboardingRoute(pathname) && !isVerificationRoute(pathname)) {
     return '/onboarding';
   }
 
