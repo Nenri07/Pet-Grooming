@@ -63,17 +63,30 @@ interface PetProfileProps {
   serviceHistory: SerializableServiceHistoryEntry[];
 }
 
-/** Convert a server `PetServiceHistoryEntry` into the serializable shape. */
+/**
+ * Convert a server `PetServiceHistoryEntry` into the serializable shape.
+ *
+ * A missing or malformed `date` must NOT crash the render: `new Date(bad)` is
+ * an Invalid Date and `.toISOString()` on it throws `RangeError: Invalid time
+ * value`, which (in a server component) surfaces as the masked production
+ * digest crash. We coerce each date defensively and emit an empty string for an
+ * invalid one; the client's `formatDate` already renders '' / 'Unknown date'
+ * for a non-parseable value.
+ */
 export function toSerializableHistory(
   entries: PetServiceHistoryEntry[]
 ): SerializableServiceHistoryEntry[] {
-  return entries.map((e) => ({
-    appointmentId: e.appointmentId,
-    date: new Date(e.date).toISOString(),
-    serviceName: e.serviceName,
-    notes: e.notes,
-    status: e.status,
-  }));
+  return entries.map((e) => {
+    const d = e.date instanceof Date ? e.date : new Date(e.date as unknown as string);
+    const date = Number.isNaN(d.getTime()) ? '' : d.toISOString();
+    return {
+      appointmentId: e.appointmentId,
+      date,
+      serviceName: e.serviceName,
+      notes: e.notes,
+      status: e.status,
+    };
+  });
 }
 
 function cx(...classes: Array<string | false | null | undefined>): string {
@@ -660,7 +673,7 @@ function DigitalCardPanel({ petId }: { petId: string }) {
  * crashes the page. Only treat a value as a usable image src when it is an
  * absolute https URL; otherwise callers fall back to the placeholder.
  */
-function safeHttpsImageSrc(url: string | undefined): string | null {
+function safeHttpsImageSrc(url: string | undefined | null): string | null {
   if (!url) return null;
   try {
     const parsed = new URL(url);

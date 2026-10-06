@@ -65,7 +65,8 @@ export interface PetProfile {
   id: string;
   clientId: string;
   name: string;
-  photoUrl?: string;
+  /** Null (not undefined) when absent — safe to pass across the RSC boundary. */
+  photoUrl?: string | null;
   breed: string;
   weight: number;
   weightUnit: WeightUnit;
@@ -73,8 +74,8 @@ export interface PetProfile {
   temperament: Temperament;
   coatCondition: CoatCondition;
   specialFlags: string[];
-  notes?: string;
-  digitalCardId?: string;
+  notes?: string | null;
+  digitalCardId?: string | null;
 }
 
 /** A serializable row for the Pets list page. */
@@ -174,15 +175,18 @@ export async function getPet(petId: string): Promise<GetPetResult> {
       appointmentId: String(appt._id),
       date: appt.scheduledDate,
       serviceName: serviceNameOf(appt.serviceId),
-      notes: appt.postGroomNotes ?? undefined,
+      notes: appt.postGroomNotes || null,
       status: appt.status,
     }));
 
+    // RSC serialization: `undefined` cannot be passed from a Server Component
+    // to a Client Component; use `null` for absent optional fields so the
+    // handoff to <PetProfile> doesn't throw a serialization error.
     const profile: PetProfile = {
       id: String(pet._id),
       clientId: String(pet.clientId),
       name: pet.name,
-      photoUrl: pet.photoUrl ?? undefined,
+      photoUrl: pet.photoUrl || null,
       breed: pet.breed,
       weight: pet.weight,
       weightUnit: pet.weightUnit,
@@ -190,8 +194,8 @@ export async function getPet(petId: string): Promise<GetPetResult> {
       temperament: pet.temperament,
       coatCondition: pet.coatCondition,
       specialFlags: pet.specialFlags ?? [],
-      notes: pet.notes ?? undefined,
-      digitalCardId: pet.digitalCardId ?? undefined,
+      notes: pet.notes || null,
+      digitalCardId: pet.digitalCardId || null,
     };
 
     return { ok: true, pet: profile, serviceHistory };
