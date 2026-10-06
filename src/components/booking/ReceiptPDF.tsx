@@ -1,5 +1,5 @@
 /**
- * ReceiptPDF — a premium A5 booking receipt / INVOICE document.
+ * ReceiptPDF — a narrow receipt-slip booking receipt / INVOICE document.
  *
  * Rendered client-side by @react-pdf/renderer when the visitor taps
  * "Download receipt (PDF)" on the booking success step. It is laid out like a
@@ -47,18 +47,19 @@ const COLORS = {
 const styles = StyleSheet.create({
   page: {
     padding: 0,
-    fontSize: 10,
+    fontSize: 9,
     color: COLORS.text,
     fontFamily: 'Helvetica',
-    lineHeight: 1.5,
+    lineHeight: 1.45,
     backgroundColor: COLORS.cardBg,
+    /* Narrow receipt slip: 80mm wide ≈ 226pt; height grows with content. */
   },
 
   /* Header band across the top. */
   band: {
     backgroundColor: COLORS.primary,
-    paddingVertical: 20,
-    paddingHorizontal: 30,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -68,14 +69,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    width: 40,
-    height: 40,
+    width: 28,
+    height: 28,
     borderRadius: 8,
-    marginRight: 12,
+    marginRight: 8,
     objectFit: 'cover',
   },
   businessName: {
-    fontSize: 17,
+    fontSize: 13,
     fontFamily: 'Helvetica-Bold',
     color: COLORS.white,
   },
@@ -94,8 +95,8 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   docTitle: {
-    fontSize: 11,
-    letterSpacing: 1.5,
+    fontSize: 8,
+    letterSpacing: 1,
     color: COLORS.white,
     fontFamily: 'Helvetica-Bold',
     textAlign: 'right',
@@ -108,9 +109,9 @@ const styles = StyleSheet.create({
   },
 
   body: {
-    paddingHorizontal: 30,
-    paddingTop: 22,
-    paddingBottom: 26,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 18,
     flexGrow: 1,
   },
 
@@ -136,13 +137,13 @@ const styles = StyleSheet.create({
     marginBottom: 3,
   },
   metaValue: {
-    fontSize: 14,
+    fontSize: 11,
     fontFamily: 'Helvetica-Bold',
     color: COLORS.primaryDeep,
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
   metaValueSm: {
-    fontSize: 11,
+    fontSize: 9,
     fontFamily: 'Helvetica-Bold',
     color: COLORS.ink,
   },
@@ -172,7 +173,7 @@ const styles = StyleSheet.create({
   thead: {
     flexDirection: 'row',
     paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.hairline,
   },
@@ -186,7 +187,7 @@ const styles = StyleSheet.create({
   trow: {
     flexDirection: 'row',
     paddingVertical: 10,
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     borderTopWidth: 1,
     borderTopColor: COLORS.hairline,
   },
@@ -215,7 +216,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   totalsInner: {
-    width: '58%',
+    width: '100%',
   },
   totalLine: {
     flexDirection: 'row',
@@ -246,7 +247,7 @@ const styles = StyleSheet.create({
     color: COLORS.ink,
   },
   grandValue: {
-    fontSize: 16,
+    fontSize: 13,
     fontFamily: 'Helvetica-Bold',
     color: COLORS.primaryDeep,
   },
@@ -383,7 +384,7 @@ export interface ReceiptPDFProps {
   data: ReceiptData;
 }
 
-/** The A5 premium booking receipt / invoice. */
+/** The narrow receipt-slip premium booking receipt / invoice. */
 export function ReceiptPDF({ data }: ReceiptPDFProps) {
   const business = data.businessName || 'Pet Grooming';
   const dateStr = formatDate(data.scheduledDate);
@@ -408,7 +409,7 @@ export function ReceiptPDF({ data }: ReceiptPDFProps) {
       author={business}
       subject="Booking Receipt / Invoice"
     >
-      <Page size="A5" style={styles.page}>
+      <Page size={[226.77, 600]} style={styles.page}>
         {/* Header band + branding + document title */}
         <View style={styles.band}>
           <View style={styles.brand}>
