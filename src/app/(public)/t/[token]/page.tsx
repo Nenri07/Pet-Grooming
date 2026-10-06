@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { resolveTracker } from '@/lib/tracking';
 import { TrackerView } from '@/components/public/TrackerView';
+import { CollabMark } from '@/components/public/CollabMark';
 
 /**
  * Public "van is on the way" tracker — /t/[token] (Master Spec §11.2).
@@ -22,7 +23,11 @@ export default async function TrackerPage({ params }: { params: { token: string 
   const data = await resolveTracker(params.token);
 
   return (
-    <main className="min-h-screen bg-base-200 px-4 py-10 sm:py-16">
+    <main className="relative min-h-screen bg-base-200 px-4 py-10 sm:py-16">
+      {/* Collab mark only when we have a resolved groomer to brand with. */}
+      {data && (
+        <CollabMark groomerLogoUrl={data.logoUrl} groomerName={data.business} />
+      )}
       <div className="mx-auto w-full max-w-md">
         {data ? (
           <TrackerView

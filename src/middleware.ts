@@ -212,7 +212,12 @@ export default withAuth(
       return NextResponse.redirect(new URL(dest, req.url));
     }
 
-    return NextResponse.next();
+    // Expose the pathname to Server Components (layouts can't read it directly).
+    // The (public) layout reads `x-pathname` to decide whether to render the
+    // marketing chrome or hand client-facing shared pages a bare shell.
+    const requestHeaders = new Headers(req.headers);
+    requestHeaders.set('x-pathname', pathname);
+    return NextResponse.next({ request: { headers: requestHeaders } });
   },
   {
     callbacks: {

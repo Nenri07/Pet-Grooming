@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { resolveClaim } from '@/lib/fill';
 import { ClaimView } from '@/components/public/ClaimView';
+import { CollabMark } from '@/components/public/CollabMark';
 
 /**
  * Public claim page — /claim/[token] (Master Spec §11.1).
@@ -24,7 +25,10 @@ export default async function ClaimPage({ params }: { params: { token: string } 
   const claim = await resolveClaim(params.token);
 
   return (
-    <main className="min-h-screen bg-base-200 px-4 py-10 sm:py-16">
+    <main className="relative min-h-screen bg-base-200 px-4 py-10 sm:py-16">
+      {claim && (
+        <CollabMark groomerLogoUrl={claim.logoUrl ?? null} groomerName={claim.business} />
+      )}
       <div className="mx-auto w-full max-w-md">
         {claim ? (
           <ClaimView

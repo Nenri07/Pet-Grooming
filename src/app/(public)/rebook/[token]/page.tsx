@@ -11,6 +11,7 @@ import {
   type BookingInitialState,
 } from '@/components/booking/BookingFlow';
 import type { PetInfoInput, OwnerDetailsInput } from '@/types';
+import { CollabMark } from '@/components/public/CollabMark';
 
 /**
  * Public rebook page — /rebook/[token] (Master Spec §11.4).
@@ -36,6 +37,8 @@ interface ResolvedRebook {
   groomer: BookingGroomer;
   initialState: BookingInitialState;
   petName: string;
+  /** Groomer logo for the collab mark (guarded at render). */
+  logoUrl: string | null;
 }
 
 async function resolveRebook(token: string): Promise<ResolvedRebook | null> {
@@ -138,14 +141,25 @@ async function resolveRebook(token: string): Promise<ResolvedRebook | null> {
     paymentResult: null,
   };
 
-  return { groomer, initialState, petName: p.name };
+  const logoUrl =
+    typeof profile.logoUrl === 'string' && profile.logoUrl.trim().length > 0
+      ? profile.logoUrl.trim()
+      : null;
+
+  return { groomer, initialState, petName: p.name, logoUrl };
 }
 
 export default async function RebookPage({ params }: { params: { token: string } }) {
   const resolved = await resolveRebook(params.token);
 
   return (
-    <main className="min-h-screen bg-base-200 px-4 py-8 sm:py-12">
+    <main className="relative min-h-screen bg-base-200 px-4 py-8 sm:py-12">
+      {resolved && (
+        <CollabMark
+          groomerLogoUrl={resolved.logoUrl}
+          groomerName={resolved.groomer.businessName}
+        />
+      )}
       {resolved ? (
         <>
           <div className="mx-auto mb-6 w-full max-w-xl text-center">

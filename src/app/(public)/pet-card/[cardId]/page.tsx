@@ -9,6 +9,8 @@ import {
   PetCardRenderer,
   type PetCardViewData,
 } from '@/components/pet-card/PetCardRenderer';
+import { CollabMark } from '@/components/public/CollabMark';
+import { ConfettiBurst } from '@/components/public/ConfettiBurst';
 import type { ServiceHistoryEntry } from '@/types';
 
 /**
@@ -181,7 +183,14 @@ export default async function PetCardPage({ params }: PetCardPageProps) {
   // `cardData` matches PetCardData; Dates serialize to strings across the
   // server→client boundary, which PetCardViewData tolerates.
   return (
-    <main className="min-h-screen bg-base-200 px-4 py-8 sm:py-12">
+    <main className="relative min-h-screen bg-base-200 px-4 py-8 sm:py-12">
+      {/* Fancy Pawxis x groomer collab mark, top-right. */}
+      <CollabMark
+        groomerLogoUrl={card.branding.logoUrl}
+        groomerName={card.branding.businessName}
+      />
+      {/* Celebratory burst when the shared card opens (reduced-motion safe). */}
+      <ConfettiBurst />
       <PetCardRenderer
         data={cardData as unknown as PetCardViewData}
         shareUrl={shareableUrl}
