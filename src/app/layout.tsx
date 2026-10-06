@@ -12,9 +12,25 @@ const description =
 // Base URL for resolving relative OG/Twitter image paths (fixes the Next.js
 // build warning about metadataBase being unset). Uses the public app URL when
 // configured, else a sane localhost default for dev/build.
-const metadataBase = new URL(
-  process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
-);
+//
+// Resilient parse: a protocol-less value (e.g. "pawxis.app") makes `new URL()`
+// throw ERR_INVALID_URL, which previously crashed the whole build at metadata
+// collection. We prepend https:// when the scheme is missing and fall back to
+// localhost if the value is still unparseable, so a misconfigured env var can
+// never break the build.
+function resolveMetadataBase(): URL {
+  const raw = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  const fallback = new URL('http://localhost:3000');
+  if (!raw) return fallback;
+  const candidate = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+  try {
+    return new URL(candidate);
+  } catch {
+    return fallback;
+  }
+}
+
+const metadataBase = resolveMetadataBase();
 
 export const metadata: Metadata = {
   metadataBase,
