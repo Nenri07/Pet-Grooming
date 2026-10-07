@@ -103,6 +103,17 @@ function isComingSoonEnabled(): boolean {
  * sign in to use the bypassed app). Everything else is gated.
  */
 function isComingSoonAllowed(pathname: string): boolean {
+  // Static assets must NEVER be gated: the coming-soon page itself loads the
+  // logo (/pawxisLogo.png), fonts, og image, etc. from /public. Redirecting
+  // those to the HTML page is exactly why the logo rendered blank. Allow any
+  // request that targets a file with an extension, plus Next internals.
+  if (
+    pathname.startsWith('/_next/') ||
+    pathname === '/favicon.ico' ||
+    /\.[a-zA-Z0-9]+$/.test(pathname) // has a file extension → static asset
+  ) {
+    return true;
+  }
   return (
     pathname === COMING_SOON_ROUTE ||
     pathname.startsWith(`${COMING_SOON_ROUTE}/`) ||

@@ -144,11 +144,12 @@ export function ComingSoonClient({ launchAtMs }: ComingSoonClientProps) {
 
       <motion.div className="relative z-10 flex w-full max-w-xl flex-col items-center" variants={container} initial="hidden" animate="show">
         <motion.div variants={item} className="mb-8">
-          {/* Plain <img> straight from /public — bypasses the Next.js image
-              optimizer (/_next/image), which was returning a blank image for
-              this PNG in production. No background box (logo is transparent).
-              The wordmark art is dark on transparent, so a brightness/invert
-              filter renders it as a clean white logo on the dark backdrop. */}
+          {/* Plain <img> straight from /public. No background box (logo is
+              transparent). The wordmark art is dark on transparent, so a
+              brightness/invert filter renders it as a clean WHITE logo on the
+              dark backdrop. (The earlier blank-logo bug was the coming-soon
+              middleware gate redirecting the image request to the HTML page;
+              that is fixed in middleware.ts so /pawxisLogo.png now serves.) */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/pawxisLogo.png"
