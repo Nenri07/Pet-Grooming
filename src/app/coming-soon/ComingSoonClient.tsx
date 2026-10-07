@@ -154,7 +154,7 @@ export function ComingSoonClient({ launchAtMs }: ComingSoonClientProps) {
           <img
             src="/pawxisLogo.png"
             alt="Pawxis"
-            className="h-12 w-auto object-contain sm:h-14"
+            className="h-20 w-auto object-contain sm:h-28"
             style={{ filter: 'brightness(0) invert(1)' }}
           />
         </motion.div>
