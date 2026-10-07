@@ -12,7 +12,6 @@
  */
 
 import * as React from 'react';
-import Image from 'next/image';
 import { motion, type Variants } from 'framer-motion';
 import { PawPrint, ArrowRight, CheckCircle2, Loader2 } from 'lucide-react';
 import { useReducedMotion } from '@/lib/animation/useReducedMotion';
@@ -145,18 +144,18 @@ export function ComingSoonClient({ launchAtMs }: ComingSoonClientProps) {
 
       <motion.div className="relative z-10 flex w-full max-w-xl flex-col items-center" variants={container} initial="hidden" animate="show">
         <motion.div variants={item} className="mb-8">
-          {/* Light chip behind the logo: the wordmark is dark on transparent,
-              so it would vanish on the dark backdrop without a light surface. */}
-          <span className="inline-flex items-center justify-center rounded-2xl bg-white/95 px-5 py-3 shadow-card ring-1 ring-black/5">
-            <Image
-              src="/pawxisLogo.png"
-              alt="Pawxis"
-              width={320}
-              height={128}
-              priority
-              className="h-11 w-auto object-contain sm:h-12"
-            />
-          </span>
+          {/* Plain <img> straight from /public — bypasses the Next.js image
+              optimizer (/_next/image), which was returning a blank image for
+              this PNG in production. No background box (logo is transparent).
+              The wordmark art is dark on transparent, so a brightness/invert
+              filter renders it as a clean white logo on the dark backdrop. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/pawxisLogo.png"
+            alt="Pawxis"
+            className="h-12 w-auto object-contain sm:h-14"
+            style={{ filter: 'brightness(0) invert(1)' }}
+          />
         </motion.div>
 
         <motion.span variants={item} className="mb-5 inline-flex items-center gap-2 rounded-full border border-base-content/10 bg-base-100/70 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-primary backdrop-blur-md">
