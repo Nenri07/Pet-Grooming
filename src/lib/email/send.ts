@@ -509,3 +509,55 @@ export async function sendOnTheWayEmail(
     return false;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Waitlist / coming-soon signup notification
+// ---------------------------------------------------------------------------
+
+/**
+ * Notify the business (BUSINESS_EMAIL) that someone joined the pre-launch
+ * waitlist via the /coming-soon page. Best-effort and guarded exactly like the
+ * other sends: no-ops and returns `false` when Resend / the from address /
+ * BUSINESS_EMAIL are not configured, never throws, retries up to 3 times. The
+ * waitlist signup itself is persisted independently, so a failed notification
+ * never blocks the signup.
+ *
+ * @param signupEmail The visitor's email that was added to the waitlist.
+ * @returns `true` on a successful send; `false` on any failure / missing config.
+ */
+export async function sendWaitlistNotification(signupEmail: string): Promise<boolean> {
+  const resend = getResend();
+  const from = getFromAddress();
+  const to = process.env.BUSINESS_EMAIL;
+  if (!resend || !from || !to || !signupEmail) return false;
+
+  const businessName = process.env.NEXT_PUBLIC_BUSINESS_NAME?.trim() || 'Pawxis';
+  const safeEmail = escapeHtml(signupEmail);
+  const body = `
+    <p style="margin:0 0 16px;font-size:14px;line-height:1.5;">
+      A new visitor joined the ${escapeHtml(businessName)} early-access waitlist.
+    </p>
+    <p style="margin:0 0 16px;font-size:15px;line-height:1.5;font-weight:600;color:#111827;">
+      ${safeEmail}
+    </p>
+    <p style="margin:16px 0 0;font-size:13px;color:#6b7280;line-height:1.5;">
+      Captured from the coming-soon page.
+    </p>`;
+
+  try {
+    await withRetry(async () => {
+      const { error } = await resend.emails.send({
+        from,
+        to,
+        subject: `New waitlist signup: ${signupEmail}`,
+        replyTo: signupEmail,
+        html: emailShell(businessName, 'New early-access signup', body),
+      });
+      if (error) throw error;
+    });
+    return true;
+  } catch (err) {
+    console.error('[email] Failed to send waitlist notification:', err);
+    return false;
+  }
+}

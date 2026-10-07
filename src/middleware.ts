@@ -79,6 +79,38 @@ function isVerificationRoute(pathname: string): boolean {
     || pathname === VERIFY_EMAIL_ROUTE || pathname.startsWith(`${VERIFY_EMAIL_ROUTE}/`);
 }
 
+// ---------------------------------------------------------------------------
+// Coming-soon site takeover (pre-launch). When `COMING_SOON` is enabled, ALL
+// public traffic is redirected to `/coming-soon`, EXCEPT: the coming-soon page
+// itself, the waitlist action's own needs, and a few essentials. The team
+// bypasses the takeover with `?preview=<COMING_SOON_BYPASS>`, which sets a
+// cookie so the bypass sticks for the session. Flip `COMING_SOON` off to launch
+// — no redeploy needed.
+// ---------------------------------------------------------------------------
+
+const COMING_SOON_ROUTE = '/coming-soon';
+const COMING_SOON_COOKIE = 'pawxis_preview';
+
+/** Whether the pre-launch takeover is switched on. */
+function isComingSoonEnabled(): boolean {
+  const v = process.env.COMING_SOON?.trim().toLowerCase();
+  return v === '1' || v === 'true' || v === 'on' || v === 'yes';
+}
+
+/**
+ * Routes that must stay reachable even during the takeover: the coming-soon
+ * page itself (so we don't loop) and the login route (so the team can still
+ * sign in to use the bypassed app). Everything else is gated.
+ */
+function isComingSoonAllowed(pathname: string): boolean {
+  return (
+    pathname === COMING_SOON_ROUTE ||
+    pathname.startsWith(`${COMING_SOON_ROUTE}/`) ||
+    pathname === '/login' ||
+    pathname.startsWith('/login/')
+  );
+}
+
 /**
  * Pure redirect-resolution for the middleware.
  *
@@ -191,6 +223,33 @@ export default withAuth(
     const { pathname } = req.nextUrl;
     const token = req.nextauth.token;
 
+    // --- Pre-launch takeover gate (runs FIRST, before all other rules) ------
+    if (isComingSoonEnabled()) {
+      const bypassSecret = process.env.COMING_SOON_BYPASS?.trim();
+      const previewParam = req.nextUrl.searchParams.get('preview')?.trim();
+      const hasCookie = req.cookies.get(COMING_SOON_COOKIE)?.value === '1';
+
+      // A valid ?preview=<secret> grants the bypass and sets a sticky cookie.
+      if (bypassSecret && previewParam && previewParam === bypassSecret) {
+        const url = req.nextUrl.clone();
+        url.searchParams.delete('preview');
+        const res = NextResponse.redirect(url);
+        res.cookies.set(COMING_SOON_COOKIE, '1', {
+          httpOnly: true,
+          sameSite: 'lax',
+          path: '/',
+          maxAge: 60 * 60 * 24 * 7, // 7 days
+        });
+        return res;
+      }
+
+      // Without the bypass cookie, redirect everything to the coming-soon page.
+      if (!hasCookie && !isComingSoonAllowed(pathname)) {
+        return NextResponse.redirect(new URL(COMING_SOON_ROUTE, req.url));
+      }
+    }
+
+
     // Derive the billing access decision from the compact JWT claim (no DB /
     // Stripe here). When the claim is absent — e.g. not yet stamped (task 3.3
     // adds stamping) — leave `access` undefined so the lockout rule is skipped
@@ -227,6 +286,12 @@ export default withAuth(
        */
       authorized: ({ token, req }) => {
         const { pathname } = req.nextUrl;
+
+        // During the pre-launch takeover, let EVERY request reach the
+        // middleware function so its coming-soon gate (not NextAuth's login
+        // bounce) decides the redirect. The gate itself allows /coming-soon and
+        // /login through and redirects the rest.
+        if (isComingSoonEnabled()) return true;
 
         // Auth pages are reachable without a session (the middleware function
         // above redirects signed-in users away from them).
