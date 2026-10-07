@@ -88,12 +88,26 @@ export function ComingSoonClient({ launchAtMs }: ComingSoonClientProps) {
     { label: 'Seconds', value: left.seconds },
   ];
 
+  // Ambient floating paws: varied size / drift / tint for a lively, non-uniform
+  // field. 'tint' picks a soft brand color so they feel on-brand, not grey.
   const paws = [
-    { left: '8%', top: '18%', size: 26, dur: 9, delay: 0 },
-    { left: '82%', top: '22%', size: 20, dur: 11, delay: 1.4 },
-    { left: '16%', top: '68%', size: 18, dur: 10, delay: 0.8 },
-    { left: '74%', top: '72%', size: 30, dur: 13, delay: 2.1 },
-    { left: '46%', top: '12%', size: 16, dur: 12, delay: 1.1 },
+    { left: '6%',  top: '16%', size: 30, dur: 9,  delay: 0,   drift: -26, rot: 10,  tint: 'text-primary/20' },
+    { left: '84%', top: '20%', size: 22, dur: 11, delay: 1.4, drift: -20, rot: -8,  tint: 'text-accent/20' },
+    { left: '14%', top: '66%', size: 20, dur: 10, delay: 0.8, drift: -18, rot: 12,  tint: 'text-secondary/20' },
+    { left: '78%', top: '70%', size: 34, dur: 13, delay: 2.1, drift: -30, rot: -10, tint: 'text-primary/15' },
+    { left: '46%', top: '10%', size: 18, dur: 12, delay: 1.1, drift: -16, rot: 6,   tint: 'text-accent/20' },
+    { left: '30%', top: '82%', size: 24, dur: 14, delay: 0.4, drift: -22, rot: -12, tint: 'text-primary/15' },
+    { left: '62%', top: '14%', size: 16, dur: 10, delay: 2.6, drift: -14, rot: 8,   tint: 'text-secondary/20' },
+    { left: '90%', top: '54%', size: 28, dur: 15, delay: 1.8, drift: -24, rot: -6,  tint: 'text-accent/15' },
+    { left: '4%',  top: '44%', size: 22, dur: 12, delay: 3.0, drift: -20, rot: 14,  tint: 'text-primary/20' },
+    { left: '52%', top: '88%', size: 20, dur: 13, delay: 0.9, drift: -18, rot: -9,  tint: 'text-secondary/15' },
+  ];
+
+  // A couple of large, very faint "ghost" paws that drift slowly for depth.
+  const ghostPaws = [
+    { left: '-4%',  top: '30%', size: 220, dur: 34, delay: 0, rot: 18 },
+    { left: '78%',  top: '-6%', size: 180, dur: 40, delay: 3, rot: -14 },
+    { left: '60%',  top: '66%', size: 160, dur: 30, delay: 1.5, rot: 24 },
   ];
 
   return (
@@ -108,20 +122,41 @@ export function ComingSoonClient({ launchAtMs }: ComingSoonClientProps) {
         <motion.div className="absolute left-1/3 top-1/2 h-[40vmax] w-[40vmax] rounded-full bg-secondary/20 blur-[90px]"
           animate={reduced ? undefined : { x: [0, 40, 0], y: [0, -50, 0] }}
           transition={reduced ? undefined : { duration: 26, repeat: Infinity, ease: 'easeInOut', delay: 1 }} />
+
+        {/* Large, faint ghost paws drifting for depth. */}
+        {!reduced && ghostPaws.map((g, i) => (
+          <motion.span key={`ghost-${i}`} className="absolute text-base-content/5"
+            style={{ left: g.left, top: g.top }}
+            animate={{ x: [0, 30, 0], y: [0, -24, 0], rotate: [g.rot, g.rot + 6, g.rot] }}
+            transition={{ duration: g.dur, repeat: Infinity, ease: 'easeInOut', delay: g.delay }}>
+            <PawPrint style={{ width: g.size, height: g.size }} />
+          </motion.span>
+        ))}
       </div>
 
       {!reduced && paws.map((p, i) => (
-        <motion.span key={i} aria-hidden="true" className="pointer-events-none absolute text-base-content/10"
+        <motion.span key={i} aria-hidden="true" className={`pointer-events-none absolute ${p.tint}`}
           style={{ left: p.left, top: p.top }}
-          animate={{ y: [0, -24, 0], opacity: [0.08, 0.22, 0.08], rotate: [0, 8, 0] }}
+          animate={{ y: [0, p.drift, 0], opacity: [0.35, 0.85, 0.35], rotate: [0, p.rot, 0] }}
           transition={{ duration: p.dur, repeat: Infinity, ease: 'easeInOut', delay: p.delay }}>
           <PawPrint style={{ width: p.size, height: p.size }} />
         </motion.span>
       ))}
 
       <motion.div className="relative z-10 flex w-full max-w-xl flex-col items-center" variants={container} initial="hidden" animate="show">
-        <motion.div variants={item}>
-          <Image src="/pawxisLogo.png" alt="Pawxis" width={320} height={128} priority className="mb-8 h-14 w-auto object-contain sm:h-16" />
+        <motion.div variants={item} className="mb-8">
+          {/* Light chip behind the logo: the wordmark is dark on transparent,
+              so it would vanish on the dark backdrop without a light surface. */}
+          <span className="inline-flex items-center justify-center rounded-2xl bg-white/95 px-5 py-3 shadow-card ring-1 ring-black/5">
+            <Image
+              src="/pawxisLogo.png"
+              alt="Pawxis"
+              width={320}
+              height={128}
+              priority
+              className="h-11 w-auto object-contain sm:h-12"
+            />
+          </span>
         </motion.div>
 
         <motion.span variants={item} className="mb-5 inline-flex items-center gap-2 rounded-full border border-base-content/10 bg-base-100/70 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-primary backdrop-blur-md">
