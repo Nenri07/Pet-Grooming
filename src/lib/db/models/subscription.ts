@@ -62,6 +62,10 @@ export interface ISubscription {
   stripeCustomerId?: string | null;
   /** Stripe Subscription id (sub_...). */
   stripeSubscriptionId?: string | null;
+  /** Polar customer id (set from Polar webhooks / checkout). Additive. */
+  polarCustomerId?: string | null;
+  /** Polar subscription id (set from Polar subscription webhooks). Additive. */
+  polarSubscriptionId?: string | null;
   /** Included monthly SMS allowance for this plan (§13.1). */
   smsIncluded: number;
   /** One-time top-up balance added via Checkout (§13.4). */
@@ -103,6 +107,8 @@ const subscriptionSchema = new Schema<ISubscription>(
     currentPeriodEnd: { type: Date, default: null },
     stripeCustomerId: { type: String, default: null },
     stripeSubscriptionId: { type: String, default: null },
+    polarCustomerId: { type: String, default: null },
+    polarSubscriptionId: { type: String, default: null },
     smsIncluded: { type: Number, min: 0, default: 300 },
     smsTopupBalance: { type: Number, min: 0, default: 0 },
     foundingMember: { type: Boolean, default: false },
@@ -115,6 +121,9 @@ const subscriptionSchema = new Schema<ISubscription>(
 // allowed without a unique collision.
 subscriptionSchema.index({ stripeCustomerId: 1 }, { sparse: true });
 subscriptionSchema.index({ stripeSubscriptionId: 1 }, { sparse: true });
+// Look up subscriptions by Polar ids from webhooks; sparse (many nulls).
+subscriptionSchema.index({ polarCustomerId: 1 }, { sparse: true });
+subscriptionSchema.index({ polarSubscriptionId: 1 }, { sparse: true });
 
 export const Subscription: Model<ISubscription> =
   (models.Subscription as Model<ISubscription>) ||
