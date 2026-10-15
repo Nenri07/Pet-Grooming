@@ -25,6 +25,9 @@ import bcrypt from 'bcryptjs';
 import { connectDB } from '@/lib/db/connect';
 import { User } from '@/lib/db/models/user';
 import { GroomerProfile } from '@/lib/db/models/groomer-profile';
+import { Subscription } from '@/lib/db/models/subscription';
+import { computeTrialDeadline } from '@/lib/billing/trial';
+import { PLANS } from '@/lib/plans';
 import { registerSchema, loginSchema, type LoginInput } from '@/lib/validators/auth';
 
 /** bcrypt work factor for password hashing. */
@@ -130,6 +133,38 @@ export async function registerGroomer(input: unknown): Promise<AuthActionResult>
       // Roll back the orphaned user so a retry can succeed cleanly.
       await User.deleteOne({ _id: user._id });
       throw profileError;
+    }
+
+    // 6. Persist a REAL 14-day trial Subscription so the trial actually counts
+    //    down and EXPIRES. Without a stored row the entitlements layer falls
+    //    back to a "now + 14 days" view that is recomputed every request and
+    //    therefore never ends (an accidental infinite trial). The timezone is
+    //    UTC at this point (profile just created with no tz); the deadline is
+    //    noon-local on day 14 via the same helper the trial flow uses, and
+    //    `trialEndsAt` mirrors `trialDeadline` so the access-guard and
+    //    entitlements never disagree. Best-effort: a failure here must not fail
+    //    registration (the fallback still grants the trial), so it is logged
+    //    and swallowed rather than rolling back the account.
+    try {
+      const now = new Date();
+      const trialDeadline = computeTrialDeadline(now, 'UTC');
+      await Subscription.findOneAndUpdate(
+        { groomerId: user._id },
+        {
+          $set: {
+            plan: 'trial',
+            status: 'trialing',
+            trialStartedAt: now,
+            trialDeadline,
+            trialEndsAt: trialDeadline,
+            smsIncluded: PLANS.trial.sms,
+          },
+          $setOnInsert: { groomerId: user._id },
+        },
+        { upsert: true }
+      );
+    } catch (trialError) {
+      console.error('registerGroomer: trial provisioning (non-fatal):', trialError);
     }
 
     return { ok: true };
