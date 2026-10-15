@@ -24,6 +24,7 @@
  *   # backfill ONLY one account (your test account):
  *   npx tsx scripts/backfill-trial-subscription.ts --email=you@example.com
  */
+import './_load-env';
 import { connectDB } from '@/lib/db/connect';
 import { User } from '@/lib/db/models/user';
 import { GroomerProfile } from '@/lib/db/models/groomer-profile';

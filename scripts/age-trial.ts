@@ -18,6 +18,7 @@
  * After running, reload /dashboard or /billing in the app: an expired trial
  * should lock the portal and show the 'Choose a plan' upgrade screen.
  */
+import './_load-env';
 import { connectDB } from '@/lib/db/connect';
 import { User } from '@/lib/db/models/user';
 import { Subscription } from '@/lib/db/models/subscription';
