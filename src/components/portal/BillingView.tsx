@@ -306,12 +306,13 @@ export function BillingView(props: BillingViewProps) {
               <CreditCard className="h-4 w-4" aria-hidden="true" />
               {pending === 'portal' ? 'Opening…' : 'Manage subscription'}
             </button>
-            {status !== 'trialing' && !active && (
-              // Primary path for starting a FRESH trial now runs the gated
-              // verification flow at /start-trial (email + phone OTP) before
-              // provisioning. The direct `startTrial` action is kept imported
-              // and available for other callers, but the user-facing CTA links
-              // to the gated surface (task 10.1).
+            {status === 'none' && (
+              // "Start free trial" is ONLY for an account that has never had a
+              // trial (status 'none'). A trial that has ENDED ('expired') or was
+              // canceled must NOT offer a restart — those users reactivate by
+              // subscribing to a plan below (and the abuse pipeline would block a
+              // second trial anyway). The gated flow at /start-trial does the
+              // email + phone verification before provisioning (task 10.1).
               <a href="/start-trial" className="btn btn-ghost btn-sm min-h-[44px]">
                 Start free trial
               </a>
