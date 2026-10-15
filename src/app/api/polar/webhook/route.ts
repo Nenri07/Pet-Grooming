@@ -46,8 +46,15 @@ export async function POST(req: Request): Promise<Response> {
   try {
     event = (await webhooks.validateEvent(rawBody, headers, secret)) as unknown as PolarEvent;
   } catch (err) {
-    console.error('Polar webhook: signature verification failed:', err);
-    return NextResponse.json({ error: 'invalid signature' }, { status: 403 });
+    // Distinguish a real signature failure (reject 403) from the SDK not
+    // recognizing the event type (a valid, signed event of a newer type) — the
+    // latter should be acknowledged (200) and ignored, not treated as spoofed.
+    if (err instanceof webhooks.PolarWebhookVerificationError) {
+      console.error('Polar webhook: signature verification failed:', err);
+      return NextResponse.json({ error: 'invalid signature' }, { status: 403 });
+    }
+    console.warn('Polar webhook: unrecognized/unparseable event, ignoring:', err);
+    return NextResponse.json({ received: true, ignored: true }, { status: 200 });
   }
 
   try {
