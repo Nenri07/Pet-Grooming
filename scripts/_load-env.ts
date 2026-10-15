@@ -35,3 +35,15 @@ function loadEnvFile(file: string): void {
 // first file did not already set).
 loadEnvFile(resolve(process.cwd(), '.env'));
 loadEnvFile(resolve(process.cwd(), '.env.local'));
+
+// Scripts can override the connection string with MONGODB_URI_DIRECT - a
+// NON-SRV (explicit-hosts) URI - for environments where the mongodb+srv SRV
+// DNS lookup is refused (querySrv ECONNREFUSED). When set, it replaces
+// MONGODB_URI for the script's process ONLY (the app's .env is untouched).
+// IMPORTANT: it MUST point at the SAME cluster/database the app uses, or the
+// script will read/write a different database than the app sees.
+if (process.env.MONGODB_URI_DIRECT && process.env.MONGODB_URI_DIRECT.trim()) {
+  process.env.MONGODB_URI = process.env.MONGODB_URI_DIRECT.trim();
+  // eslint-disable-next-line no-console
+  console.log('[_load-env] Using MONGODB_URI_DIRECT (non-SRV) for this script run.');
+}
