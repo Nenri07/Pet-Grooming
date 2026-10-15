@@ -11,7 +11,7 @@ import { ComingSoonClient } from './ComingSoonClient';
  * \`joinWaitlist\`. It renders its own shell (no marketing nav/footer).
  *
  * Launch target is a FIXED instant so the countdown is a true countdown
- * (not reset per load): Sunday, Oct 11, 2026, 12:00 PM. Overridable via the
+ * (not reset per load): Friday, Oct 9, 2026, 5:00 PM. Overridable via the
  * \`NEXT_PUBLIC_LAUNCH_AT\` env (ISO 8601) without a code change.
  */
 export const metadata: Metadata = {
@@ -23,8 +23,8 @@ export const metadata: Metadata = {
 
 export const dynamic = 'force-dynamic';
 
-/** Default launch instant: Sunday, Oct 11, 2026, 12:00 PM (local offset +05:00, Asia/Karachi). */
-const DEFAULT_LAUNCH_AT = '2026-10-11T12:00:00+05:00';
+/** Default launch instant: Friday, Oct 9, 2026, 5:00 PM (local offset +05:00, Asia/Karachi). */
+const DEFAULT_LAUNCH_AT = '2026-10-09T17:00:00+05:00';
 
 export default function ComingSoonPage() {
   const launchAtRaw = process.env.NEXT_PUBLIC_LAUNCH_AT?.trim() || DEFAULT_LAUNCH_AT;
