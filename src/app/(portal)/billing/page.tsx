@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth/config';
 import { getEntitlements } from '@/lib/billing/entitlements';
-import { isBillingConfigured } from '@/lib/billing/provider';
+import { isBillingConfigured, isPolarConfigured } from '@/lib/billing/provider';
 import { getUsage } from '@/lib/sms/quota';
 import { PLANS, SMS_TOPUP, FOUNDING } from '@/lib/plans';
 import { BillingView } from '@/components/portal/BillingView';
@@ -49,7 +49,7 @@ export default async function BillingPage() {
         <BillingSessionRefresh />
       </Suspense>
       <BillingView
-        billingConfigured={isBillingConfigured()}
+        billingConfigured={isBillingConfigured() || isPolarConfigured()}
       plan={entitlements.plan}
       tier={entitlements.tier}
       status={entitlements.status}
