@@ -548,7 +548,7 @@ function CalendarFeedCard({ initialFeedUrl }: { initialFeedUrl: string | null })
       <p className="text-sm text-base-content/70">
         Subscribe to a read-only feed of your appointments in Apple Calendar,
         Google Calendar, or Outlook. It updates automatically — this is a
-        one-way export, so nothing you do in that calendar changes PawPort.
+        one-way export, so nothing you do in that calendar changes Pawxis.
       </p>
 
       {feedUrl ? (

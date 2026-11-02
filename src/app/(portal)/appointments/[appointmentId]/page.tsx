@@ -155,7 +155,7 @@ export default async function AppointmentDetailPage({
     beforePhotoUrl: doc.beforePhotoUrl ?? null,
     afterPhotoUrl: doc.afterPhotoUrl ?? null,
     branding: {
-      business: profile?.businessName ?? 'PawPort',
+      business: profile?.businessName ?? 'Pawxis',
       logoUrl: profile?.logoUrl ?? null,
       bookingUrl,
     },

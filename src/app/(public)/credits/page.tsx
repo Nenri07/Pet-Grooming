@@ -11,8 +11,8 @@ import { images } from '@/content/images.generated';
  * Server component (no client JS needed): the data is static at build time.
  */
 export const metadata: Metadata = {
-  title: 'Photo credits · PawPort',
-  description: 'Photography used across the PawPort site, with attribution to each photographer on Pexels.',
+  title: 'Photo credits · Pawxis',
+  description: 'Photography used across the Pawxis site, with attribution to each photographer on Pexels.',
 };
 
 export default function CreditsPage() {

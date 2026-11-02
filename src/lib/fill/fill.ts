@@ -120,7 +120,7 @@ export async function fillMyDay(
 
     // Offer each candidate the slot (claim token + SMS).
     const business =
-      (typeof profile.businessName === 'string' && profile.businessName.trim()) || 'PawPort';
+      (typeof profile.businessName === 'string' && profile.businessName.trim()) || 'Pawxis';
     const timezone = profile.timezone ?? 'UTC';
 
     let offered = 0;

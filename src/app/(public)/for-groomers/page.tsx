@@ -27,9 +27,9 @@ import { forGroomers } from '@/content/for-groomers';
  */
 
 export const metadata: Metadata = {
-  title: 'Get your own pet grooming website + booking system · PawPort',
+  title: 'Get your own pet grooming website + booking system · Pawxis',
   description:
-    'PawPort bundles a branded website for mobile pet groomers with online booking, deposits, route-aware scheduling, two-way SMS and digital pet records — one subscription, set up in an afternoon. Start free.',
+    'Pawxis bundles a branded website for mobile pet groomers with online booking, deposits, route-aware scheduling, two-way SMS and digital pet records — one subscription, set up in an afternoon. Start free.',
   keywords: [
     'pet grooming website',
     'mobile pet groomer booking system',
@@ -41,16 +41,16 @@ export const metadata: Metadata = {
   alternates: { canonical: absoluteUrl('/for-groomers') },
   robots: { index: true, follow: true },
   openGraph: {
-    title: 'Your own pet grooming website + booking system · PawPort',
+    title: 'Your own pet grooming website + booking system · Pawxis',
     description:
       'A branded website plus booking, deposits, routing, SMS and pet records for solo mobile groomers — in one bundle.',
     url: absoluteUrl('/for-groomers'),
     type: 'website',
-    images: [{ url: absoluteUrl('/og.jpg'), width: 1200, height: 630, alt: 'PawPort' }],
+    images: [{ url: absoluteUrl('/og.jpg'), width: 1200, height: 630, alt: 'Pawxis' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Your own pet grooming website + booking system · PawPort',
+    title: 'Your own pet grooming website + booking system · Pawxis',
     description:
       'A branded website plus booking, deposits, routing, SMS and pet records for solo mobile groomers — in one bundle.',
     images: [absoluteUrl('/og.jpg')],

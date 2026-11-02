@@ -84,7 +84,7 @@ export default async function SettingsPage() {
         <CardHeader>
           <CardTitle>Appearance</CardTitle>
           <p className="text-sm text-base-content/60">
-            Pick a color theme. It applies instantly across your whole PawPort
+            Pick a color theme. It applies instantly across your whole Pawxis
             site — dashboard, booking pages, and everything in between.
           </p>
         </CardHeader>
@@ -95,7 +95,7 @@ export default async function SettingsPage() {
         <CardHeader>
           <CardTitle>Account</CardTitle>
           <p className="text-sm text-base-content/60">
-            Sign out of PawPort on this device. You can log back in anytime with
+            Sign out of Pawxis on this device. You can log back in anytime with
             your email and password.
           </p>
         </CardHeader>

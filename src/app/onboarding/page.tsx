@@ -97,7 +97,7 @@ export default async function OnboardingPage() {
         businessEmail: settings?.businessEmail ?? '',
         groomerSlug: settings?.groomerSlug ?? '',
         logoUrl: settings?.logoUrl ?? '',
-        depositAmount: settings?.depositAmount ?? 25,
+        depositAmount: settings?.depositAmount ?? 0,
         estimateRules: settings?.estimateRules ?? [],
       }}
       initialServices={servicesResult.ok ? servicesResult.services : []}

@@ -52,7 +52,7 @@ export function getStripe(): Stripe {
   if (!stripeSingleton) {
     stripeSingleton = new Stripe(STRIPE_SECRET_KEY, {
       typescript: true,
-      appInfo: { name: 'PawPort' },
+      appInfo: { name: 'Pawxis' },
     });
   }
   return stripeSingleton;

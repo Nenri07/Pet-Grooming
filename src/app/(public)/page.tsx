@@ -32,10 +32,10 @@ import {
 export const metadata: Metadata = {
   title: 'Mobile pet grooming booking software',
   description:
-    'PawPort is booking, routing and no-show protection software for solo mobile pet groomers. Take route-aware bookings, collect deposits, and cut no-shows. Groom more dogs. Drive less.',
+    'Pawxis is booking, routing and no-show protection software for solo mobile pet groomers. Take route-aware bookings, collect deposits, and cut no-shows. Groom more dogs. Drive less.',
   alternates: { canonical: absoluteUrl('/') },
   openGraph: {
-    title: 'PawPort — Mobile pet grooming booking software',
+    title: 'Pawxis — Mobile pet grooming booking software',
     description:
       'Route-aware booking, deposits and no-show protection built for solo mobile pet groomers.',
     url: absoluteUrl('/'),

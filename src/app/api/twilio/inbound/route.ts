@@ -133,7 +133,7 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   // Reply per intent.
-  const business = 'PawPort';
+  const business = 'Pawxis';
   if (intent === 'stop') {
     return new NextResponse(
       twiml(`You've been unsubscribed and won't receive more texts. Reply START to opt back in.`),

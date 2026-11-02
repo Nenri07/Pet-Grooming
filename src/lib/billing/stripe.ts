@@ -277,7 +277,7 @@ export class StripeBilling implements BillingProvider {
               currency: 'usd',
               unit_amount: SMS_TOPUP.price * 100,
               product_data: {
-                name: `PawPort SMS top-up — ${SMS_TOPUP.messages} messages`,
+                name: `Pawxis SMS top-up — ${SMS_TOPUP.messages} messages`,
               },
             },
             quantity: 1,

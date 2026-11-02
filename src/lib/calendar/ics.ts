@@ -97,7 +97,7 @@ export function buildIcs(events: IcsEvent[], calName: string, dtstamp: Date = ne
   const lines: string[] = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//PawPort//Calendar Feed//EN',
+    'PRODID:-//Pawxis//Calendar Feed//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     `X-WR-CALNAME:${escapeIcsText(calName)}`,

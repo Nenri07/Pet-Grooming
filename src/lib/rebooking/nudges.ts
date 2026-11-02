@@ -160,7 +160,7 @@ export async function runRebookNudges(now: Date = new Date()): Promise<RebookNud
         .select('businessName')
         .lean();
       const business =
-        (typeof profile?.businessName === 'string' && profile.businessName.trim()) || 'PawPort';
+        (typeof profile?.businessName === 'string' && profile.businessName.trim()) || 'Pawxis';
 
       await sendSms({
         groomerId,

@@ -43,12 +43,12 @@ export async function generateMetadata({ params }: DemoPageProps): Promise<Metad
   const robots = { index: false, follow: false } as const;
 
   if (!demo) {
-    return { title: 'Demo not found · PawPort', robots };
+    return { title: 'Demo not found · Pawxis', robots };
   }
 
   return {
-    title: `${demo.businessName} · PawPort preview`,
-    description: `A personalized PawPort booking preview built for ${demo.businessName} in ${demo.city}.`,
+    title: `${demo.businessName} · Pawxis preview`,
+    description: `A personalized Pawxis booking preview built for ${demo.businessName} in ${demo.city}.`,
     robots,
   };
 }
@@ -116,7 +116,7 @@ export default function DemoPage({ params }: DemoPageProps) {
               {demo.businessName}
             </h1>
             <p className="max-w-xl text-lg text-base-content/70">
-              Here is what your PawPort booking page could look like — branded to
+              Here is what your Pawxis booking page could look like — branded to
               you, with route-smart scheduling built in.
             </p>
           </div>

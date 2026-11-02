@@ -192,7 +192,7 @@ export function ConnectStatusCard({
           )}
         </div>
         <CardDescription>
-          Client deposits pay out directly to your own Stripe account — PawPort
+          Client deposits pay out directly to your own Stripe account — Pawxis
           never holds your money. Connect once and deposits land straight in
           your balance.
         </CardDescription>

@@ -53,7 +53,7 @@ export async function GET(
     const groomerId = String(profile.userId);
     const calName =
       (typeof profile.businessName === 'string' && profile.businessName.trim()) ||
-      'PawPort Appointments';
+      'Pawxis Appointments';
 
     const events = await loadGroomerIcsEvents(groomerId);
     const ics = buildIcs(events, calName);

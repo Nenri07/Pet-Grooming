@@ -83,7 +83,7 @@ export async function resolveClaim(token: string): Promise<ResolvedClaim | null>
     endMs: record.endMs,
     clientId: record.clientId,
     business:
-      (typeof profile?.businessName === 'string' && profile.businessName.trim()) || 'PawPort',
+      (typeof profile?.businessName === 'string' && profile.businessName.trim()) || 'Pawxis',
     logoUrl: (profile as { logoUrl?: string } | null)?.logoUrl,
     timezone: (profile as { timezone?: string } | null)?.timezone ?? 'UTC',
     clientName: (client as { name?: string } | null)?.name,

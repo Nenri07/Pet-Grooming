@@ -154,7 +154,9 @@ const groomerProfileSchema = new Schema<IGroomerProfile>(
     logoUrl: { type: String },
     phone: { type: String, maxlength: 15 },
     businessEmail: { type: String, maxlength: 254 },
-    depositAmount: { type: Number, min: 0, max: 500, default: 25 },
+    // Default 0: deposits need Stripe Connect, which a groomer must opt into.
+    // A positive default left new booking pages showing "payments not set up".
+    depositAmount: { type: Number, min: 0, max: 500, default: 0 },
     estimateRules: [estimateRuleSchema],
     availabilityWindows: [availabilityWindowSchema],
     blockedDates: [blockedDateSchema],
