@@ -93,7 +93,12 @@ function delay(ms: number): Promise<void> {
 async function loadContext(input: SendSmsInput): Promise<{
   business: string;
   timezone: string;
+  /** Total sendable this month: plan allowance + carried-over top-up credits. */
   included: number;
+  /** The plan's monthly allowance alone (usage beyond this consumes top-ups). */
+  planIncluded: number;
+  /** One-time top-up credits remaining. */
+  topup: number;
   consentAt?: Date | string | null;
   optOut?: boolean | null;
   clientEmail?: string;
@@ -101,9 +106,11 @@ async function loadContext(input: SendSmsInput): Promise<{
   customTemplates?: Partial<Record<SmsKind, string>>;
 }> {
   const defaults = {
-    business: 'PawPort',
+    business: 'Pawxis',
     timezone: 'UTC',
     included: DEFAULT_INCLUDED_SMS,
+    planIncluded: DEFAULT_INCLUDED_SMS,
+    topup: 0,
   };
 
   try {
@@ -121,8 +128,14 @@ async function loadContext(input: SendSmsInput): Promise<{
     const timezone =
       (typeof profile?.timezone === 'string' && profile.timezone.trim()) || defaults.timezone;
 
-    // Resolve the included SMS allowance from the plan/subscription when present.
-    const included = await resolveIncludedSms(input.groomerId).catch(() => defaults.included);
+    // Resolve the plan allowance + top-up balance from the Subscription.
+    const allowance = await resolveSmsAllowance(input.groomerId).catch(() => ({
+      planIncluded: defaults.planIncluded,
+      topup: 0,
+    }));
+    const planIncluded = allowance.planIncluded;
+    const topup = allowance.topup;
+    const included = planIncluded + topup;
 
     let consentAt: Date | string | null | undefined;
     let optOut: boolean | null | undefined;
@@ -142,7 +155,17 @@ async function loadContext(input: SendSmsInput): Promise<{
       }
     }
 
-    return { business, timezone, included, consentAt, optOut, clientEmail, clientName };
+    return {
+      business,
+      timezone,
+      included,
+      planIncluded,
+      topup,
+      consentAt,
+      optOut,
+      clientEmail,
+      clientName,
+    };
   } catch (err) {
     console.error('[sms] loadContext failed, using defaults:', err);
     return { ...defaults };
@@ -150,18 +173,44 @@ async function loadContext(input: SendSmsInput): Promise<{
 }
 
 /**
- * Resolve the included monthly SMS allowance for a groomer.
- *
- * SEAM (Master Spec §13): the authoritative allowance lives on the
- * `Subscription` record (`smsIncluded` + `smsTopupBalance`), resolved from the
- * plan (Solo 300 / Pro 800). That model is built in Phase 5 (billing); until it
- * exists we read a static allowance from `SMS_INCLUDED_DEFAULT` (env) and fall
- * back to {@link DEFAULT_INCLUDED_SMS}. When the Subscription model lands, swap
- * this to read it — nothing else in the pipeline changes.
+ * Resolve a groomer's SMS allowance from their Subscription (via entitlements):
+ * the plan's monthly allowance (trial/Solo 300, Pro 800) plus any purchased
+ * top-up credits. Falls back to SMS_INCLUDED_DEFAULT / DEFAULT_INCLUDED_SMS when
+ * the plan allowance can't be resolved.
  */
-async function resolveIncludedSms(_groomerId: string): Promise<number> {
+async function resolveSmsAllowance(
+  groomerId: string
+): Promise<{ planIncluded: number; topup: number }> {
   const fromEnv = Number(process.env.SMS_INCLUDED_DEFAULT);
-  return Number.isFinite(fromEnv) && fromEnv > 0 ? fromEnv : DEFAULT_INCLUDED_SMS;
+  const fallback = Number.isFinite(fromEnv) && fromEnv > 0 ? fromEnv : DEFAULT_INCLUDED_SMS;
+  const { getEntitlements } = await import('@/lib/billing/entitlements');
+  const ent = await getEntitlements(groomerId);
+  const planIncluded =
+    Number.isFinite(ent.smsIncluded) && ent.smsIncluded > 0 ? ent.smsIncluded : fallback;
+  const topup = Number.isFinite(ent.smsTopupBalance) ? Math.max(0, ent.smsTopupBalance) : 0;
+  return { planIncluded, topup };
+}
+
+/**
+ * Consume one top-up credit when this month's usage has gone past the plan
+ * allowance. Best-effort and never throws: the balance can't go below zero
+ * (conditional update), and the entitlements cache is refreshed so the UI
+ * shows the new balance.
+ */
+async function consumeTopupCredit(groomerId: string): Promise<void> {
+  try {
+    const { connectDB } = await import('@/lib/db/connect');
+    await connectDB();
+    const { Subscription } = await import('@/lib/db/models/subscription');
+    await Subscription.updateOne(
+      { groomerId, smsTopupBalance: { $gt: 0 } },
+      { $inc: { smsTopupBalance: -1 } }
+    );
+    const { invalidateEntitlements } = await import('@/lib/billing/entitlements');
+    await invalidateEntitlements(groomerId);
+  } catch (err) {
+    console.error('[sms] consumeTopupCredit failed (non-fatal):', err);
+  }
 }
 
 /**
@@ -291,7 +340,10 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
           return { ok: true, outcome: 'skipped_no_provider', id: res.id, status: res.status };
         }
 
-        await incrementUsage(input.groomerId, now);
+        const usedNow = await incrementUsage(input.groomerId, now);
+        if (ctx.topup > 0 && usedNow > ctx.planIncluded) {
+          await consumeTopupCredit(input.groomerId);
+        }
         return { ok: true, outcome: 'sent', id: res.id, status: res.status };
       } catch (err) {
         lastError = err;

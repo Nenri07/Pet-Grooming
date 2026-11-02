@@ -1,16 +1,24 @@
 /**
  * Polar webhook (/api/polar/webhook) - subscriptions + SMS top-ups.
  *
- * Verifies the signed payload with the SDK's webhooks.validateEvent (we do
- * NOT use @polar-sh/nextjs - it needs Next 15/16; this app is Next 14), then
- * drives the SAME Subscription state machine the Stripe billing webhook does:
- * subscription active/updated/cycled -> status 'active' (+ plan/smsIncluded
- * from the product, + currentPeriodEnd); subscription.revoked -> read-only;
- * order.paid (SMS top-up product) -> credit smsTopupBalance. Idempotent, acks
- * 200 on unknown/unresolvable events, invalidates the entitlements cache after
- * each write. Does NOT touch the Stripe deposit/Connect webhooks.
+ * Verifies the signed payload with the SDK's webhooks.validateEvent (we do NOT
+ * use @polar-sh/nextjs - it needs Next 15/16; this app is Next 14), then drives
+ * the same Subscription state machine the Stripe billing webhook does.
+ *
+ * Correctness guarantees:
+ *  - Status comes from data.status (see polar-webhook.ts), never from the event
+ *    name, so unpaid / past_due / ended subscriptions never grant access.
+ *  - Out-of-order delivery: a subscription event older than the last one we
+ *    applied (polarSyncedAt) is dropped, so a late retry of an "active" event
+ *    cannot re-open access after a revoke.
+ *  - Duplicate delivery: deduped by the Standard Webhooks "webhook-id" header
+ *    (Redis, best-effort) and, for top-ups, durably by Polar order id so a
+ *    retried order.paid never credits SMS twice.
+ *  - Unknown event types and unresolvable accounts are acknowledged with 200.
+ *  - Does NOT touch the Stripe deposit / Connect webhooks.
  */
 import { NextResponse } from 'next/server';
+import { isValidObjectId } from 'mongoose';
 import { webhooks } from '@polar-sh/sdk/2026-10';
 import { connectDB } from '@/lib/db/connect';
 import { Subscription } from '@/lib/db/models/subscription';
@@ -21,19 +29,33 @@ import { isRedisConfigured, idempotencyOnce } from '@/lib/redis';
 import {
   mapEventToIntent,
   resolveGroomerId,
-  extractEventId,
   type PolarEvent,
 } from '@/lib/billing/polar-webhook';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+/** MongoDB duplicate-key error (unique groomerId index). */
+function isDuplicateKeyError(err: unknown): boolean {
+  return (
+    typeof err === 'object' &&
+    err !== null &&
+    'code' in err &&
+    (err as { code?: unknown }).code === 11000
+  );
+}
+
+function ok(extra: Record<string, unknown> = {}): Response {
+  return NextResponse.json({ received: true, ...extra }, { status: 200 });
+}
+
 export async function POST(req: Request): Promise<Response> {
   const secret = process.env.POLAR_WEBHOOK_SECRET;
   if (!secret) {
     console.error('Polar webhook: POLAR_WEBHOOK_SECRET is not configured.');
-    // No secret -> we cannot verify; ack 200 so Polar does not hammer retries.
-    return NextResponse.json({ received: true, unverified: true }, { status: 200 });
+    // Return 500 so Polar keeps retrying until the secret is configured,
+    // instead of silently dropping real payments.
+    return NextResponse.json({ error: 'webhook not configured' }, { status: 500 });
   }
 
   const rawBody = await req.text();
@@ -46,44 +68,36 @@ export async function POST(req: Request): Promise<Response> {
   try {
     event = (await webhooks.validateEvent(rawBody, headers, secret)) as unknown as PolarEvent;
   } catch (err) {
-    // Distinguish a real signature failure (reject 403) from the SDK not
-    // recognizing the event type (a valid, signed event of a newer type) — the
-    // latter should be acknowledged (200) and ignored, not treated as spoofed.
     if (err instanceof webhooks.PolarWebhookVerificationError) {
       console.error('Polar webhook: signature verification failed:', err);
       return NextResponse.json({ error: 'invalid signature' }, { status: 403 });
     }
-    console.warn('Polar webhook: unrecognized/unparseable event, ignoring:', err);
-    return NextResponse.json({ received: true, ignored: true }, { status: 200 });
+    // A correctly signed event of a type this SDK version does not know.
+    console.warn('Polar webhook: unrecognized event type, ignoring:', err);
+    return ok({ ignored: true });
   }
 
   try {
-    await connectDB();
-
-    // Fast idempotency guard (best-effort; fail-open when Redis is off).
-    const eventId = extractEventId(event);
-    if (eventId && isRedisConfigured()) {
+    // Standard Webhooks delivery id: unique per event, stable across retries.
+    const deliveryId = headers['webhook-id'];
+    if (deliveryId && isRedisConfigured()) {
       try {
-        const first = await idempotencyOnce(`polar:${eventId}`);
-        if (!first) {
-          return NextResponse.json({ received: true, duplicate: true }, { status: 200 });
-        }
+        if (!(await idempotencyOnce('polar:' + deliveryId))) return ok({ duplicate: true });
       } catch (idemErr) {
         console.warn('Polar webhook idempotency check failed (continuing):', idemErr);
       }
     }
 
+    const intent = mapEventToIntent(event);
+    if (!intent) return ok({ ignored: true });
+
     const groomerId = resolveGroomerId(event);
-    if (!groomerId) {
-      // Unresolvable account -> ack 200, no change.
-      return NextResponse.json({ received: true, unresolved: true }, { status: 200 });
+    if (!groomerId || !isValidObjectId(groomerId)) {
+      console.warn('Polar webhook: could not resolve groomer for', event.type);
+      return ok({ unresolved: true });
     }
 
-    const intent = mapEventToIntent(event);
-    if (!intent) {
-      // Unknown / unhandled event -> ack 200, no change.
-      return NextResponse.json({ received: true, ignored: true }, { status: 200 });
-    }
+    await connectDB();
 
     if (intent.kind === 'set-status') {
       const set: Record<string, unknown> = { status: intent.status };
@@ -97,23 +111,52 @@ export async function POST(req: Request): Promise<Response> {
       if (intent.currentPeriodEnd) set.currentPeriodEnd = intent.currentPeriodEnd;
       if (intent.polarCustomerId) set.polarCustomerId = intent.polarCustomerId;
       if (intent.polarSubscriptionId) set.polarSubscriptionId = intent.polarSubscriptionId;
-      await Subscription.findOneAndUpdate(
-        { groomerId },
-        { $set: set, $setOnInsert: { groomerId } },
-        { upsert: true }
-      );
-    } else if (intent.kind === 'credit-topup') {
-      await Subscription.findOneAndUpdate(
-        { groomerId },
-        { $inc: { smsTopupBalance: intent.messages }, $setOnInsert: { groomerId } },
-        { upsert: true }
-      );
+      set.pastDueSince = intent.status === 'past_due' ? intent.pastDueSince : null;
+      if (intent.eventAt) set.polarSyncedAt = intent.eventAt;
+
+      // Only apply when this event is not older than the last one applied.
+      const filter: Record<string, unknown> = { groomerId };
+      if (intent.eventAt) {
+        filter.$or = [
+          { polarSyncedAt: null },
+          { polarSyncedAt: { $exists: false } },
+          { polarSyncedAt: { $lte: intent.eventAt } },
+        ];
+      }
+      try {
+        await Subscription.findOneAndUpdate(
+          filter,
+          { $set: set, $setOnInsert: { groomerId } },
+          { upsert: true }
+        );
+      } catch (err) {
+        // The row exists but is newer than this event: the upsert tried to
+        // insert a second row for the groomer. Treat as stale and skip.
+        if (isDuplicateKeyError(err)) return ok({ stale: true });
+        throw err;
+      }
+    } else {
+      try {
+        await Subscription.findOneAndUpdate(
+          { groomerId, polarTopupOrderIds: { $ne: intent.orderId } },
+          {
+            $inc: { smsTopupBalance: intent.messages },
+            $push: { polarTopupOrderIds: intent.orderId },
+            $setOnInsert: { groomerId },
+          },
+          { upsert: true }
+        );
+      } catch (err) {
+        // This order was already credited.
+        if (isDuplicateKeyError(err)) return ok({ duplicate: true });
+        throw err;
+      }
     }
 
     await invalidateEntitlements(groomerId);
-    return NextResponse.json({ received: true }, { status: 200 });
+    return ok();
   } catch (err) {
-    // A transient DB error -> 500 so Polar retries the delivery.
+    // Transient failure -> 500 so Polar retries the delivery.
     console.error('Polar webhook processing failed:', err);
     return NextResponse.json({ error: 'processing failed' }, { status: 500 });
   }

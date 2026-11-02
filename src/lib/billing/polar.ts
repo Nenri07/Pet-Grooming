@@ -84,18 +84,21 @@ export class PolarBilling implements BillingProvider {
     try {
       const email = await this.groomerEmail(params.groomerId);
       const discountId = discountIdForInterval(params.interval);
+      // The @polar-sh/sdk 2026-10 client sends request bodies VERBATIM, and the
+      // Polar API expects snake_case keys. camelCase keys are silently ignored.
       const body: Record<string, unknown> = {
         products: [productId],
-        successUrl: params.successUrl,
-        externalCustomerId: params.groomerId,
+        success_url: params.successUrl,
+        return_url: params.cancelUrl,
+        external_customer_id: params.groomerId,
         metadata: {
           groomerId: params.groomerId,
           plan: params.plan,
           interval: params.interval,
         },
       };
-      if (email) body.customerEmail = email;
-      if (discountId) body.discountId = discountId;
+      if (email) body.customer_email = email;
+      if (discountId) body.discount_id = discountId;
       const checkout = await getPolar().checkouts.create(body);
       const url = (checkout as { url?: string | null }).url;
       if (!url) return polarError();
@@ -119,11 +122,12 @@ export class PolarBilling implements BillingProvider {
       const email = await this.groomerEmail(params.groomerId);
       const body: Record<string, unknown> = {
         products: [productId],
-        successUrl: params.successUrl,
-        externalCustomerId: params.groomerId,
+        success_url: params.successUrl,
+        return_url: params.cancelUrl,
+        external_customer_id: params.groomerId,
         metadata: { groomerId: params.groomerId, kind: 'sms_topup' },
       };
-      if (email) body.customerEmail = email;
+      if (email) body.customer_email = email;
       const checkout = await getPolar().checkouts.create(body);
       const url = (checkout as { url?: string | null }).url;
       if (!url) return polarError();
@@ -147,10 +151,11 @@ export class PolarBilling implements BillingProvider {
       // Prefer a stored Polar customer id; else create the session from the
       // external id (the groomer's User id we set at checkout).
       const body: Record<string, unknown> = row?.polarCustomerId
-        ? { customerId: row.polarCustomerId }
-        : { customerExternalId: params.groomerId };
+        ? { customer_id: row.polarCustomerId, return_url: params.returnUrl }
+        : { external_customer_id: params.groomerId, return_url: params.returnUrl };
       const session = await getPolar().customerSessions.create(body);
-      const url = (session as { customerPortalUrl?: string | null }).customerPortalUrl;
+      // Response bodies are snake_case too (CustomerSession.customer_portal_url).
+      const url = (session as { customer_portal_url?: string | null }).customer_portal_url;
       if (!url) {
         return {
           ok: false,

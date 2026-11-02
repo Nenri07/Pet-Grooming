@@ -1,10 +1,16 @@
 /**
  * Pure Polar-webhook logic (no DB / SDK / IO).
  *
- * Maps a verified Polar event into an intent the route applies to the
- * Subscription row, resolves the groomer id from the payload, and extracts a
- * stable event id for idempotency. Kept pure so it is unit/property testable
- * without a database or the Polar SDK.
+ * Maps a verified Polar event to an intent the route applies to the
+ * Subscription row, and resolves the groomer id from the payload. Kept pure so
+ * it is unit-testable without a database or the Polar SDK.
+ *
+ * Polar payloads are snake_case ({ type, timestamp, data }). The status written
+ * to our Subscription comes from data.status — NOT from the event name — because
+ * subscription.updated fires for every transition (including past_due and
+ * canceled), and subscription.created fires while the first payment is still
+ * "incomplete". Mapping by event name alone would grant access to unpaid or
+ * ended subscriptions.
  */
 import { SMS_TOPUP } from '@/lib/plans';
 import { isSmsTopupProduct } from '@/lib/billing/polar-products';
@@ -12,20 +18,27 @@ import { isSmsTopupProduct } from '@/lib/billing/polar-products';
 /** Loose shape of a Polar webhook payload (we read only what we need). */
 export interface PolarEvent {
   type?: string;
+  timestamp?: string;
   data?: Record<string, unknown>;
 }
+
+/** Our Subscription statuses that a Polar subscription can map to. */
+export type MappedStatus = 'active' | 'past_due' | 'canceled';
 
 /** What the route should do in response to an event. */
 export type WebhookIntent =
   | {
       kind: 'set-status';
-      status: 'active' | 'canceled';
-      productId?: string | null;
-      currentPeriodEnd?: Date | null;
-      polarCustomerId?: string | null;
-      polarSubscriptionId?: string | null;
+      status: MappedStatus;
+      productId: string | null;
+      currentPeriodEnd: Date | null;
+      pastDueSince: Date | null;
+      polarCustomerId: string | null;
+      polarSubscriptionId: string | null;
+      /** When Polar last modified the subscription; used to drop stale events. */
+      eventAt: Date | null;
     }
-  | { kind: 'credit-topup'; messages: number }
+  | { kind: 'credit-topup'; messages: number; orderId: string }
   | null;
 
 function asString(v: unknown): string | null {
@@ -41,10 +54,31 @@ function asDate(v: unknown): Date | null {
 }
 
 /**
- * Resolve the groomer (User id) for an event. We set externalCustomerId =
- * groomerId and metadata.groomerId at checkout, so try, in order:
- * data.metadata.groomerId -> data.customer.externalId -> data.externalCustomerId
- * (and snake_case fallbacks). Returns null when unresolvable.
+ * Map a Polar subscription status to ours, or null when the subscription is
+ * not yet paid ("incomplete") and should not change access.
+ */
+export function mapPolarSubscriptionStatus(status: unknown): MappedStatus | null {
+  switch (status) {
+    case 'active':
+    case 'trialing':
+      return 'active';
+    case 'past_due':
+      return 'past_due';
+    case 'canceled':
+    case 'unpaid':
+    case 'incomplete_expired':
+    case 'paused':
+      return 'canceled';
+    default:
+      // 'incomplete' (first payment pending) and unknown values: no change.
+      return null;
+  }
+}
+
+/**
+ * Resolve the groomer (User id). Checkout sets both metadata.groomerId and
+ * external_customer_id = groomerId; Polar copies checkout metadata onto the
+ * resulting subscription and order. Returns null when unresolvable.
  */
 export function resolveGroomerId(event: PolarEvent): string | null {
   const d = event.data ?? {};
@@ -53,97 +87,52 @@ export function resolveGroomerId(event: PolarEvent): string | null {
   if (fromMeta) return fromMeta;
   const customer = asRecord(d.customer);
   const fromCustomer = customer
-    ? asString(customer.externalId) ?? asString(customer.external_id)
+    ? asString(customer.external_id) ?? asString(customer.externalId)
     : null;
   if (fromCustomer) return fromCustomer;
-  return (
-    asString(d.externalCustomerId) ??
-    asString(d.external_customer_id) ??
-    asString(d.customerExternalId) ??
-    null
-  );
+  return asString(d.external_customer_id) ?? asString(d.externalCustomerId);
 }
 
-/** A stable id for idempotency (prefer event id, else subscription/order id). */
-export function extractEventId(event: PolarEvent): string | null {
-  const d = event.data ?? {};
-  return (
-    asString((event as Record<string, unknown>).id) ??
-    asString(d.id) ??
-    null
-  );
-}
-
-/** Read the product id off a subscription/order payload (several shapes). */
 function productIdOf(d: Record<string, unknown>): string | null {
-  // subscription.product_id / productId, or nested product.id
-  const direct = asString(d.productId) ?? asString(d.product_id);
+  const direct = asString(d.product_id) ?? asString(d.productId);
   if (direct) return direct;
   const product = asRecord(d.product);
   return product ? asString(product.id) : null;
 }
 
-/** Read the current period end off a subscription payload. */
-function currentPeriodEndOf(d: Record<string, unknown>): Date | null {
-  return asDate(d.currentPeriodEnd) ?? asDate(d.current_period_end);
-}
-
-/**
- * Map a verified Polar event to an intent. PURE.
- *
- *  - subscription.created|updated|active|cycled -> set-status 'active'
- *  - subscription.canceled with cancel_at_period_end true -> stay 'active'
- *  - subscription.revoked -> set-status 'canceled' (read-only / ended)
- *  - order.paid for the SMS top-up product -> credit-topup
- *  - anything else -> null (unknown/unhandled)
- */
+/** Map a verified Polar event to an intent. PURE. */
 export function mapEventToIntent(event: PolarEvent): WebhookIntent {
   const type = event.type ?? '';
   const d = event.data ?? {};
 
-  if (
-    type === 'subscription.created' ||
-    type === 'subscription.updated' ||
-    type === 'subscription.active' ||
-    type === 'subscription.cycled'
-  ) {
+  if (type.startsWith('subscription.')) {
+    const status = mapPolarSubscriptionStatus(d.status);
+    if (!status) return null;
+    const customer = asRecord(d.customer);
     return {
       kind: 'set-status',
-      status: 'active',
+      status,
       productId: productIdOf(d),
-      currentPeriodEnd: currentPeriodEndOf(d),
-      polarCustomerId: asString(d.customerId) ?? asString(d.customer_id),
+      currentPeriodEnd: asDate(d.current_period_end) ?? asDate(d.currentPeriodEnd),
+      pastDueSince:
+        status === 'past_due'
+          ? asDate(d.past_due_at) ?? asDate(event.timestamp) ?? null
+          : null,
+      polarCustomerId:
+        asString(d.customer_id) ?? (customer ? asString(customer.id) : null),
       polarSubscriptionId: asString(d.id),
+      eventAt: asDate(d.modified_at) ?? asDate(event.timestamp),
     };
-  }
-
-  if (type === 'subscription.canceled') {
-    // Cancel-at-period-end: still active until the period actually ends.
-    const cancelAtPeriodEnd =
-      d.cancelAtPeriodEnd === true || d.cancel_at_period_end === true;
-    if (cancelAtPeriodEnd) {
-      return {
-        kind: 'set-status',
-        status: 'active',
-        productId: productIdOf(d),
-        currentPeriodEnd: currentPeriodEndOf(d),
-        polarSubscriptionId: asString(d.id),
-      };
-    }
-    // Immediate cancellation -> ended.
-    return { kind: 'set-status', status: 'canceled', polarSubscriptionId: asString(d.id) };
-  }
-
-  if (type === 'subscription.revoked') {
-    return { kind: 'set-status', status: 'canceled', polarSubscriptionId: asString(d.id) };
   }
 
   if (type === 'order.paid') {
     const pid = productIdOf(d);
-    if (pid && isSmsTopupProduct(pid)) {
-      return { kind: 'credit-topup', messages: SMS_TOPUP.messages };
+    const orderId = asString(d.id);
+    if (pid && orderId && isSmsTopupProduct(pid)) {
+      return { kind: 'credit-topup', messages: SMS_TOPUP.messages, orderId };
     }
-    return null; // a subscription order's payment is handled via subscription.* events
+    // Subscription orders are reflected through the subscription.* events.
+    return null;
   }
 
   return null;

@@ -66,6 +66,13 @@ export interface ISubscription {
   polarCustomerId?: string | null;
   /** Polar subscription id (set from Polar subscription webhooks). Additive. */
   polarSubscriptionId?: string | null;
+  /**
+   * Polar's modified_at for the last subscription event we applied. Events older
+   * than this are dropped so an out-of-order retry cannot re-grant access.
+   */
+  polarSyncedAt?: Date | null;
+  /** Polar order ids already credited as SMS top-ups (durable idempotency). */
+  polarTopupOrderIds?: string[];
   /** Included monthly SMS allowance for this plan (§13.1). */
   smsIncluded: number;
   /** One-time top-up balance added via Checkout (§13.4). */
@@ -109,6 +116,8 @@ const subscriptionSchema = new Schema<ISubscription>(
     stripeSubscriptionId: { type: String, default: null },
     polarCustomerId: { type: String, default: null },
     polarSubscriptionId: { type: String, default: null },
+    polarSyncedAt: { type: Date, default: null },
+    polarTopupOrderIds: { type: [String], default: [] },
     smsIncluded: { type: Number, min: 0, default: 300 },
     smsTopupBalance: { type: Number, min: 0, default: 0 },
     foundingMember: { type: Boolean, default: false },
