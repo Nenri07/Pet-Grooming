@@ -54,8 +54,9 @@ export default function PrivacyPage() {
               reminders.
             </>,
             <>
-              <strong>Payment data.</strong> Subscription and deposit transactions
-              are processed by Stripe. We receive limited details such as status
+              <strong>Payment data.</strong> Subscription and SMS top-up payments are
+              processed by Polar, our merchant of record; Client deposits are
+              processed by Stripe. We receive limited details such as status
               and the last digits of a card; we do not store full card numbers.
             </>,
             <>
@@ -107,8 +108,12 @@ export default function PrivacyPage() {
         <UL
           items={[
             <>
-              <strong>Stripe</strong> — subscription billing and, via Stripe
-              Connect, Client deposit processing paid to Groomers.
+              <strong>Polar</strong> — merchant of record for Pawxis
+              subscriptions and SMS top-ups, including tax handling.
+            </>,
+            <>
+              <strong>Stripe</strong> — via Stripe Connect, Client deposit
+              processing paid to Groomers.
             </>,
             <>
               <strong>Twilio</strong> — delivery of SMS reminders and

@@ -98,9 +98,11 @@ export default function TermsPage() {
           ]}
         />
         <P>
-          Pawxis subscription payments are processed by our payment processor,
-          Stripe. By subscribing you also agree to Stripe&rsquo;s applicable
-          terms.
+          Pawxis subscriptions and SMS top-ups are sold through Polar
+          (polar.sh), which acts as our reseller and merchant of record. Polar
+          processes the payment, issues the receipt, and handles applicable
+          sales tax or VAT. By subscribing you also agree to Polar&rsquo;s
+          applicable terms.
         </P>
       </Section>
 

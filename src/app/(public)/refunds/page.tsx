@@ -67,8 +67,9 @@ export default function RefundsPage() {
           ]}
         />
         <P>
-          Where a refund is granted, it is returned to your original payment
-          method through Stripe.
+          Subscriptions and SMS top-ups are sold through Polar, our merchant of
+          record. Where a refund is granted, Polar returns it to your original
+          payment method.
         </P>
       </Section>
 
