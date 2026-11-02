@@ -89,17 +89,20 @@ const CONTACT_GROOMER_MESSAGE =
  * piece of state is present.
  */
 function buildBookingContext(
-  state: BookingStepProps['state']
+  state: BookingStepProps['state'],
+  services: BookingStepProps['services']
 ): DepositMetadata | null {
   const owner = state.ownerDetails;
   const pet = state.petInfo;
   const slot = state.selectedSlot;
   if (!owner || !pet || !slot) return null;
+  const chosen = services[state.selectedServiceIndex] ?? services[0];
   return {
     pet,
     owner,
     slotStart: new Date(slot.start).toISOString(),
     slotEnd: new Date(slot.end).toISOString(),
+    serviceId: chosen?.id,
     // SMS consent captured at step 2 (Master Spec §12.3), threaded to the
     // deposit intent → webhook so Client.smsConsentAt is stamped on fulfilment.
     smsConsent: state.smsConsent === true,
@@ -294,7 +297,7 @@ function PaymentForm({
   );
 }
 
-export function StepPayment({ state, dispatch, groomerSlug }: BookingStepProps) {
+export function StepPayment({ state, dispatch, services, groomerSlug }: BookingStepProps) {
   const [intent, setIntent] = React.useState<IntentState>({ status: 'loading' });
   const stripePromise = React.useMemo(() => getStripePromise(), []);
 
@@ -313,10 +316,12 @@ export function StepPayment({ state, dispatch, groomerSlug }: BookingStepProps) 
   const slotEndISO = state.selectedSlot
     ? new Date(state.selectedSlot.end).toISOString()
     : null;
+  const selectedServiceId =
+    (services[state.selectedServiceIndex] ?? services[0])?.id;
   const booking = React.useMemo(
-    () => buildBookingContext(state),
+    () => buildBookingContext(state, services),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [pet, owner, slotStartISO, slotEndISO]
+    [pet, owner, slotStartISO, slotEndISO, selectedServiceId]
   );
 
   const createIntent = React.useCallback(async () => {

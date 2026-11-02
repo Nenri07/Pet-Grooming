@@ -178,14 +178,13 @@ export function StepSuccess({
         return;
       }
 
-      // TODO: thread selected service id — BookingStepServices carries no id, so
-      // the server falls back to the groomer's first active service for now.
       finalizeFreeBooking({
         groomerSlug,
         pet: state.petInfo!,
         owner: state.ownerDetails!,
         slotStartMs: new Date(slot!.start).getTime(),
         slotEndMs: new Date(slot!.end).getTime(),
+        serviceId: chosenService?.id,
         smsConsent: state.smsConsent,
       })
         .then((result) => {

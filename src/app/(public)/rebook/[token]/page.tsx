@@ -77,6 +77,7 @@ async function resolveRebook(token: string): Promise<ResolvedRebook | null> {
     slug: profile.groomerSlug ?? '',
     businessName: profile.businessName ?? 'Pet Grooming',
     services: services.map((s) => ({
+      id: String(s._id),
       name: s.name,
       basePrice: s.basePrice,
       durationMinutes: s.durationMinutes,

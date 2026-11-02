@@ -23,7 +23,8 @@
  * _Requirements: 7.3, 7.5_
  */
 import type Stripe from 'stripe';
-import type { Types } from 'mongoose';
+import { isValidObjectId, type Types } from 'mongoose';
+import { nanoid } from 'nanoid';
 import { connectDB } from '@/lib/db/connect';
 import { GroomerProfile } from '@/lib/db/models/groomer-profile';
 import { Service } from '@/lib/db/models/service';
@@ -47,6 +48,32 @@ import type {
   Temperament,
   WeightUnit,
 } from '@/types';
+
+/** Same length as `generateDigitalPetCard` so public card URLs stay uniform. */
+const PET_CARD_ID_LENGTH = 12;
+
+function appBaseUrl(): string {
+  return process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') ?? '';
+}
+
+function petCardUrlFor(cardId: string | undefined): string | undefined {
+  if (!cardId) return undefined;
+  const base = appBaseUrl();
+  return base ? `${base}/pet-card/${cardId}` : undefined;
+}
+
+/**
+ * The service the client picked, scoped to this groomer. A malformed or stale
+ * id (service deleted/renamed after the page loaded) falls back to the
+ * groomer's first active service so a paid booking is never lost.
+ */
+async function resolveBookedService(groomerId: Types.ObjectId, serviceId?: string) {
+  if (serviceId && isValidObjectId(serviceId)) {
+    const chosen = await Service.findOne({ _id: serviceId, groomerId }).lean();
+    if (chosen) return chosen;
+  }
+  return Service.findOne({ groomerId, isActive: true }).sort({ createdAt: 1 }).lean();
+}
 
 /**
  * Shape of the booking payload persisted server-side as a PendingBooking when
@@ -224,7 +251,10 @@ function isDuplicateKeyError(err: unknown): boolean {
 async function upsertClientAndPet(
   groomerId: Types.ObjectId,
   booking: BookingMetadata
-): Promise<{ client: { _id: Types.ObjectId }; pet: { _id: Types.ObjectId } }> {
+): Promise<{
+  client: { _id: Types.ObjectId };
+  pet: { _id: Types.ObjectId; digitalCardId?: string };
+}> {
   const email = booking.owner.email.toLowerCase();
 
   const clientSet: Record<string, unknown> = {
@@ -259,6 +289,22 @@ async function upsertClientAndPet(
     },
     { new: true, upsert: true }
   );
+
+  // Mint a public Digital Pet Card id on first booking so the confirmation
+  // email can include a shareable link without waiting for the groomer.
+  if (!pet.digitalCardId) {
+    pet.digitalCardId = nanoid(PET_CARD_ID_LENGTH);
+    try {
+      await pet.save();
+    } catch (err) {
+      if (isDuplicateKeyError(err)) {
+        const again = await Pet.findById(pet._id).select('digitalCardId');
+        if (again?.digitalCardId) pet.digitalCardId = again.digitalCardId;
+      } else {
+        console.error('fulfil: mint digitalCardId failed:', err);
+      }
+    }
+  }
 
   return { client, pet };
 }
@@ -461,9 +507,7 @@ export async function fulfilBookingByPaymentIntentId(
     (typeof profile.businessName === 'string' && profile.businessName.trim()) ||
     'your groomer';
 
-  const service = booking.serviceId
-    ? await Service.findOne({ _id: booking.serviceId, groomerId }).lean()
-    : await Service.findOne({ groomerId, isActive: true }).sort({ createdAt: 1 }).lean();
+  const service = await resolveBookedService(groomerId, booking.serviceId);
 
   if (!service) {
     return {
@@ -484,6 +528,7 @@ export async function fulfilBookingByPaymentIntentId(
   const { client, pet } = await upsertClientAndPet(groomerId, booking);
 
   const serviceAddress = formatServiceAddress(booking.owner.address);
+  const petCardUrl = petCardUrlFor(pet.digitalCardId);
 
   const appointment = await Appointment.create({
     groomerId,
@@ -540,6 +585,7 @@ export async function fulfilBookingByPaymentIntentId(
     scheduledDate,
     depositAmount: depositAmountOf(paymentIntent),
     currency: paymentIntent.currency ?? 'usd',
+    petCardUrl,
   });
 
   // Best-effort SMS confirmation + reminder scheduling (Master Spec §12.3).
@@ -612,9 +658,7 @@ export async function fulfilFreeBooking(
     (typeof profile.businessName === 'string' && profile.businessName.trim()) ||
     'your groomer';
 
-  const service = booking.serviceId
-    ? await Service.findOne({ _id: booking.serviceId, groomerId }).lean()
-    : await Service.findOne({ groomerId, isActive: true }).sort({ createdAt: 1 }).lean();
+  const service = await resolveBookedService(groomerId, booking.serviceId);
 
   if (!service) {
     return {
@@ -633,6 +677,7 @@ export async function fulfilFreeBooking(
   const { client, pet } = await upsertClientAndPet(groomerId, booking);
 
   const serviceAddress = formatServiceAddress(booking.owner.address);
+  const petCardUrl = petCardUrlFor(pet.digitalCardId);
 
   const appointment = await Appointment.create({
     groomerId,
@@ -659,6 +704,7 @@ export async function fulfilFreeBooking(
     scheduledDate,
     depositAmount: 0,
     currency: 'usd',
+    petCardUrl,
   });
 
   // Best-effort SMS confirmation + reminder scheduling (Master Spec §12.3).
@@ -710,6 +756,7 @@ async function sendBookingNotifications(
     scheduledDate: Date;
     depositAmount: number;
     currency: string;
+    petCardUrl?: string;
   }
 ): Promise<void> {
   try {
@@ -734,6 +781,7 @@ async function sendBookingNotifications(
       groomerName: ctx.groomerBusinessName,
       depositAmount: ctx.depositAmount,
       currency,
+      petCardUrl: ctx.petCardUrl,
     });
 
     await sendGroomerNotificationEmail({

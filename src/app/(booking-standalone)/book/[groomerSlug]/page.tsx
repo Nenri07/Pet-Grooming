@@ -141,6 +141,7 @@ async function loadGroomer(slug: string): Promise<BookingGroomer | null> {
     businessName: profile.businessName ?? 'Pet Grooming',
     logoUrl: profile.logoUrl ?? null,
     services: services.map((s) => ({
+      id: String(s._id),
       name: s.name,
       basePrice: s.basePrice,
       durationMinutes: s.durationMinutes,

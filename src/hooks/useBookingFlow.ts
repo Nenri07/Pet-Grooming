@@ -200,6 +200,8 @@ export interface BookingStepProps {
 
 /** Minimal, serializable service shape passed down to steps. */
 export type BookingStepServices = Array<{
+  /** Mongo id of the Service document — required so fulfilment stamps the chosen service. */
+  id: string;
   name: string;
   basePrice: number;
   durationMinutes: number;

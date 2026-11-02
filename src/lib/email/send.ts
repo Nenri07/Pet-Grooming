@@ -117,6 +117,8 @@ export interface ClientConfirmationDetails {
   depositAmount: number;
   /** ISO currency code, defaults to "USD". */
   currency?: string;
+  /** Absolute public Digital Pet Card URL, included when minted at booking. */
+  petCardUrl?: string;
 }
 
 /** Details rendered into the Groomer notification email (Req 8.3). */
@@ -231,7 +233,19 @@ export async function sendClientConfirmationEmail(
     </p>
     <p style="margin:12px 0 0;font-size:13px;color:#6b7280;line-height:1.5;">
       On the day, you'll get a text and email with a live link to track your groomer's arrival.
-    </p>`;
+    </p>
+    ${
+      details.petCardUrl
+        ? `<p style="margin:20px 0 0;">
+      <a href="${escapeHtml(details.petCardUrl)}" style="display:inline-block;padding:12px 18px;background:#111827;color:#fff;border-radius:999px;font-size:14px;font-weight:600;text-decoration:none;">
+        Open your pet&#39;s card
+      </a>
+    </p>
+    <p style="margin:8px 0 0;font-size:12px;color:#6b7280;line-height:1.5;">
+      Save this card — it holds your pet's details for the next visit.
+    </p>`
+        : ''
+    }`;
 
   try {
     await withRetry(async () => {
