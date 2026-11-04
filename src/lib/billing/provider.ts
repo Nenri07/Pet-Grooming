@@ -23,6 +23,10 @@
 import type { BillingInterval } from '@/lib/plans';
 import { StripeBilling } from '@/lib/billing/stripe';
 import { isPolarConfigured } from '@/lib/billing/polar-products';
+// Static import on purpose: PolarBilling pulls in the Stripe module, which the
+// Next server build treats as an async (ESM) module. A synchronous require()
+// of it returns a Promise, so `new PolarBilling()` threw and checkout 500'd.
+import { PolarBilling } from '@/lib/billing/polar';
 
 /** A paid, checkout-able plan (trial is started separately, no checkout). */
 export type CheckoutPlan = 'solo' | 'pro';
@@ -215,11 +219,8 @@ export function getBillingProvider(): BillingProvider {
   // Precedence: Polar (platform revenue via merchant-of-record) → Stripe Billing
   // → Noop. PolarBilling delegates createConnectAccountLink to Stripe so client
   // DEPOSITS always stay on Stripe Connect regardless of this selection. The
-  // PolarBilling module is required lazily so the Polar SDK stays out of the
-  // module graph when Polar is unconfigured.
+  // PolarBilling is imported statically (see the import note above).
   if (isPolarConfigured()) {
-    const { PolarBilling } =
-      require('@/lib/billing/polar') as typeof import('@/lib/billing/polar');
     return new PolarBilling();
   }
   if (isBillingConfigured()) {

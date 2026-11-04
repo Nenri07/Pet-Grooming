@@ -98,9 +98,21 @@ export class PolarBilling implements BillingProvider {
         },
       };
       if (email) body.customer_email = email;
-      if (discountId) body.discount_id = discountId;
-      const checkout = await getPolar().checkouts.create(body);
-      const url = (checkout as { url?: string | null }).url;
+      let checkout: { url?: string | null };
+      if (discountId) {
+        try {
+          checkout = await getPolar().checkouts.create({ ...body, discount_id: discountId });
+        } catch (err) {
+          // An expired, ended, or product-restricted promo makes Polar reject the
+          // whole checkout (422 "Discount does not exist"). A promo must never
+          // block a paying customer, so retry once at full price.
+          console.warn('[billing] polar checkout rejected with discount, retrying without it:', err);
+          checkout = await getPolar().checkouts.create(body);
+        }
+      } else {
+        checkout = await getPolar().checkouts.create(body);
+      }
+      const url = checkout.url;
       if (!url) return polarError();
       return { ok: true, url };
     } catch (err) {
