@@ -17,6 +17,7 @@
  *  - Unknown event types and unresolvable accounts are acknowledged with 200.
  *  - Does NOT touch the Stripe deposit / Connect webhooks.
  */
+import { createHash } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { isValidObjectId } from 'mongoose';
 import { webhooks } from '@polar-sh/sdk/2026-10';
@@ -50,7 +51,12 @@ function ok(extra: Record<string, unknown> = {}): Response {
 }
 
 export async function POST(req: Request): Promise<Response> {
-  const secret = process.env.POLAR_WEBHOOK_SECRET;
+  // Tolerate whitespace, line breaks, and surrounding quotes pasted into the
+  // hosting dashboard; they silently break signature checks otherwise.
+  const secret = (process.env.POLAR_WEBHOOK_SECRET ?? '')
+    .trim()
+    .replace(/^['"]|['"]$/g, '')
+    .trim();
   if (!secret) {
     console.error('Polar webhook: POLAR_WEBHOOK_SECRET is not configured.');
     // Return 500 so Polar keeps retrying until the secret is configured,
@@ -70,7 +76,10 @@ export async function POST(req: Request): Promise<Response> {
   } catch (err) {
     if (err instanceof webhooks.PolarWebhookVerificationError) {
       console.error('Polar webhook: signature verification failed:', err);
-      return NextResponse.json({ error: 'invalid signature' }, { status: 403 });
+      // Non-reversible fingerprint (length + 8 hex of SHA-256) so a mismatched
+      // dashboard value can be diagnosed without exposing the secret.
+      const fp = `${secret.length}:${createHash('sha256').update(secret).digest('hex').slice(0, 8)}`;
+      return NextResponse.json({ error: 'invalid signature', secretFingerprint: fp }, { status: 403 });
     }
     // A correctly signed event of a type this SDK version does not know.
     console.warn('Polar webhook: unrecognized event type, ignoring:', err);
