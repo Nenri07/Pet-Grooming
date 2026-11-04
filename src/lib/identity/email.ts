@@ -153,3 +153,78 @@ export function emailDomain(email: string): string {
   const atIndex = normalized.lastIndexOf('@');
   return atIndex === -1 ? '' : normalized.slice(atIndex + 1);
 }
+
+/** Escape every regex metacharacter so the character only matches itself. */
+function escapeRegexChar(c: string): string {
+  return c.replace(/[.*+?^${}()|[\]\\\-\/]/g, '\\$&');
+}
+
+/**
+ * Build the Mongo `email` filter value that selects every stored `User.email`
+ * that may canonicalize to `normalizedEmail` (email-verify-link-fails, R2.4).
+ *
+ * `User.email` is only lowercased and trimmed, while verification records hold
+ * the canonical form from {@link normalizeEmail}. For non-Gmail addresses the
+ * two forms are identical, so the exact string is returned (same lookup as
+ * before). For a canonical Gmail address `c1…cn@gmail.com` this returns
+ *
+ *   ^c1\.*c2\.*…cn\.*(?:\+[\s\S]*)?@(?:gmail|googlemail)\.com$
+ *
+ * which matches any number of dots between, and after, the local-part
+ * characters, an optional `+tag`, and either Google host. Each character is
+ * escaped, so the pattern has no user-controlled metacharacters, and the `\.*`
+ * runs are separated by non-dot literals, so it does not backtrack
+ * catastrophically. The tag uses `[\s\S]*` (not `.*`) so a tag containing a
+ * line break still matches, mirroring {@link normalizeEmail}, which drops
+ * everything after the first `+` regardless of content.
+ *
+ * Equivalence: for a lowercased, trimmed stored email `s` that does not start
+ * with `.`, the regex matches `s` iff `normalizeEmail(s) === normalizedEmail`.
+ * Stored emails with a leading dot are not matched (Gmail never issues them).
+ * The regex is case-sensitive because stored emails are already lowercase.
+ *
+ * Returns the exact string when the canonical local part is empty (e.g. the
+ * canonical form of `+x@gmail.com`) or the input has no `@`: there is no
+ * meaningful alias set to search for, and the prior exact-match behaviour is
+ * kept. The regex only narrows the query; {@link pickCanonicalMatch} is the
+ * authoritative check.
+ *
+ * Pure: `(normalizedEmail) -> string | RegExp`.
+ */
+export function canonicalEmailFilter(normalizedEmail: string): string | RegExp {
+  const atIndex = normalizedEmail.lastIndexOf('@');
+  if (atIndex <= 0) return normalizedEmail;
+  const domain = normalizedEmail.slice(atIndex + 1);
+  if (domain !== GMAIL_CANONICAL_DOMAIN) return normalizedEmail;
+
+  // Iterate by code point so a non-BMP character is never split into two
+  // lone surrogates (which would not survive UTF-8 serialization to Mongo).
+  const chars = Array.from(normalizedEmail.slice(0, atIndex));
+  const body = chars.map(escapeRegexChar).join('\\.*');
+  return new RegExp(`^${body}\\.*(?:\\+[\\s\\S]*)?@(?:gmail|googlemail)\\.com$`);
+}
+
+/** Outcome of {@link pickCanonicalMatch}. */
+export type CanonicalMatch<T> = { kind: 'none' } | { kind: 'one'; user: T } | { kind: 'ambiguous' };
+
+/**
+ * Choose the single candidate whose stored email canonicalizes to
+ * `normalizedEmail` (email-verify-link-fails, R2.4, R3.3).
+ *
+ * Candidates are filtered with `normalizeEmail(c.email ?? '') === normalizedEmail`.
+ * Exactly one survivor yields `{ kind: 'one', user }`; more than one yields
+ * `{ kind: 'ambiguous' }` (the caller refuses rather than guess); zero yields
+ * `{ kind: 'none' }`. A candidate whose email does not canonicalize to
+ * `normalizedEmail` is never returned.
+ *
+ * Pure: `(candidates, normalizedEmail) -> CanonicalMatch<T>`.
+ */
+export function pickCanonicalMatch<T extends { email?: string | null }>(
+  candidates: readonly T[],
+  normalizedEmail: string
+): CanonicalMatch<T> {
+  const matches = candidates.filter((c) => normalizeEmail(c.email ?? '') === normalizedEmail);
+  if (matches.length === 1) return { kind: 'one', user: matches[0] };
+  if (matches.length > 1) return { kind: 'ambiguous' };
+  return { kind: 'none' };
+}

@@ -5,8 +5,8 @@
  *
  * Reads the one-time `?token=` from the URL (via `useSearchParams`, which the
  * parent wraps in a Suspense boundary as the app router requires), calls the
- * {@link confirmEmailVerification} server action exactly once on mount, and
- * renders one of three calm, theme-tokenized states:
+ * {@link confirmEmailVerification} server action at most once per page load per
+ * token, and renders one of three calm, theme-tokenized states:
  *
  *   - verifying — a spinner while the action runs;
  *   - success  — "Your email is verified — you can close this tab and continue";
@@ -16,6 +16,11 @@
  * The server action is the authority — it burns the one-time token and sets
  * `User.emailVerifiedAt`. This component only surfaces the typed envelope; it
  * never throws and never shows provider internals (R7.3/7.4, R13.4).
+ *
+ * The token is single-use, so a ref guard (`claimConfirm`) keeps effect
+ * re-runs and Strict Mode remounts from sending it twice, and `update`/`router`
+ * are read through refs so session loading doesn't re-trigger the confirm. The
+ * flow itself lives in `@/lib/verification/email-confirm-flow`.
  *
  * On success it refreshes the live session and routes onward (R4.3, R5.3,
  * R5.4): the app is wrapped in a NextAuth `SessionProvider` at the root layout,
@@ -39,15 +44,11 @@ import { CheckCircle2, XCircle } from 'lucide-react';
 
 import { Card } from '@/components/ui/Card';
 import { confirmEmailVerification } from '@/actions/verification';
-
-type Phase =
-  | { kind: 'verifying' }
-  | { kind: 'success'; message: string }
-  | { kind: 'error'; message: string };
-
-const MSG_SUCCESS = 'Your email is verified — you can close this tab and continue.';
-const MSG_MISSING_TOKEN =
-  'This verification link is missing its token. Please request a new one.';
+import {
+  claimConfirm,
+  runEmailConfirm,
+  type Phase,
+} from '@/lib/verification/email-confirm-flow';
 
 export function VerifyEmailClient() {
   const searchParams = useSearchParams();
@@ -56,51 +57,42 @@ export function VerifyEmailClient() {
   const token = searchParams.get('token') ?? '';
   const [phase, setPhase] = React.useState<Phase>({ kind: 'verifying' });
 
-  // Confirm exactly once on mount. A missing token short-circuits to an error
-  // without calling the action.
+  // Refs survive re-renders and Strict Mode's simulated remount.
+  const confirmedTokenRef = React.useRef<string | null>(null);
+  const mountedRef = React.useRef(false);
+  const updateRef = React.useRef(update);
+  const routerRef = React.useRef(router);
+
+  // Declared before the confirm effect so it is set when the confirm runs.
   React.useEffect(() => {
-    let cancelled = false;
-
-    async function run() {
-      if (token.trim() === '') {
-        if (!cancelled) setPhase({ kind: 'error', message: MSG_MISSING_TOKEN });
-        return;
-      }
-      try {
-        const res = await confirmEmailVerification({ token });
-        if (cancelled) return;
-        if (res.ok) {
-          setPhase({ kind: 'success', message: MSG_SUCCESS });
-          // Flip the JWT `emailVerified` claim in the live session, then route
-          // onward. `update()` triggers a `jwt` refresh (trigger === 'update')
-          // that re-reads `emailVerifiedAt`, so the middleware recognizes the
-          // verified state without a forced re-login (R5.3, R5.4), then we hand
-          // off to the middleware via /onboarding (R4.3).
-          try {
-            await update();
-          } catch {
-            // A failed refresh must not strand the user on the success screen;
-            // the full navigation below re-runs the jwt callback regardless.
-          }
-          if (!cancelled) router.push('/onboarding');
-        } else {
-          setPhase({ kind: 'error', message: res.message });
-        }
-      } catch {
-        if (!cancelled) {
-          setPhase({
-            kind: 'error',
-            message: 'Something went wrong. Please try again in a moment.',
-          });
-        }
-      }
-    }
-
-    void run();
+    mountedRef.current = true;
     return () => {
-      cancelled = true;
+      mountedRef.current = false;
     };
-  }, [token, update, router]);
+  }, []);
+
+  // Keep the latest `update`/`router` without making them confirm deps: the
+  // session finishing loading changes `update`, which used to re-send the
+  // one-time token and discard the first (successful) result.
+  React.useEffect(() => {
+    updateRef.current = update;
+    routerRef.current = router;
+  });
+
+  // Confirm at most once per page load per token. A missing token
+  // short-circuits to an error without calling the action.
+  React.useEffect(() => {
+    if (!claimConfirm(confirmedTokenRef, token)) return;
+    void runEmailConfirm(token, {
+      confirm: confirmEmailVerification,
+      // `update()` re-reads `emailVerifiedAt` in the jwt callback so the
+      // middleware sees the verified state without a re-login (R5.3, R5.4).
+      refreshSession: () => updateRef.current(),
+      navigate: (href) => routerRef.current.push(href),
+      isActive: () => mountedRef.current && confirmedTokenRef.current === token,
+      setPhase,
+    });
+  }, [token]);
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center px-4">

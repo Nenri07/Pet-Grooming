@@ -1,0 +1,212 @@
+{
+  "pbtResults": {
+    "1. Write bug condition exploration test": {
+      "status": "passed",
+      "failingExample": "Exploration test failed on unfixed code as expected (bug confirmed):\n1) effectRerun: [token \"aa0000a000…a0\", events [{kind:\"depChange\",router:false}]] → confirm called 2 times (expected 1). The first run's ok:true is discarded by the per-run `cancelled` flag; the second call finds the token burned.\n2) verifiedReplay: [token \"aaa0aaa0…a0\", \"a@example.com\", already verified, signed in, no Redis record] → { ok:false, reason:'expired' } (expected ok:true).\n3) gmailMismatch: [\"a@googlemail.com\", token \"0aaa000…aaaa\", others [\"0@example.com\"], session \"none\"] → { ok:false } (the canonical \"a@gmail.com\" lookup via findOne misses the stored alias).\n4) Concrete: first.last@gmail.com (no session) → ok:false.",
+      "lastRunTimestamp": 1793794426685
+    },
+    "2. Write preservation property tests (BEFORE implementing fix)": {
+      "status": "passed",
+      "lastRunTimestamp": 1793794613414
+    },
+    "3.6 Verify bug condition exploration test now passes": {
+      "status": "passed",
+      "lastRunTimestamp": 1793795800825
+    },
+    "3.7 Verify preservation tests still pass": {
+      "status": "passed",
+      "lastRunTimestamp": 1793795806225
+    }
+  },
+  "executionHistory": {
+    "1. Write bug condition exploration test": [
+      {
+        "executionId": "afbe1fef-bbaf-45ab-af10-b7b1f4cba959",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793794139484
+      },
+      {
+        "executionId": "afbe1fef-bbaf-45ab-af10-b7b1f4cba959",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793794145628
+      },
+      {
+        "executionId": "afbe1fef-bbaf-45ab-af10-b7b1f4cba959",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793794447233
+      }
+    ],
+    "2. Write preservation property tests (BEFORE implementing fix)": [
+      {
+        "executionId": "afbe1fef-bbaf-45ab-af10-b7b1f4cba959",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793794139620
+      },
+      {
+        "executionId": "afbe1fef-bbaf-45ab-af10-b7b1f4cba959",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793794448030
+      },
+      {
+        "executionId": "afbe1fef-bbaf-45ab-af10-b7b1f4cba959",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793794630967
+      }
+    ],
+    "3.1 Add the pure confirm-flow helper module": [
+      {
+        "executionId": "afbe1fef-bbaf-45ab-af10-b7b1f4cba959",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793794139726
+      },
+      {
+        "executionId": "afbe1fef-bbaf-45ab-af10-b7b1f4cba959",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793794631852
+      },
+      {
+        "executionId": "afbe1fef-bbaf-45ab-af10-b7b1f4cba959",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793794775797
+      }
+    ],
+    "3.2 Rewire `VerifyEmailClient` to confirm once per page load": [
+      {
+        "executionId": "afbe1fef-bbaf-45ab-af10-b7b1f4cba959",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793794139825
+      },
+      {
+        "executionId": "afbe1fef-bbaf-45ab-af10-b7b1f4cba959",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793794776977
+      },
+      {
+        "executionId": "afbe1fef-bbaf-45ab-af10-b7b1f4cba959",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793794919091
+      }
+    ],
+    "3.3 Treat a replay by a verified signed-in user as success": [
+      {
+        "executionId": "afbe1fef-bbaf-45ab-af10-b7b1f4cba959",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793794139922
+      },
+      {
+        "executionId": "afbe1fef-bbaf-45ab-af10-b7b1f4cba959",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793794919903
+      },
+      {
+        "executionId": "afbe1fef-bbaf-45ab-af10-b7b1f4cba959",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793795066848
+      }
+    ],
+    "3.4 Add canonical Gmail lookup helpers": [
+      {
+        "executionId": "afbe1fef-bbaf-45ab-af10-b7b1f4cba959",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793794140035
+      },
+      {
+        "executionId": "afbe1fef-bbaf-45ab-af10-b7b1f4cba959",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793795067978
+      },
+      {
+        "executionId": "afbe1fef-bbaf-45ab-af10-b7b1f4cba959",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793795603013
+      }
+    ],
+    "3.5 Use the canonical lookup on the no-session path": [
+      {
+        "executionId": "afbe1fef-bbaf-45ab-af10-b7b1f4cba959",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793794140234
+      },
+      {
+        "executionId": "afbe1fef-bbaf-45ab-af10-b7b1f4cba959",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793795604183
+      },
+      {
+        "executionId": "afbe1fef-bbaf-45ab-af10-b7b1f4cba959",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793795743005
+      }
+    ],
+    "3.6 Verify bug condition exploration test now passes": [
+      {
+        "executionId": "afbe1fef-bbaf-45ab-af10-b7b1f4cba959",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793794140316
+      },
+      {
+        "executionId": "afbe1fef-bbaf-45ab-af10-b7b1f4cba959",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793795744239
+      },
+      {
+        "executionId": "afbe1fef-bbaf-45ab-af10-b7b1f4cba959",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793795833007
+      }
+    ],
+    "3.7 Verify preservation tests still pass": [
+      {
+        "executionId": "afbe1fef-bbaf-45ab-af10-b7b1f4cba959",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793794140413
+      },
+      {
+        "executionId": "afbe1fef-bbaf-45ab-af10-b7b1f4cba959",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793795745167
+      },
+      {
+        "executionId": "afbe1fef-bbaf-45ab-af10-b7b1f4cba959",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793795834189
+      }
+    ],
+    "4. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "afbe1fef-bbaf-45ab-af10-b7b1f4cba959",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793794140512
+      },
+      {
+        "executionId": "afbe1fef-bbaf-45ab-af10-b7b1f4cba959",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793795846188
+      },
+      {
+        "executionId": "afbe1fef-bbaf-45ab-af10-b7b1f4cba959",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793796243168
+      }
+    ],
+    "5. Commit and push to main": [
+      {
+        "executionId": "afbe1fef-bbaf-45ab-af10-b7b1f4cba959",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793794140605
+      },
+      {
+        "executionId": "afbe1fef-bbaf-45ab-af10-b7b1f4cba959",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793796244348
+      }
+    ],
+    "3. Fix for verification link showing \"invalid or expired\" after a successful verify": [
+      {
+        "executionId": "afbe1fef-bbaf-45ab-af10-b7b1f4cba959",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793795834357
+      }
+    ]
+  }
+}

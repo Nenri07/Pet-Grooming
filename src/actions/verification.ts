@@ -42,7 +42,11 @@ import { connectDB } from '@/lib/db/connect';
 import { User } from '@/lib/db/models/user';
 import { sendEmailVerification } from '@/lib/email/send';
 import { getEmailVerificationTtlMin } from '@/lib/identity/config';
-import { normalizeEmail } from '@/lib/identity/email';
+import {
+  canonicalEmailFilter,
+  normalizeEmail,
+  pickCanonicalMatch,
+} from '@/lib/identity/email';
 import { normalizePhoneE164 } from '@/lib/identity/phone';
 import {
   TTL,
@@ -54,6 +58,7 @@ import {
   keys,
   type EmailVerifyRecord,
 } from '@/lib/redis';
+import { isWellFormedVerifyToken } from '@/lib/verification/email-confirm-flow';
 import { getVerificationProvider, type VerifyFailureReason } from '@/lib/verification/provider';
 
 // ---------------------------------------------------------------------------
@@ -258,6 +263,23 @@ export async function confirmPhoneOtp(input: {
 const EMAIL_VERIFY_TOKEN_BYTES = 32;
 
 /**
+ * True when the request has a signed-in user whose `emailVerifiedAt` is set.
+ * Read-only. Used to treat a replayed (already consumed) link from a verified
+ * user as success (R2.3). Errors propagate to the caller's try/catch.
+ */
+async function isSessionUserAlreadyVerified(): Promise<boolean> {
+  const session = await getServerSession(authOptions);
+  const userId = session?.user?.id;
+  if (!userId) return false;
+
+  await connectDB();
+  const user = await User.findById(userId)
+    .select('emailVerifiedAt')
+    .lean<{ emailVerifiedAt?: Date | null } | null>();
+  return Boolean(user?.emailVerifiedAt);
+}
+
+/**
  * Begin email verification for the signed-in groomer (R7.1).
  *
  * Flow: resolve the session (must be signed in) → load the user's email →
@@ -373,7 +395,12 @@ export async function confirmEmailVerification(input: {
     const key = keys.emailVerify(token);
     const record = await cacheGet<EmailVerifyRecord>(key);
     if (!record?.normalizedEmail) {
-      // Missing or TTL-expired token.
+      // Missing, consumed, or TTL-expired token. A well-formed token replayed by
+      // a signed-in user who is already verified is reported as success: this
+      // writes nothing and only restates the requester's own state (R2.3).
+      if (isWellFormedVerifyToken(token) && (await isSessionUserAlreadyVerified())) {
+        return { ok: true, message: MSG_EMAIL_VERIFIED };
+      }
       return {
         ok: false,
         reason: 'expired',
@@ -383,10 +410,9 @@ export async function confirmEmailVerification(input: {
 
     await connectDB();
 
-    // Resolve the user by the normalized email stored with the token. We match
-    // on BOTH the raw and normalized forms: the token's `normalizedEmail` is
-    // canonical, but `User.email` is stored lowercased/trimmed (not Gmail-
-    // collapsed), so we scan the small set and compare canonically.
+    // Resolve the user by the canonical email stored with the token. The
+    // token's `normalizedEmail` is canonical, but `User.email` is only
+    // lowercased/trimmed (not Gmail-collapsed), so the two can differ.
     const now = new Date();
     const session = await getServerSession(authOptions);
 
@@ -408,14 +434,27 @@ export async function confirmEmailVerification(input: {
 
     if (!matched) {
       // No (matching) session: find the account whose canonical email matches.
-      // `User.email` is lowercased/trimmed; for non-Gmail addresses that equals
-      // the normalized form, so a direct lookup covers the common case.
-      const user = await User.findOne({ email: record.normalizedEmail })
+      // `canonicalEmailFilter` is the exact string for non-Gmail addresses and
+      // an anchored regex over Gmail aliases (dots, `+tag`, googlemail.com) for
+      // Gmail. `pickCanonicalMatch` re-checks each candidate with
+      // `normalizeEmail` and only accepts exactly one; two hits are enough to
+      // detect ambiguity, so the query is capped at 2.
+      const candidates = await User.find({
+        email: canonicalEmailFilter(record.normalizedEmail),
+      })
         .select('_id email')
-        .lean<{ _id: unknown; email?: string } | null>();
-      if (user?._id) {
-        await User.updateOne({ _id: user._id }, { $set: { emailVerifiedAt: now } });
+        .limit(2)
+        .lean<Array<{ _id: unknown; email?: string }>>();
+      const pick = pickCanonicalMatch(candidates, record.normalizedEmail);
+      if (pick.kind === 'one') {
+        await User.updateOne({ _id: pick.user._id }, { $set: { emailVerifiedAt: now } });
         matched = true;
+      } else if (pick.kind === 'ambiguous') {
+        // Two accounts share this canonical email. Refuse rather than guess,
+        // and keep the token so the owner can sign in and use the session path.
+        console.warn(
+          '[verification] confirmEmailVerification: ambiguous canonical email match, refusing'
+        );
       }
     }
 
