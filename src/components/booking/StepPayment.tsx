@@ -88,7 +88,7 @@ const CONTACT_GROOMER_MESSAGE =
  * pet and owner records, not summaries. Returns `null` until every required
  * piece of state is present.
  */
-function buildBookingContext(
+export function buildBookingContext(
   state: BookingStepProps['state'],
   services: BookingStepProps['services']
 ): DepositMetadata | null {

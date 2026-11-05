@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { depositLinkOffer } from '@/lib/billing/payment-link';
+import { hasOwnStripe } from '@/lib/stripe/own-account';
 import { connectDB } from '@/lib/db/connect';
 import { getRebook } from '@/lib/redis';
 import { GroomerProfile } from '@/lib/db/models/groomer-profile';
@@ -88,7 +89,11 @@ async function resolveRebook(token: string): Promise<ResolvedRebook | null> {
       typeof profile.depositAmount === 'number' && profile.depositAmount > 0,
     businessPhone,
     businessEmail,
-    depositLink: depositLinkOffer({
+    cardDeposit:
+      !(effectiveStatus === 'complete') && typeof profile.depositAmount === 'number' && profile.depositAmount > 0 && hasOwnStripe(profile)
+        ? { amount: profile.depositAmount }
+        : null,
+    depositLink: hasOwnStripe(profile) ? null : depositLinkOffer({
       depositAmount: profile.depositAmount,
       paymentsReady: effectiveStatus === 'complete',
       depositPaymentLink: profile.depositPaymentLink,

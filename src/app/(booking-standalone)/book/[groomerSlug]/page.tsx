@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { depositLinkOffer } from '@/lib/billing/payment-link';
+import { hasOwnStripe } from '@/lib/stripe/own-account';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { PawPrint } from 'lucide-react';
@@ -100,7 +101,7 @@ async function loadGroomer(slug: string): Promise<BookingGroomer | null> {
       // Service/branding fields plus the Connect + deposit fields the booking
       // gate (task 14.2 / R17) needs to decide whether deposit bookings are
       // allowed and whether to show the "online payments not set up" state.
-      'userId businessName logoUrl phone businessEmail depositAmount depositPaymentLink connectStatus stripeConnectChargesEnabled'
+      'userId businessName logoUrl phone businessEmail depositAmount depositPaymentLink ownStripeConnectedAt connectStatus stripeConnectChargesEnabled'
     )
     .lean();
   if (!profile) return null;
@@ -149,7 +150,11 @@ async function loadGroomer(slug: string): Promise<BookingGroomer | null> {
     })),
     paymentsReady,
     requiresDeposit,
-    depositLink: depositLinkOffer({
+    cardDeposit:
+      !(paymentsReady) && typeof profile.depositAmount === 'number' && profile.depositAmount > 0 && hasOwnStripe(profile)
+        ? { amount: profile.depositAmount }
+        : null,
+    depositLink: hasOwnStripe(profile) ? null : depositLinkOffer({
       depositAmount: profile.depositAmount,
       paymentsReady,
       depositPaymentLink: profile.depositPaymentLink,

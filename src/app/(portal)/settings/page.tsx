@@ -7,6 +7,8 @@ import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { ThemePicker } from '@/components/portal/ThemePicker';
 import { LogoutButton } from '@/components/portal/LogoutButton';
 import { ConnectStatusCard } from '@/components/portal/ConnectStatusCard';
+import { OwnStripeCard, type OwnStripeStatus } from '@/components/portal/OwnStripeCard';
+import { isSecretBoxConfigured } from '@/lib/crypto/secret-box';
 import { isConnectConfigured } from '@/lib/billing/provider';
 import { connectDB } from '@/lib/db/connect';
 import { GroomerProfile } from '@/lib/db/models/groomer-profile';
@@ -61,6 +63,26 @@ export default async function SettingsPage() {
   const connectConfigured = isConnectConfigured();
   const connectStatus = await loadConnectStatus(session.user.id);
 
+  // Groomer's own Stripe key (used while platform Connect isn't available).
+  await connectDB();
+  const own = await GroomerProfile.findOne({ userId: session.user.id })
+    .select('ownStripeAccountName ownStripeKeyHint ownStripeLivemode ownStripeConnectedAt ownStripeWebhookId')
+    .lean<{
+      ownStripeAccountName?: string;
+      ownStripeKeyHint?: string;
+      ownStripeLivemode?: boolean;
+      ownStripeConnectedAt?: Date;
+      ownStripeWebhookId?: string;
+    } | null>();
+  const ownStripe: OwnStripeStatus = {
+    available: isSecretBoxConfigured(),
+    connected: Boolean(own?.ownStripeConnectedAt),
+    accountName: own?.ownStripeAccountName ?? null,
+    keyHint: own?.ownStripeKeyHint ?? null,
+    livemode: typeof own?.ownStripeLivemode === 'boolean' ? own.ownStripeLivemode : null,
+    autoConfirm: Boolean(own?.ownStripeWebhookId),
+  };
+
   if (!result.ok) {
     return (
       <div className="mx-auto w-full max-w-2xl">
@@ -75,10 +97,11 @@ export default async function SettingsPage() {
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
       <BusinessSettings initialSettings={result.settings} />
 
-      <ConnectStatusCard
-        connectConfigured={connectConfigured}
-        status={connectStatus}
-      />
+      {connectConfigured ? (
+        <ConnectStatusCard connectConfigured={connectConfigured} status={connectStatus} />
+      ) : (
+        <OwnStripeCard status={ownStripe} />
+      )}
 
       <Card>
         <CardHeader>

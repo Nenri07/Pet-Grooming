@@ -26,6 +26,7 @@ import type Stripe from 'stripe';
 import { isValidObjectId, type Types } from 'mongoose';
 import { nanoid } from 'nanoid';
 import { sanitizeLatLng } from '@/lib/geo/mapbox-search';
+import { hasOwnStripe } from '@/lib/stripe/own-account';
 import {
   normalizePaymentLink,
   paymentLinkForAmount,
@@ -485,9 +486,13 @@ async function summariseExisting(
  *   including the shared bookingRef.
  */
 export async function fulfilBookingByPaymentIntentId(
-  paymentIntent: Stripe.PaymentIntent
+  paymentIntent: Stripe.PaymentIntent,
+  opts: { pendingKey?: string } = {}
 ): Promise<FulfilResult> {
   const stripePaymentId = paymentIntent.id;
+  // Card deposits on a groomer's own Stripe account (Checkout) key the
+  // PendingBooking by the Checkout Session id, not the PaymentIntent id.
+  const pendingKey = opts.pendingKey ?? stripePaymentId;
 
   await connectDB();
 
@@ -499,7 +504,7 @@ export async function fulfilBookingByPaymentIntentId(
   }
 
   const pending = await PendingBooking.findOne({
-    paymentIntentId: stripePaymentId,
+    paymentIntentId: pendingKey,
   }).lean();
   const booking = normalizePendingBooking(pending);
   if (!booking) {
@@ -585,7 +590,7 @@ export async function fulfilBookingByPaymentIntentId(
   }
 
   // Clean up the server-side pending record (TTL would reap it anyway).
-  await PendingBooking.deleteOne({ paymentIntentId: stripePaymentId });
+  await PendingBooking.deleteOne({ paymentIntentId: pendingKey });
 
   // Best-effort hold release + cache bust (never throws past this block).
   await releaseHoldAndBustCache(
@@ -663,7 +668,7 @@ export async function fulfilFreeBooking(
 
   const profile = await GroomerProfile.findOne({ groomerSlug: booking.groomerSlug })
     .select(
-      'userId businessName depositAmount depositPaymentLink connectStatus stripeConnectChargesEnabled'
+      'userId businessName depositAmount depositPaymentLink ownStripeConnectedAt connectStatus stripeConnectChargesEnabled'
     )
     .lean();
   if (!profile) {
@@ -688,7 +693,7 @@ export async function fulfilFreeBooking(
       (profile.connectStatus ??
         (profile.stripeConnectChargesEnabled === true ? 'complete' : 'not_started')) ===
       'complete';
-    if (connectReady) {
+    if (connectReady || hasOwnStripe(profile)) {
       return { ok: false, error: 'This booking needs a card deposit. Please go back and pay to confirm.' };
     }
     const link = normalizePaymentLink(profile.depositPaymentLink);

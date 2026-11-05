@@ -62,6 +62,18 @@ export interface IGroomerProfile {
   depositAmount: number;
   /** Groomer's own deposit payment link (PayPal.me, Stripe Payment Link, …). */
   depositPaymentLink?: string;
+  /**
+   * Groomer's OWN Stripe account, connected by pasting one key (used until
+   * Pawxis has Stripe Connect). Secrets are AES-GCM sealed and `select: false`.
+   */
+  ownStripeKeyEnc?: string;
+  ownStripeWebhookSecretEnc?: string;
+  ownStripeWebhookId?: string;
+  /** Safe-to-show key hint, e.g. "rk_live_…7f3a". */
+  ownStripeKeyHint?: string;
+  ownStripeAccountName?: string;
+  ownStripeLivemode?: boolean;
+  ownStripeConnectedAt?: Date;
   estimateRules: EstimateRule[];
   availabilityWindows: AvailabilityWindow[];
   blockedDates: BlockedDate[];
@@ -160,6 +172,13 @@ const groomerProfileSchema = new Schema<IGroomerProfile>(
     // A positive default left new booking pages showing "payments not set up".
     depositAmount: { type: Number, min: 0, max: 500, default: 0 },
     depositPaymentLink: { type: String, maxlength: 500 },
+    ownStripeKeyEnc: { type: String, select: false },
+    ownStripeWebhookSecretEnc: { type: String, select: false },
+    ownStripeWebhookId: { type: String },
+    ownStripeKeyHint: { type: String, maxlength: 40 },
+    ownStripeAccountName: { type: String, maxlength: 200 },
+    ownStripeLivemode: { type: Boolean },
+    ownStripeConnectedAt: { type: Date },
     estimateRules: [estimateRuleSchema],
     availabilityWindows: [availabilityWindowSchema],
     blockedDates: [blockedDateSchema],

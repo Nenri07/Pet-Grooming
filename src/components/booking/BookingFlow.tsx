@@ -15,7 +15,9 @@ import { StepPetInfo } from './StepPetInfo';
 import { StepOwnerDetails } from './StepOwnerDetails';
 import { StepEstimate } from './StepEstimate';
 import { StepCalendar } from './StepCalendar';
-import { StepPayment } from './StepPayment';
+import { StepPayment, buildBookingContext } from './StepPayment';
+import { startCardDeposit } from '@/actions/own-stripe-checkout';
+import type { BookingStepProps } from '@/hooks/useBookingFlow';
 import { StepSuccess } from './StepSuccess';
 import { bookingAllowed } from '@/lib/billing/connect';
 import type { OwnerDetailsInput, PetInfoInput } from '@/types';
@@ -54,6 +56,12 @@ export interface BookingGroomer {
    * the deposit through that link (the URL comes back with the booking).
    */
   depositLink?: { label: string; amount: number } | null;
+  /**
+   * Set when a deposit is required and the groomer connected their OWN Stripe
+   * account: the client pays by card on Stripe Checkout and the booking is
+   * confirmed automatically.
+   */
+  cardDeposit?: { amount: number } | null;
 }
 
 /**
@@ -258,6 +266,73 @@ function NoDepositConfirm({
 }
 
 /**
+ * CardDepositConfirm — Step 5 when the groomer connected their own Stripe
+ * account. Sends the client to Stripe's secure checkout for the deposit.
+ */
+function CardDepositConfirm({
+  amount,
+  groomerSlug,
+  state,
+  services,
+  onBack,
+}: {
+  amount: number;
+  groomerSlug: string;
+  state: BookingStepProps['state'];
+  services: BookingStepProps['services'];
+  onBack: () => void;
+}) {
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const money = new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(amount);
+
+  const pay = async () => {
+    const booking = buildBookingContext(state, services);
+    if (!booking) {
+      setError('Some booking details are missing. Please go back and check them.');
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    const res = await startCardDeposit(groomerSlug, booking);
+    if (res.ok) {
+      window.location.assign(res.url);
+      return;
+    }
+    setBusy(false);
+    setError(res.error);
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div>
+        <h2 className="text-xl font-semibold text-base-content">Pay your deposit</h2>
+        <p className="text-sm text-base-content/60">Step 5 of 5 — {money} deposit</p>
+      </div>
+      <div className="alert rounded-2xl" role="status">
+        <span>
+          A {money} deposit holds your time. You&apos;ll pay on Stripe&apos;s secure page and come
+          straight back to your confirmation. The rest is paid on the day.
+        </span>
+      </div>
+      {error && (
+        <div className="alert alert-error rounded-2xl" role="alert">
+          <span>{error}</span>
+        </div>
+      )}
+      <div className="flex gap-2">
+        <button type="button" className="btn btn-ghost rounded-btn min-h-11" onClick={onBack} disabled={busy}>
+          Back
+        </button>
+        <button type="button" className="btn btn-primary rounded-btn min-h-11 flex-1" onClick={pay} disabled={busy}>
+          {busy ? 'Opening secure checkout…' : `Pay ${money} deposit`}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
  * PayByLinkConfirm — Step 5 when the groomer takes deposits through their own
  * payment link (PayPal.me, Stripe Payment Link, …). The client confirms the
  * booking here; the next screen and the confirmation email carry the link.
@@ -409,6 +484,18 @@ export function BookingFlow({ groomer, initialState, prefillNotice }: BookingFlo
         // aren't set up — show the labelled not-set-up state instead so the
         // client never reaches a dead charge (R17.1). When Connect is
         // complete, the existing StepPayment runs unchanged (R17.3).
+        // Groomer connected their own Stripe account: pay by card on Checkout.
+        if (!depositBookingAllowed && groomer.cardDeposit) {
+          return (
+            <CardDepositConfirm
+              amount={groomer.cardDeposit.amount}
+              groomerSlug={groomer.slug}
+              state={state}
+              services={groomer.services}
+              onBack={() => dispatch({ type: 'GO_BACK' })}
+            />
+          );
+        }
         // No card payments, but the groomer added their own payment link: book
         // now, pay the deposit through the link on the next screen.
         if (!depositBookingAllowed && groomer.depositLink) {
