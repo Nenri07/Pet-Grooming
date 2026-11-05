@@ -21,7 +21,7 @@
 import * as React from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
-import { Navigation, Phone, MessageSquare, PawPrint } from 'lucide-react';
+import { Navigation, Phone, MessageSquare, MessageCircle, PawPrint } from 'lucide-react';
 import { safeHttpsImageSrc } from '@/lib/images';
 
 /**
@@ -79,6 +79,12 @@ interface TrackerPayload {
 interface TrackerViewProps {
   token: string;
   initial: TrackerPayload;
+}
+
+/** wa.me link for a phone number (digits only, country code kept). */
+function whatsappHref(phone: string): string | null {
+  const digits = phone.replace(/\D/g, '');
+  return digits.length >= 7 ? `https://wa.me/${digits}` : null;
 }
 
 /** Poll interval for the tracker. */
@@ -222,7 +228,7 @@ export function TrackerView({ token, initial }: TrackerViewProps) {
 
         {/* Call / Text groomer */}
         {data.groomerPhone && (
-          <div className="mt-6 grid grid-cols-2 gap-3">
+          <div className="mt-6 grid grid-cols-3 gap-3">
             <a
               href={`tel:${data.groomerPhone}`}
               className="btn btn-outline min-h-[48px]"
@@ -237,6 +243,17 @@ export function TrackerView({ token, initial }: TrackerViewProps) {
               <MessageSquare className="h-5 w-5" aria-hidden="true" />
               Text
             </a>
+            {whatsappHref(data.groomerPhone) && (
+              <a
+                href={whatsappHref(data.groomerPhone) as string}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-outline min-h-[48px]"
+              >
+                <MessageCircle className="h-5 w-5" aria-hidden="true" />
+                WhatsApp
+              </a>
+            )}
           </div>
         )}
       </div>

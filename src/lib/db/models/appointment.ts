@@ -65,6 +65,10 @@ export interface IAppointment extends Document {
    * (reminder_24h, reminder_2h). Stored so reschedule/cancel can cancel them.
    */
   reminderJobIds?: string[];
+  /** When the 24-hour reminder went out (set by the reminder sweep). */
+  reminder24SentAt?: Date;
+  /** When the 2-hour reminder went out (set by the reminder sweep). */
+  reminder2SentAt?: Date;
   // --- PawPort Live ETA + Before/After (additive; §11.2, §11.3, §14) ---
   /** Live "van is on the way" tracking state (§11.2). */
   tracking?: AppointmentTracking;
@@ -129,6 +133,8 @@ const appointmentSchema = new Schema<IAppointment>(
     },
     // Additive (§12.3): scheduled reminder job ids (QStash) for cancel/replace.
     reminderJobIds: { type: [String], default: undefined },
+    reminder24SentAt: { type: Date },
+    reminder2SentAt: { type: Date },
     // --- PawPort Live ETA + Before/After (additive; §11.2, §11.3, §14) ---
     tracking: {
       type: new Schema<AppointmentTracking>(
@@ -146,6 +152,9 @@ const appointmentSchema = new Schema<IAppointment>(
   },
   { timestamps: true }
 );
+
+// Reminder sweep: upcoming appointments by start time.
+appointmentSchema.index({ status: 1, scheduledDate: 1 });
 
 appointmentSchema.index({ groomerId: 1, scheduledDate: 1 });
 appointmentSchema.index({ groomerId: 1, status: 1 });

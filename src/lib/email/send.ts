@@ -597,3 +597,85 @@ export async function sendWaitlistNotification(signupEmail: string): Promise<boo
     return false;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Appointment reminder (24 h / 2 h before) — works without SMS
+// ---------------------------------------------------------------------------
+
+export interface AppointmentReminderDetails {
+  kind: '24h' | '2h';
+  businessName: string;
+  petName: string;
+  /** Formatted in the groomer's time zone, e.g. "Fri, Nov 7". */
+  date: string;
+  /** e.g. "10:30 AM". */
+  time: string;
+  serviceAddress?: string;
+  /** Groomer's phone in any format; used for call / text / WhatsApp links. */
+  groomerPhone?: string;
+}
+
+/** Digits-only phone for wa.me links (keeps a leading country code). */
+export function whatsappLink(phone: string | undefined | null): string | null {
+  const digits = (phone ?? '').replace(/\D/g, '');
+  return digits.length >= 7 ? `https://wa.me/${digits}` : null;
+}
+
+export async function sendAppointmentReminderEmail(
+  to: string,
+  d: AppointmentReminderDetails
+): Promise<boolean> {
+  const resend = getResend();
+  const from = getFromAddress();
+  if (!resend || !from || !to) return false;
+
+  const business = d.businessName?.trim() || 'your groomer';
+  const pet = escapeHtml(d.petName || 'your pet');
+  const lead =
+    d.kind === '24h'
+      ? `Just a reminder: ${pet}&#39;s grooming with ${escapeHtml(business)} is coming up.`
+      : `See you soon! ${escapeHtml(business)} is coming for ${pet} today.`;
+  const phone = d.groomerPhone?.trim();
+  const wa = whatsappLink(phone);
+  const contact = phone
+    ? `<p style="margin:20px 0 0;font-size:13px;color:#6b7280;line-height:1.5;">
+      Need to change it? Contact ${escapeHtml(business)}:
+      <a href="tel:${escapeHtml(phone)}" style="color:#111827;">call</a>,
+      <a href="sms:${escapeHtml(phone)}" style="color:#111827;">text</a>${
+        wa ? ` or <a href="${escapeHtml(wa)}" style="color:#111827;">WhatsApp</a>` : ''
+      }.
+    </p>`
+    : `<p style="margin:20px 0 0;font-size:13px;color:#6b7280;line-height:1.5;">
+      Need to change it? Reply to your confirmation email.
+    </p>`;
+
+  const body = `
+    <p style="margin:0 0 16px;font-size:14px;line-height:1.5;">${lead}</p>
+    <table style="width:100%;border-collapse:collapse;">
+      ${row('Date', d.date)}
+      ${row('Time', d.time)}
+      ${d.serviceAddress ? row('Address', d.serviceAddress) : ''}
+    </table>
+    ${contact}`;
+
+  const subject =
+    d.kind === '24h'
+      ? `Reminder: ${d.petName || 'your pet'}'s grooming on ${d.date} at ${d.time}`
+      : `Today at ${d.time}: ${d.petName || 'your pet'}'s grooming`;
+
+  try {
+    await withRetry(async () => {
+      const { error } = await resend.emails.send({
+        from,
+        to,
+        subject,
+        html: emailShell(business, d.kind === '24h' ? 'Appointment reminder' : 'See you soon', body),
+      });
+      if (error) throw error;
+    });
+    return true;
+  } catch (err) {
+    console.error('[email] Failed to send reminder email:', err);
+    return false;
+  }
+}
