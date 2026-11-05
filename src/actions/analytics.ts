@@ -20,6 +20,7 @@
  * _Requirements: 16.1, 16.2, 16.3_
  */
 import { getServerSession } from 'next-auth';
+import { loadRevenueItems } from '@/lib/analytics/revenue';
 import { startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { authOptions } from '@/lib/auth/config';
 import { connectDB } from '@/lib/db/connect';
@@ -120,20 +121,9 @@ export async function getMonthlyAnalytics(): Promise<MonthlyAnalyticsResult> {
       })
         .select('status scheduledDate')
         .lean<LeanAppointment[]>(),
-      Transaction.find({
-        groomerId,
-        status: 'succeeded',
-        createdAt: { $gte: currentStart, $lte: currentEnd },
-      })
-        .select('amount status')
-        .lean<LeanTransaction[]>(),
-      Transaction.find({
-        groomerId,
-        status: 'succeeded',
-        createdAt: { $gte: previousStart, $lte: previousEnd },
-      })
-        .select('amount status')
-        .lean<LeanTransaction[]>(),
+      // Revenue = completed jobs' totals + kept deposits (see loadRevenueItems).
+      loadRevenueItems(groomerId, currentStart, currentEnd) as Promise<LeanTransaction[]>,
+      loadRevenueItems(groomerId, previousStart, previousEnd) as Promise<LeanTransaction[]>,
     ]);
 
     const currentAppts: AppointmentLike[] = currentAppointments.map((a) => ({
@@ -232,13 +222,7 @@ export async function getAnalyticsSeries(): Promise<AnalyticsSeriesResult> {
       })
         .select('status scheduledDate')
         .lean<LeanSeriesAppointment[]>(),
-      Transaction.find({
-        groomerId,
-        status: 'succeeded',
-        createdAt: { $gte: windowStart, $lte: windowEnd },
-      })
-        .select('amount status createdAt')
-        .lean<LeanSeriesTransaction[]>(),
+      loadRevenueItems(groomerId, windowStart, windowEnd) as Promise<LeanSeriesTransaction[]>,
     ]);
 
     const appointments: DatedAppointment[] = apptDocs.map((a) => ({

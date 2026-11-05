@@ -52,6 +52,11 @@ export interface UpdateAppointmentStatusInput {
    * (Requirement 12.2).
    */
   postGroomNotes?: string;
+  /**
+   * Total charged for the groom (deposit included), recorded on completion.
+   * Defaults to the service's base price when omitted.
+   */
+  amountCharged?: number;
 }
 
 /**
@@ -69,6 +74,7 @@ const updateStatusSchema = z.object({
   appointmentId: z.string().min(1),
   newStatus: z.enum(APPOINTMENT_STATUSES),
   postGroomNotes: z.string().max(MAX_POST_GROOM_NOTES).optional(),
+  amountCharged: z.number().finite().min(0).max(99999).optional(),
 });
 
 /**
@@ -99,7 +105,7 @@ export async function updateAppointmentStatus(
   if (!parsed.success) {
     return { ok: false, error: 'The appointment update request was invalid.' };
   }
-  const { appointmentId, newStatus, postGroomNotes } = parsed.data;
+  const { appointmentId, newStatus, postGroomNotes, amountCharged } = parsed.data;
 
   try {
     await connectDB();
@@ -132,6 +138,19 @@ export async function updateAppointmentStatus(
       const trimmed = postGroomNotes.trim();
       if (trimmed.length > 0) {
         appointment.postGroomNotes = trimmed;
+      }
+    }
+    // Record what the groom earned so it counts in revenue. Falls back to the
+    // service's base price when the groomer doesn't enter an amount.
+    if (newStatus === 'completed') {
+      if (typeof amountCharged === 'number') {
+        appointment.amountCharged = Math.round(amountCharged * 100) / 100;
+      } else if (typeof appointment.amountCharged !== 'number') {
+        const { Service } = await import('@/lib/db/models/service');
+        const svc = await Service.findById(appointment.serviceId)
+          .select('basePrice')
+          .lean<{ basePrice?: number } | null>();
+        if (typeof svc?.basePrice === 'number') appointment.amountCharged = svc.basePrice;
       }
     }
     await appointment.save();

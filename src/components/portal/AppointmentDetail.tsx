@@ -64,7 +64,11 @@ export interface AppointmentDetailData {
   service: {
     name: string | null;
     durationMinutes: number | null;
+    /** The service's listed price; prefills "Total charged" on completion. */
+    basePrice?: number | null;
   };
+  /** Total charged for the groom, once completed. */
+  amountCharged?: number | null;
   /** Live ETA state (§11.2). */
   tracking?: {
     /** Whether a trip is currently active (started, not arrived). */
@@ -227,6 +231,10 @@ export function AppointmentDetail({ appointment }: AppointmentDetailProps) {
   const [postGroomNotes, setPostGroomNotes] = React.useState(
     appointment.postGroomNotes ?? ''
   );
+  const [totalCharged, setTotalCharged] = React.useState<string>(() => {
+    const v = appointment.amountCharged ?? appointment.service.basePrice;
+    return typeof v === 'number' ? String(v) : '';
+  });
 
   const { client, pet, service } = appointment;
 
@@ -237,13 +245,14 @@ export function AppointmentDetail({ appointment }: AppointmentDetailProps) {
   );
 
   const runTransition = React.useCallback(
-    async (newStatus: AppointmentStatus, notes?: string) => {
+    async (newStatus: AppointmentStatus, notes?: string, charged?: number) => {
       setIsPending(true);
       try {
         const result = await updateAppointmentStatus({
           appointmentId: appointment.id,
           newStatus,
           postGroomNotes: notes,
+          amountCharged: charged,
         });
 
         if (!result.ok) {
@@ -501,10 +510,10 @@ export function AppointmentDetail({ appointment }: AppointmentDetailProps) {
               id="post-groom-notes-title"
               className="text-lg font-semibold text-base-content"
             >
-              Post-groom notes
+              Complete appointment
             </h3>
             <p className="mt-1 text-sm text-base-content/60">
-              Add optional notes about this groom. You can leave this blank.
+              Add optional notes about this groom, and confirm what you charged.
             </p>
             <textarea
               className="textarea textarea-bordered mt-4 min-h-[120px] w-full"
@@ -517,6 +526,23 @@ export function AppointmentDetail({ appointment }: AppointmentDetailProps) {
             <p className="mt-1 text-right text-xs text-base-content/50">
               {postGroomNotes.length}/{MAX_POST_GROOM_NOTES}
             </p>
+            <label className="form-control mt-2 w-full" htmlFor="total-charged">
+              <span className="label-text font-medium">Total charged ($)</span>
+              <input
+                id="total-charged"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                max={99999}
+                step="0.01"
+                className="input input-bordered mt-1 min-h-[44px] w-full"
+                value={totalCharged}
+                onChange={(e) => setTotalCharged(e.target.value)}
+              />
+              <span className="mt-1 text-xs text-base-content/60">
+                The full price for this groom, including any deposit. It&apos;s added to your revenue.
+              </span>
+            </label>
             <div className="mt-4 flex justify-end gap-3">
               <button
                 type="button"
@@ -532,7 +558,10 @@ export function AppointmentDetail({ appointment }: AppointmentDetailProps) {
                 onClick={() =>
                   void runTransition(
                     'completed',
-                    postGroomNotes.trim() ? postGroomNotes : undefined
+                    postGroomNotes.trim() ? postGroomNotes : undefined,
+                    totalCharged.trim() !== '' && Number.isFinite(Number(totalCharged)) && Number(totalCharged) >= 0
+                      ? Number(totalCharged)
+                      : undefined
                   )
                 }
                 className="btn btn-success min-h-[44px]"

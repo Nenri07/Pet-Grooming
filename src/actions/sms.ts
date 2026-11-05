@@ -309,3 +309,131 @@ export async function sendTemplateMessage(input: {
     return { ok: false, error: "We couldn't send that message right now." };
   }
 }
+
+// ---------------------------------------------------------------------------
+// Messaging without Twilio: WhatsApp / phone texting app / email
+// ---------------------------------------------------------------------------
+
+export type ComposeResult =
+  | { ok: true; text: string; phone: string | null; email: string | null }
+  | { ok: false; error: string };
+
+/** Friendlier wording for the manual channels (no "Reply STOP" etc.). */
+const MANUAL_TEXT: Partial<Record<SmsKind, string>> = {
+  on_my_way: "Hi! I'm on my way to {pet} now. See you shortly.",
+  running_late: 'Hi! I\u2019m running a little behind for {pet} today. Thanks for your patience.',
+  rebook_nudge: "It's about time for {pet}\u2019s next groom. Book your spot here: {link}",
+  review_request: 'Thanks for choosing us for {pet}! If you were happy with the groom, a quick review would mean a lot.',
+};
+
+/**
+ * Prepare a quick-action message (and the client's contact details) so the
+ * groomer can send it through WhatsApp, their phone's texting app, or email.
+ */
+export async function composeClientMessage(input: { clientId: string; kind?: SmsKind }): Promise<ComposeResult> {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return { ok: false, error: 'You must be signed in.' };
+  if (typeof input?.clientId !== 'string' || !/^[a-f0-9]{24}$/i.test(input.clientId)) {
+    return { ok: false, error: 'Client not found.' };
+  }
+  try {
+    await connectDB();
+    const groomerId = session.user.id;
+    const { Client } = await import('@/lib/db/models/client');
+    const client = await Client.findOne({ _id: input.clientId, groomerId })
+      .select('phone email')
+      .lean<{ phone?: string; email?: string } | null>();
+    if (!client) return { ok: false, error: 'Client not found.' };
+
+    let text = '';
+    if (input.kind) {
+      const { Pet } = await import('@/lib/db/models/pet');
+      const { GroomerProfile } = await import('@/lib/db/models/groomer-profile');
+      const [pet, profile] = await Promise.all([
+        Pet.findOne({ groomerId, clientId: input.clientId }).select('name').lean<{ name?: string } | null>(),
+        GroomerProfile.findOne({ userId: groomerId }).select('businessName groomerSlug').lean<{ businessName?: string; groomerSlug?: string } | null>(),
+      ]);
+      const base = (process.env.NEXT_PUBLIC_APP_URL ?? '').replace(/\/$/, '');
+      const link = profile?.groomerSlug && base ? `${base}/book/${profile.groomerSlug}` : '';
+      const tpl = MANUAL_TEXT[input.kind];
+      const { renderTemplate } = await import('@/lib/sms/templates');
+      text = renderTemplate(
+        input.kind,
+        { pet: pet?.name ?? 'your pet', business: profile?.businessName ?? '', link },
+        tpl ? { [input.kind]: tpl } : undefined
+      );
+    }
+    return { ok: true, text, phone: client.phone ?? null, email: client.email ?? null };
+  } catch (error) {
+    console.error('composeClientMessage failed:', error);
+    return { ok: false, error: "We couldn't prepare that message." };
+  }
+}
+
+const manualSchema = z.object({
+  clientId: z.string().regex(/^[a-f0-9]{24}$/i),
+  body: z.string().trim().min(1).max(1000),
+  channel: z.enum(['whatsapp', 'sms_app', 'email']),
+});
+
+const CHANNEL_STATUS = { whatsapp: 'sent via WhatsApp', sms_app: 'sent via your phone', email: 'emailed' } as const;
+
+/**
+ * Record a message sent through WhatsApp or the groomer's phone (opened on
+ * their device), or SEND it by email, and add it to the thread.
+ */
+export async function sendManualMessage(input: {
+  clientId: string;
+  body: string;
+  channel: 'whatsapp' | 'sms_app' | 'email';
+}): Promise<SendReplyResult> {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return { ok: false, error: 'You must be signed in.' };
+  const parsed = manualSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: 'Enter a message to send.' };
+  const { clientId, body, channel } = parsed.data;
+  try {
+    await connectDB();
+    const groomerId = session.user.id;
+    const { Client } = await import('@/lib/db/models/client');
+    const client = await Client.findOne({ _id: clientId, groomerId })
+      .select('phone email')
+      .lean<{ phone?: string; email?: string } | null>();
+    if (!client) return { ok: false, error: 'Client not found.' };
+
+    if (channel === 'email') {
+      if (!client.email) return { ok: false, error: 'This client has no email on file.' };
+      const { GroomerProfile } = await import('@/lib/db/models/groomer-profile');
+      const { User } = await import('@/lib/db/models/user');
+      const [profile, user] = await Promise.all([
+        GroomerProfile.findOne({ userId: groomerId })
+          .select('businessName businessEmail phone')
+          .lean<{ businessName?: string; businessEmail?: string; phone?: string } | null>(),
+        User.findById(groomerId).select('email').lean<{ email?: string } | null>(),
+      ]);
+      const { sendClientMessageEmail } = await import('@/lib/email/send');
+      const sent = await sendClientMessageEmail(client.email, {
+        businessName: profile?.businessName ?? '',
+        body,
+        replyTo: profile?.businessEmail || user?.email || undefined,
+        groomerPhone: profile?.phone,
+      });
+      if (!sent) return { ok: false, error: "We couldn't send that email right now." };
+    }
+
+    const { SmsMessage } = await import('@/lib/db/models/sms-message');
+    await SmsMessage.create({
+      groomerId,
+      clientId,
+      direction: 'out',
+      kind: 'reply',
+      body,
+      status: CHANNEL_STATUS[channel],
+      phone: client.phone,
+    });
+    return { ok: true };
+  } catch (error) {
+    console.error('sendManualMessage failed:', error);
+    return { ok: false, error: "We couldn't send that message right now." };
+  }
+}

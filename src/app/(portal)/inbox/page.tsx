@@ -37,8 +37,9 @@ export default async function InboxPage() {
 
       {!smsConfigured && (
         <div className="mb-4 rounded-xl border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-base-content/80">
-          <span className="font-medium">SMS not configured.</span> Messages are logged here, but
-          sending is disabled until Twilio credentials are added. This view is read-only.
+          <span className="font-medium">Automatic texts are off.</span> Clients still get booking
+          confirmations, reminders and tracking links by email. To message a client, type below and
+          send it with WhatsApp, your phone&apos;s texting app, or email.
         </div>
       )}
 

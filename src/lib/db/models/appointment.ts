@@ -44,6 +44,11 @@ export interface IAppointment extends Document {
   depositStatus?: 'pending' | 'received';
   /** Deposit amount owed via the payment link, in whole currency units. */
   depositDue?: number;
+  /**
+   * Total the client paid for this groom (deposit included), recorded when the
+   * groomer marks it completed. Drives revenue.
+   */
+  amountCharged?: number;
   notes?: string;
   postGroomNotes?: string;
   /**
@@ -97,6 +102,7 @@ const appointmentSchema = new Schema<IAppointment>(
     serviceAddress: { type: String, maxlength: 500 },
     depositStatus: { type: String, enum: ['pending', 'received'] },
     depositDue: { type: Number, min: 0, max: 500 },
+    amountCharged: { type: Number, min: 0, max: 99999 },
     notes: { type: String, maxlength: 500 },
     postGroomNotes: { type: String, maxlength: 2000 },
     // Additive human-friendly booking reference (display aid; see interface).

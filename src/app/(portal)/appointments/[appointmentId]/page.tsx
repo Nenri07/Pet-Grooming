@@ -48,6 +48,7 @@ interface PopulatedPet {
 interface PopulatedService {
   name?: string;
   durationMinutes?: number;
+  basePrice?: number;
 }
 interface LeanAppointment {
   _id: unknown;
@@ -65,6 +66,7 @@ interface LeanAppointment {
   afterPhotoUrl?: string | null;
   depositStatus?: 'pending' | 'received' | null;
   depositDue?: number | null;
+  amountCharged?: number | null;
 }
 
 /** Compose a client's address parts into a single display string. */
@@ -108,7 +110,7 @@ export default async function AppointmentDetailPage({
   })
     .populate('clientId', 'name phone address')
     .populate('petId', 'name breed weight weightUnit age')
-    .populate('serviceId', 'name durationMinutes')
+    .populate('serviceId', 'name durationMinutes basePrice')
     .lean<LeanAppointment | null>();
 
   if (!doc) {
@@ -148,7 +150,9 @@ export default async function AppointmentDetailPage({
     service: {
       name: doc.serviceId?.name ?? null,
       durationMinutes: doc.serviceId?.durationMinutes ?? null,
+      basePrice: doc.serviceId?.basePrice ?? null,
     },
+    amountCharged: typeof doc.amountCharged === 'number' ? doc.amountCharged : null,
     // Live ETA (§11.2): sharing when a trip started and hasn't arrived yet.
     tracking: {
       sharing: Boolean(doc.tracking?.startedAt && !doc.tracking?.arrivedAt),

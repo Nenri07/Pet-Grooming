@@ -1,4 +1,5 @@
 import { getServerSession } from 'next-auth';
+import { loadRevenueItems } from '@/lib/analytics/revenue';
 import { redirect } from 'next/navigation';
 import {
   addDays,
@@ -16,10 +17,8 @@ import { Transaction } from '@/lib/db/models/transaction';
 import { GroomerProfile, type BookingMode } from '@/lib/db/models/groomer-profile';
 import {
   computeMonthlyMetrics,
-  computeEstimatedServiceRevenue,
   type AppointmentLike,
   type TransactionLike,
-  type CompletedServiceLike,
 } from '@/lib/analytics/metrics';
 import {
   HaversineTravelProvider,
@@ -313,46 +312,28 @@ export default async function DashboardPage() {
       .lean<Array<{ amount: number; status: TransactionLike['status'] }>>(),
   ]);
 
-  // Completed appointments this month, with the linked service's basePrice —
-  // the stand-in for "service revenue earned" (bugfix sprint 9b). The Appointment
-  // model stores no estimate/final price, so we reuse Service.basePrice via the
-  // populated serviceId; a true editable final-price field is a future change.
-  const completedThisMonthDocs = await Appointment.find({
-    groomerId,
-    scheduledDate: { $gte: thisMonthStart, $lte: thisMonthEnd },
-    status: 'completed',
-  })
-    .select('status serviceId')
-    .populate('serviceId', 'basePrice')
-    .lean<Array<{ status: AppointmentStatus; serviceId?: { basePrice?: number } | null }>>();
-
-  const completedServices: CompletedServiceLike[] = completedThisMonthDocs.map((d) => ({
-    status: d.status,
-    servicePrice:
-      typeof d.serviceId?.basePrice === 'number' ? d.serviceId.basePrice : null,
-  }));
-  const estimatedServiceRevenue = computeEstimatedServiceRevenue(completedServices);
 
   const toApptLike = (
     rows: Array<{ status: AppointmentStatus; scheduledDate: Date }>
   ): AppointmentLike[] =>
     rows.map((r) => ({ status: r.status, scheduledDate: new Date(r.scheduledDate) }));
 
-  const thisMetrics = computeMonthlyMetrics(
-    toApptLike(thisApptDocs),
-    thisTxnDocs as TransactionLike[],
-    now
-  );
-  const lastMetrics = computeMonthlyMetrics(
-    toApptLike(lastApptDocs),
-    lastTxnDocs as TransactionLike[],
-    now
-  );
+  // Revenue = completed jobs' totals + kept deposits (see loadRevenueItems).
+  const [thisRevenueItems, lastRevenueItems] = await Promise.all([
+    loadRevenueItems(groomerId, thisMonthStart, thisMonthEnd),
+    loadRevenueItems(groomerId, lastMonthStart, lastMonthEnd),
+  ]);
+  const thisMetrics = computeMonthlyMetrics(toApptLike(thisApptDocs), thisRevenueItems, now);
+  const lastMetrics = computeMonthlyMetrics(toApptLike(lastApptDocs), lastRevenueItems, now);
+  // Card deposits collected this month (shown next to revenue).
+  const depositsThisMonth = (thisTxnDocs as TransactionLike[])
+    .filter((t) => t.status === 'succeeded')
+    .reduce((sum, t) => sum + t.amount, 0);
 
   const monthSummary: MonthSummary = {
     bookings: thisMetrics.bookings,
     revenue: thisMetrics.revenue,
-    estimatedServiceRevenue,
+    estimatedServiceRevenue: Math.round(depositsThisMonth * 100) / 100,
     noShowRate: thisMetrics.noShowRate,
     bookingsDiffPct: pctDiff(thisMetrics.bookings, lastMetrics.bookings),
     revenueDiffPct: pctDiff(thisMetrics.revenue, lastMetrics.revenue),

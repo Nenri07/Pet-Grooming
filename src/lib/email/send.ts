@@ -679,3 +679,46 @@ export async function sendAppointmentReminderEmail(
     return false;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Groomer → client message from the Inbox (works without SMS)
+// ---------------------------------------------------------------------------
+
+export interface ClientMessageDetails {
+  businessName: string;
+  body: string;
+  /** Groomer's email, so the client's reply goes straight to them. */
+  replyTo?: string;
+  groomerPhone?: string;
+}
+
+export async function sendClientMessageEmail(to: string, d: ClientMessageDetails): Promise<boolean> {
+  const resend = getResend();
+  const from = getFromAddress();
+  if (!resend || !from || !to) return false;
+  const business = d.businessName?.trim() || 'Your groomer';
+  const wa = whatsappLink(d.groomerPhone);
+  const body = `
+    <p style="margin:0 0 16px;font-size:15px;line-height:1.6;white-space:pre-wrap;">${escapeHtml(d.body)}</p>
+    <p style="margin:20px 0 0;font-size:13px;color:#6b7280;line-height:1.5;">
+      Reply to this email to answer ${escapeHtml(business)}${
+        wa ? `, or <a href="${escapeHtml(wa)}" style="color:#111827;">message on WhatsApp</a>` : ''
+      }.
+    </p>`;
+  try {
+    await withRetry(async () => {
+      const { error } = await resend.emails.send({
+        from,
+        to,
+        subject: `Message from ${business}`,
+        html: emailShell(business, `A message from ${business}`, body),
+        ...(d.replyTo ? { replyTo: d.replyTo } : {}),
+      });
+      if (error) throw error;
+    });
+    return true;
+  } catch (err) {
+    console.error('[email] Failed to send client message:', err);
+    return false;
+  }
+}

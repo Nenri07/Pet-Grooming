@@ -99,9 +99,8 @@ export interface MonthSummary {
   /** Deposits actually collected (succeeded transactions). */
   revenue: number;
   /**
-   * Estimated service revenue earned this month = sum of each COMPLETED
-   * appointment's service price. Shown ALONGSIDE `revenue` (deposits), not
-   * merged. Uses Service.basePrice as the stand-in (no final-price field yet).
+   * Card deposits collected this month (shown next to revenue). Revenue itself
+   * already includes completed jobs' full totals and kept deposits.
    */
   estimatedServiceRevenue: number;
   noShowRate: number;
@@ -713,12 +712,12 @@ function ThisMonthCard({ summary }: { summary: MonthSummary }) {
           <NumberTicker value={summary.bookings} />
         </Metric>
         <Metric
-          label="Deposits collected"
+          label="Revenue"
           diff={<DiffPill value={summary.revenueDiffPct} />}
         >
           <NumberTicker value={summary.revenue} prefix="$" decimals={0} />
         </Metric>
-        <Metric label="Est. service revenue" diff={null}>
+        <Metric label="Deposits collected" diff={null}>
           <NumberTicker value={summary.estimatedServiceRevenue} prefix="$" decimals={0} />
         </Metric>
         <Metric
