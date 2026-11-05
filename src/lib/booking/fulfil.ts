@@ -25,6 +25,7 @@
 import type Stripe from 'stripe';
 import { isValidObjectId, type Types } from 'mongoose';
 import { nanoid } from 'nanoid';
+import { sanitizeLatLng } from '@/lib/geo/mapbox-search';
 import { connectDB } from '@/lib/db/connect';
 import { GroomerProfile } from '@/lib/db/models/groomer-profile';
 import { Service } from '@/lib/db/models/service';
@@ -220,6 +221,7 @@ export function normalizePendingBooking(record: unknown): BookingMetadata | null
         state: address.state,
         postalCode: address.postalCode,
       },
+      location: sanitizeLatLng(owner.location),
     },
   };
 }
@@ -262,6 +264,9 @@ async function upsertClientAndPet(
     phone: booking.owner.phone,
     address: booking.owner.address,
   };
+  // The exact map pin (when picked) drives routing + the live ETA destination.
+  const pinned = sanitizeLatLng(booking.owner.location);
+  if (pinned) clientSet.location = pinned;
   if (booking.smsConsent) {
     clientSet.smsConsentAt = new Date();
   }
@@ -539,6 +544,7 @@ export async function fulfilBookingByPaymentIntentId(
     scheduledEndDate,
     status: 'upcoming',
     serviceAddress,
+    location: sanitizeLatLng(booking.owner.location),
     notes: booking.pet.notes,
     bookingRef,
   });
@@ -688,6 +694,7 @@ export async function fulfilFreeBooking(
     scheduledEndDate,
     status: 'upcoming',
     serviceAddress,
+    location: sanitizeLatLng(booking.owner.location),
     notes: booking.pet.notes,
     bookingRef,
     source: 'public',

@@ -5,6 +5,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { BookingStepProps } from './StepPetInfo';
 import type { OwnerDetailsInput } from '@/types';
+import { AddressPicker } from '@/components/ui/AddressPicker';
+import { isPublicMapboxToken, type PickedAddress } from '@/lib/geo/mapbox-search';
+
+const MAP_PICKER_ENABLED = isPublicMapboxToken(process.env.NEXT_PUBLIC_MAPBOX_TOKEN);
 import {
   ownerDetailsSchema,
   type OwnerDetailsFormValues,
@@ -37,6 +41,7 @@ function toFormValues(
       state: owner.address.state,
       postalCode: owner.address.postalCode,
     },
+    location: owner.location,
   };
 }
 
@@ -66,6 +71,9 @@ export function StepOwnerDetails({ state, dispatch }: BookingStepProps) {
   const {
     register,
     handleSubmit,
+    setValue,
+    getValues,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<OwnerDetailsFormInput, unknown, OwnerDetailsFormValues>({
     resolver: zodResolver(ownerDetailsSchema),
@@ -88,6 +96,38 @@ export function StepOwnerDetails({ state, dispatch }: BookingStepProps) {
   // SMS consent (Master Spec §12.3): UNCHECKED by default. Restored from state
   // on back-navigation so the choice is lossless.
   const [smsConsent, setSmsConsent] = React.useState<boolean>(state.smsConsent);
+
+  // The street line the pin was picked for. If the client later retypes the
+  // street, the pin no longer describes this address, so we drop it.
+  const pinnedStreetRef = React.useRef<string | null>(
+    state.ownerDetails?.location ? state.ownerDetails.address.street : null
+  );
+  const streetValue = watch('address.street');
+  React.useEffect(() => {
+    if (pinnedStreetRef.current !== null && streetValue !== pinnedStreetRef.current) {
+      pinnedStreetRef.current = null;
+      setValue('location', undefined);
+    }
+  }, [streetValue, setValue]);
+
+  const applyPicked = (a: PickedAddress) => {
+    const opts = { shouldValidate: true, shouldDirty: true } as const;
+    // Only overwrite a field when the map gave us a value for it.
+    if (a.street) setValue('address.street', a.street, opts);
+    if (a.city) setValue('address.city', a.city, opts);
+    if (a.state) setValue('address.state', a.state, opts);
+    if (a.postalCode) setValue('address.postalCode', a.postalCode, opts);
+    pinnedStreetRef.current = a.street || getValues('address.street');
+    setValue('location', { lat: a.lat, lng: a.lng });
+  };
+
+  const pickerQuery = [
+    watch('address.street'),
+    watch('address.city'),
+  ]
+    .filter(Boolean)
+    .join(', ');
+  const hasPin = Boolean(watch('location'));
 
   const submit = handleSubmit((values) => {
     // `values` already conforms to OwnerDetailsInput (nested address, phone
@@ -185,6 +225,17 @@ export function StepOwnerDetails({ state, dispatch }: BookingStepProps) {
       <div className="divider my-1 text-sm text-base-content/50">
         Service address
       </div>
+
+      {MAP_PICKER_ENABLED && (
+      <div className="flex flex-wrap items-center gap-3">
+        <AddressPicker onPick={applyPicked} initialQuery={pickerQuery} />
+        <span className="text-xs text-base-content/60">
+          {hasPin
+            ? 'Exact spot pinned on the map.'
+            : 'Pick your spot on the map so your groomer finds you, or type it below.'}
+        </span>
+      </div>
+      )}
 
       {/* Street */}
       <div className="form-control">

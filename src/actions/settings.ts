@@ -296,7 +296,11 @@ export async function updateBusinessSettings(
     // Geocode on save: resolve coordinates when the address is non-empty AND it
     // changed from the stored value (or we have no stored location yet). A
     // geocoder failure NEVER blocks the save — routing stays pass-through.
-    if (baseAddress) {
+    const pinnedBase = data.baseLocation ?? null;
+    if (baseAddress && pinnedBase) {
+      // The groomer placed the pin on the map: trust it over geocoding.
+      set.baseLocation = { lat: pinnedBase.lat, lng: pinnedBase.lng };
+    } else if (baseAddress) {
       const changed = (current?.baseAddress ?? '').trim() !== baseAddress;
       const missingLocation = !current?.baseLocation;
       if (changed || missingLocation) {

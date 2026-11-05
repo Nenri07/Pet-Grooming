@@ -181,6 +181,15 @@ export const settingsSchema = z.object({
     .optional()
     .or(z.literal('')),
 
+  // Exact base pin from the "Find on map" picker. When present it is used
+  // instead of geocoding the typed address.
+  baseLocation: z
+    .object({
+      lat: z.number().min(-90).max(90),
+      lng: z.number().min(-180).max(180),
+    })
+    .nullish(),
+
   serviceRadiusKm: z.coerce
     .number({ message: 'Enter a service radius in kilometres.' })
     .min(SERVICE_RADIUS_MIN, {

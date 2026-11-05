@@ -164,6 +164,8 @@ export interface OwnerDetailsInput {
   email: string;
   phone: string;
   address: AddressInput;
+  /** Exact service-address pin from the map picker, when the client used it. */
+  location?: { lat: number; lng: number };
 }
 
 /** The full payload submitted to create a booking. */

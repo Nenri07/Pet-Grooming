@@ -241,6 +241,14 @@ export const ownerDetailsSchema = z.object({
         message: `Postal code must be at most ${ADDRESS_POSTAL_CODE_MAX_LENGTH} characters.`,
       }),
   }),
+
+  // Exact pin from the "Find on map" picker. Optional: typing still works.
+  location: z
+    .object({
+      lat: z.number().min(-90).max(90),
+      lng: z.number().min(-180).max(180),
+    })
+    .optional(),
 });
 
 /**

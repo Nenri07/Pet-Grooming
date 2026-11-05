@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { Link2, Plus, Trash2 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
 import { ImageUpload } from '@/components/ui/ImageUpload';
+import { AddressPicker } from '@/components/ui/AddressPicker';
 import type { GeoPolygon } from '@/lib/routing/service-area';
 import {
   updateBusinessSettings,
@@ -105,6 +106,7 @@ function toFormValues(settings: BusinessSettingsData): ServiceSettingsInput {
     })),
     logoUrl: settings.logoUrl,
     baseAddress: settings.baseAddress,
+    baseLocation: null,
     serviceRadiusKm:
       settings.serviceRadiusKm ?? ('' as unknown as number),
     serviceAreaPolygon: settings.serviceAreaPolygon ?? null,
@@ -130,6 +132,7 @@ function BusinessProfileForm({ initialSettings }: BusinessSettingsProps) {
     handleSubmit,
     control,
     watch,
+    setValue,
     setError,
     formState: { errors, isSubmitting },
   } = useForm<ServiceSettingsInput, unknown, ServiceSettingsValues>({
@@ -145,6 +148,16 @@ function BusinessProfileForm({ initialSettings }: BusinessSettingsProps) {
   });
 
   const businessNameValue = watch('businessName') ?? '';
+  const baseAddressValue = watch('baseAddress') ?? '';
+  const pinnedBase = watch('baseLocation');
+  // Typing a different address after pinning drops the pin (it no longer matches).
+  const pinnedForRef = React.useRef<string | null>(null);
+  React.useEffect(() => {
+    if (pinnedForRef.current !== null && baseAddressValue !== pinnedForRef.current) {
+      pinnedForRef.current = null;
+      setValue('baseLocation', null);
+    }
+  }, [baseAddressValue, setValue]);
 
   const submit = handleSubmit(async (values) => {
     const result = await updateBusinessSettings(values);
@@ -315,6 +328,21 @@ function BusinessProfileForm({ initialSettings }: BusinessSettingsProps) {
               aria-invalid={errors.baseAddress ? 'true' : 'false'}
               {...register('baseAddress')}
             />
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              <AddressPicker
+                initialQuery={baseAddressValue}
+                near={initialSettings.baseLocation}
+                onPick={(a) => {
+                  const text = a.fullAddress || [a.street, a.city].filter(Boolean).join(', ');
+                  pinnedForRef.current = text;
+                  setValue('baseAddress', text, { shouldDirty: true, shouldValidate: true });
+                  setValue('baseLocation', { lat: a.lat, lng: a.lng }, { shouldDirty: true });
+                }}
+              />
+              {pinnedBase && (
+                <span className="text-xs text-base-content/60">Exact spot pinned. Save to keep it.</span>
+              )}
+            </div>
             {errors.baseAddress ? (
               <p className="mt-1 text-sm text-error" role="alert">
                 {errors.baseAddress.message}
