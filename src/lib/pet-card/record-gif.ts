@@ -30,9 +30,17 @@ export async function recordNodeAsGif(
   const rect = node.getBoundingClientRect();
   const width = Math.max(1, Math.round(rect.width));
   const height = Math.max(1, Math.round(rect.height));
-  const background = getComputedStyle(document.body).backgroundColor || '#ffffff';
+  // html-to-image copies the node's computed styles onto the clone, including
+  // centring margins and the 3D tilt, which shifted and clipped the card.
+  // Flatten those on the captured root and leave the outside transparent.
   const capture = () =>
-    toCanvas(node, { width, height, pixelRatio, fontEmbedCSS, backgroundColor: background });
+    toCanvas(node, {
+      width,
+      height,
+      pixelRatio,
+      fontEmbedCSS,
+      style: { margin: '0', transform: 'none', boxShadow: 'none' },
+    });
 
   const frames: { data: Uint8ClampedArray; at: number; w: number; h: number }[] = [];
   const start = performance.now();
@@ -49,12 +57,20 @@ export async function recordNodeAsGif(
   if (frames.length === 0) throw new Error('No frames captured');
 
   const gif = GIFEncoder();
-  // One shared palette (from the first frame) keeps colours stable and the file small.
-  const palette = quantize(frames[0].data, 256);
+  // One shared palette (from the first frame) keeps colours stable and the file
+  // small. 1-bit alpha keeps the area outside the rounded corners transparent.
+  const format = 'rgba4444';
+  const palette = quantize(frames[0].data, 256, { format, oneBitAlpha: true });
+  const transparentIndex = palette.findIndex((c) => c[3] === 0);
   frames.forEach((f, i) => {
     const next = frames[i + 1];
     const delay = Math.max(20, Math.round((next ? next.at : f.at + gap) - f.at));
-    gif.writeFrame(applyPalette(f.data, palette), f.w, f.h, { palette, delay, repeat: 0 });
+    gif.writeFrame(applyPalette(f.data, palette, format), f.w, f.h, {
+      palette,
+      delay,
+      repeat: 0,
+      ...(transparentIndex >= 0 ? { transparent: true, transparentIndex } : {}),
+    });
   });
   gif.finish();
   const bytes = gif.bytes();

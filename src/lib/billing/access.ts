@@ -146,6 +146,29 @@ export function evaluateAccess(input: AccessInput): AccessDecision {
 }
 
 /**
+ * Safety net for missed billing webhooks. PURE.
+ *
+ * A paid plan normally stays `active` until the payment provider tells us it
+ * ended. If that "ended" webhook is ever lost, the row would stay `active`
+ * forever. Every successful renewal moves `currentPeriodEnd` forward, so an
+ * `active` row whose period ended more than {@link GRACE_PERIOD_DAYS} days ago
+ * has not been paid for and is treated as `expired`.
+ *
+ * Rows with no `currentPeriodEnd` (legacy / manual) are left unchanged.
+ */
+export function effectiveSubscriptionStatus(
+  status: SubscriptionStatus,
+  currentPeriodEnd: Date | string | null | undefined,
+  now: Date
+): SubscriptionStatus {
+  if (status !== 'active' || currentPeriodEnd == null) return status;
+  const end = currentPeriodEnd instanceof Date ? currentPeriodEnd : new Date(currentPeriodEnd);
+  const endMs = end.getTime();
+  if (Number.isNaN(endMs)) return status;
+  return now.getTime() >= endMs + GRACE_PERIOD_DAYS * DAY_MS ? 'expired' : status;
+}
+
+/**
  * The minimal subscription shape the {@link subscriptionToAccessInput} mapper
  * reads. Accepting a plain shape (not a Mongoose document) keeps the mapper
  * pure and trivially testable — the DB layer passes a `.lean()` result, tests
@@ -159,6 +182,8 @@ export interface SubscriptionAccessRow {
   trialEndsAt?: Date | string | null;
   /** Grace-window anchor for `past_due`. */
   pastDueSince?: Date | string | null;
+  /** End of the paid period; drives the missed-webhook safety net. */
+  currentPeriodEnd?: Date | string | null;
 }
 
 /** Coerce a `Date | string | null | undefined` into a `Date` or `null`. */
@@ -209,7 +234,8 @@ export function subscriptionToAccessInput(
 
   // Map the lifecycle status into the AccessState vocabulary. The only
   // divergence is `expired` → `none` (AccessState has no `expired`).
-  const status: AccessState = row.status === 'expired' ? 'none' : row.status;
+  const lifecycle = effectiveSubscriptionStatus(row.status, row.currentPeriodEnd, now);
+  const status: AccessState = lifecycle === 'expired' ? 'none' : lifecycle;
 
   return {
     status,

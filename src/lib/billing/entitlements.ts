@@ -25,6 +25,7 @@
  * _Master Spec: §13.1, §13.2, §15_
  */
 import { AppError } from '@/lib/errors';
+import { effectiveSubscriptionStatus } from './access';
 import {
   FEATURE_KEYS,
   PLANS,
@@ -184,6 +185,10 @@ export function resolveEntitlements(
     }
 
     case 'active':
+      // Missed-webhook safety net: renewal overdue past the grace window.
+      if (effectiveSubscriptionStatus('active', sub.currentPeriodEnd, now) === 'expired') {
+        return readOnly(sub, 'expired');
+      }
       return granted('active', false);
 
     case 'past_due': {

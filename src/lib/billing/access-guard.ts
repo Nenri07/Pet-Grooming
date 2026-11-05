@@ -71,7 +71,7 @@ async function loadAccessRow(
   const { Subscription } = await import('@/lib/db/models/subscription');
   await connectDB();
   const row = await Subscription.findOne({ groomerId })
-    .select('status trialDeadline trialEndsAt pastDueSince')
+    .select('status trialDeadline trialEndsAt pastDueSince currentPeriodEnd')
     .lean<SubscriptionAccessRow | null>();
   return row ?? null;
 }

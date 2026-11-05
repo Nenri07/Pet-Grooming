@@ -24,7 +24,11 @@ import bcrypt from 'bcryptjs';
 import { connectDB } from '@/lib/db/connect';
 import { User } from '@/lib/db/models/user';
 import { GroomerProfile } from '@/lib/db/models/groomer-profile';
-import { toAccessClaim, type AccessState } from '@/lib/billing/access';
+import {
+  effectiveSubscriptionStatus,
+  toAccessClaim,
+  type AccessState,
+} from '@/lib/billing/access';
 import { defaultTrialSubscription } from '@/lib/billing/entitlements';
 import type { SubscriptionStatus } from '@/lib/db/models/subscription';
 
@@ -360,11 +364,11 @@ export const authOptions: NextAuthOptions = {
           const { Subscription } = await import('@/lib/db/models/subscription');
           await connectDB();
           const sub = await Subscription.findOne({ groomerId: token.userId })
-            .select('status trialDeadline trialEndsAt pastDueSince')
+            .select('status trialDeadline trialEndsAt pastDueSince currentPeriodEnd')
             .lean<
               Pick<
                 import('@/lib/db/models/subscription').ISubscription,
-                'status' | 'trialDeadline' | 'trialEndsAt' | 'pastDueSince'
+                'status' | 'trialDeadline' | 'trialEndsAt' | 'pastDueSince' | 'currentPeriodEnd'
               > | null
             >();
 
@@ -397,7 +401,9 @@ export const authOptions: NextAuthOptions = {
             const trialDeadline =
               sub.trialDeadline ?? sub.trialEndsAt ?? null;
             token.access = toAccessClaim({
-              status: toAccessState(sub.status),
+              status: toAccessState(
+                effectiveSubscriptionStatus(sub.status, sub.currentPeriodEnd, new Date())
+              ),
               trialDeadline: trialDeadline ?? null,
               pastDueSince: sub.pastDueSince ?? null,
             });

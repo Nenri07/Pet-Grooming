@@ -100,7 +100,10 @@ export function PetCardRenderer({ data, shareUrl }: PetCardRendererProps) {
   }
 
   async function handleShareCard() {
-    const node = cardWrapRef.current?.firstElementChild as HTMLElement | null;
+    // Record the card itself (the <article>), not the centred wrapper around it.
+    const node =
+      (cardWrapRef.current?.querySelector('article') as HTMLElement | null) ??
+      (cardWrapRef.current?.firstElementChild as HTMLElement | null);
     if (!node) return;
     setIsSharing(true);
     try {
