@@ -1,7 +1,7 @@
 'use client';
 import * as React from 'react';
 import { motion, useInView } from 'framer-motion';
-import { Download, Printer } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { useGsapContext, useReducedMotion } from '@/lib/animation';
 import { SectionHeading } from './SectionHeading';
 import { landing } from '@/content/landing';
@@ -35,7 +35,10 @@ const SAMPLE_RECEIPT: ReceiptData = {
   clientName: 'Jordan Lee',
   scheduledDate: '2025-07-17T14:30:00',
   depositAmount: 25,
+  servicePrice: 85,
   currency: 'usd',
+  paymentIntentId: 'pi_3QfX2mHappyPaws8fK2',
+  bookedOn: '2025-07-10T09:12:00',
 };
 
 export function ReceiptShowcase() {
@@ -82,15 +85,15 @@ export function ReceiptShowcase() {
           {/* ---- Copy ---- */}
           <div className="order-2 max-w-lg lg:order-1">
             <p className="text-lg text-base-content/70">
-              Every booking gets a branded receipt clients can download and show
-              on arrival. No screenshots of a text thread, no confusion at the
-              door — just a clean slip with the reference, time and deposit.
+              Every booking gets a professional invoice in the groomer&apos;s name:
+              reference number, appointment time, what was paid and what&apos;s due
+              on the day. Clients download it as a PDF and show it on arrival.
             </p>
             <ul className="mt-6 space-y-3">
               {[
-                'Unique reference on every booking',
-                'Deposit clearly marked as paid',
-                'Downloads in one tap, works offline',
+                'A numbered invoice for every booking',
+                'Deposit paid and balance due, clearly itemised',
+                'Downloads as a PDF in one tap',
               ].map((line) => (
                 <li
                   key={line}
@@ -132,10 +135,7 @@ export function ReceiptShowcase() {
                   <Download className="h-4 w-4" />
                   {receipt.downloadLabel}
                 </span>
-                <span className="btn btn-outline pointer-events-none min-h-[44px] gap-2 opacity-60 sm:flex-none">
-                  <Printer className="h-4 w-4" />
-                  Print
-                </span>
+
               </div>
 
               <p className="mt-3 text-center text-[0.7rem] text-base-content/50">

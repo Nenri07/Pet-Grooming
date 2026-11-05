@@ -101,6 +101,7 @@ export function StepSuccess({
       currency: depositCurrency,
       paymentIntentId: payment?.paymentIntentId,
       bookedOn: new Date(),
+      servicePrice: chosenService?.basePrice,
     }),
     [
       state.petInfo?.name,
@@ -111,6 +112,7 @@ export function StepSuccess({
       payment?.amount,
       payment?.paymentIntentId,
       depositCurrency,
+      chosenService?.basePrice,
     ]
   );
 
@@ -139,6 +141,7 @@ export function StepSuccess({
       currency: string;
       paymentIntentId: string;
       depositDue?: number;
+      servicePrice?: number;
     }): ReceiptData => ({
       businessName: s.businessName,
       bookingRef: s.bookingRef || fallbackRefRef.current,
@@ -154,6 +157,7 @@ export function StepSuccess({
       paymentIntentId: s.paymentIntentId || undefined,
       bookedOn: new Date(),
       depositDue: s.depositDue,
+      servicePrice: s.servicePrice,
     }),
     []
   );

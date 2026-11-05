@@ -127,6 +127,8 @@ export interface FulfilSummary {
   /** The Stripe PaymentIntent / transaction id. */
   paymentIntentId: string;
   businessName: string;
+  /** The service's listed price, for the invoice breakdown. */
+  servicePrice?: number;
   /** Deposit still owed through the groomer's payment link (link bookings only). */
   depositDue?: number;
   /** Where the client pays that deposit. */
@@ -455,7 +457,7 @@ async function summariseExisting(
   const [pet, client, service, profile] = await Promise.all([
     Pet.findById(appointment.petId).select('name').lean(),
     Client.findById(appointment.clientId).select('name').lean(),
-    Service.findById(appointment.serviceId).select('name').lean(),
+    Service.findById(appointment.serviceId).select('name basePrice').lean(),
     GroomerProfile.findOne({ userId: appointment.groomerId })
       .select('businessName')
       .lean(),
@@ -465,6 +467,7 @@ async function summariseExisting(
     bookingRef: appointment.bookingRef ?? '',
     petName: (pet as { name?: string } | null)?.name ?? '',
     serviceName: (service as { name?: string } | null)?.name ?? '',
+    servicePrice: (service as { basePrice?: number } | null)?.basePrice,
     serviceAddress: appointment.serviceAddress ?? '',
     clientName: (client as { name?: string } | null)?.name ?? '',
     scheduledDate: new Date(appointment.scheduledDate).toISOString(),
@@ -630,6 +633,7 @@ export async function fulfilBookingByPaymentIntentId(
       bookingRef,
       petName: booking.pet.name,
       serviceName: service.name,
+      servicePrice: service.basePrice,
       serviceAddress,
       clientName: booking.owner.name,
       scheduledDate: scheduledDate.toISOString(),
@@ -784,6 +788,7 @@ export async function fulfilFreeBooking(
       bookingRef,
       petName: booking.pet.name,
       serviceName: service.name,
+      servicePrice: service.basePrice,
       serviceAddress,
       clientName: booking.owner.name,
       scheduledDate: scheduledDate.toISOString(),

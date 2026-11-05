@@ -1,66 +1,42 @@
 'use client';
 
 /**
- * ReceiptTicket — the shared, presentational booking-receipt "ticket".
+ * ReceiptTicket — the booking INVOICE, shared by the booking success step,
+ * the card-deposit return page, and the marketing showcase.
  *
- * This is the EXACT premium on-screen receipt visual (the `#pp-receipt`
- * <article>) extracted so it can be rendered in two places without drift:
- *   - `BookingReceipt` renders it on the booking success step and wraps it with
- *     the live Download / Print action buttons (kept OUTSIDE this article so the
- *     `@media print` isolation on `#pp-receipt` still prints only the ticket).
- *   - `ReceiptShowcase` on the marketing landing renders it with sample data so
- *     prospects see the real design they'll get — no action buttons.
- *
- * Visuals use DaisyUI theme tokens only (primary/accent, base-*, success) so it
- * recolours with every theme. It carries `id="pp-receipt"` so the existing
- * print stylesheet keeps isolating it. Responsive from 320px.
+ * The downloadable PDF is a high-resolution snapshot of this exact element
+ * (see BookingReceipt), so what clients see is what they download. Plain
+ * markup + theme tokens only — no extra libraries, so it costs nothing to load
+ * and recolours with every theme. Responsive from 320px.
  */
 import Image from 'next/image';
-import { PawPrint, CheckCircle2 } from 'lucide-react';
+import { PawPrint } from 'lucide-react';
 import type { ReceiptData } from './ReceiptPDF';
 import { safeHttpsImageSrc } from '@/lib/images';
 
 export interface ReceiptTicketProps {
   data: ReceiptData;
-  /**
-   * Optional override for the article id. Defaults to `pp-receipt` so the live
-   * receipt keeps its print isolation. The showcase passes a different id to
-   * avoid duplicate ids if both ever render on the same page.
-   */
+  /** Article id. Defaults to `pp-receipt` (print isolation); the showcase passes its own. */
   id?: string;
 }
 
-/** Parse a possibly-serialized date, returning null when invalid/missing. */
 function toDate(value: string | Date | null | undefined): Date | null {
   if (!value) return null;
   const date = value instanceof Date ? value : new Date(value);
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-/** Human-readable date, e.g. "Monday, June 3, 2025". */
-function formatDate(value: string | Date | null | undefined): string {
-  const date = toDate(value);
-  if (!date) return '';
-  return date.toLocaleDateString(undefined, {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+function fmtDate(value: string | Date | null | undefined, opts: Intl.DateTimeFormatOptions): string {
+  const d = toDate(value);
+  return d ? d.toLocaleDateString(undefined, opts) : '';
 }
 
-/** Human-readable time, e.g. "10:00 AM". */
-function formatTime(value: string | Date | null | undefined): string {
-  const date = toDate(value);
-  if (!date) return '';
-  return date.toLocaleTimeString(undefined, {
-    hour: 'numeric',
-    minute: '2-digit',
-  });
+function fmtTime(value: string | Date | null | undefined): string {
+  const d = toDate(value);
+  return d ? d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '';
 }
 
-/** Format a monetary amount, e.g. "$50.00". */
-function formatCurrency(amount: number, currency: string): string {
+function money(amount: number, currency: string): string {
   try {
     return new Intl.NumberFormat(undefined, {
       style: 'currency',
@@ -73,211 +49,172 @@ function formatCurrency(amount: number, currency: string): string {
   }
 }
 
-/** Short issue date, e.g. "Jun 3, 2025". */
-function formatIssueDate(value: string | Date | null | undefined): string {
-  const date = toDate(value) ?? new Date();
-  return date.toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
+type Status = { label: string; tone: 'success' | 'warning' | 'info' };
+
+/** Shortened payment reference, e.g. "pi_3Q…8fK2". */
+function shortRef(id: string): string {
+  return id.length > 14 ? `${id.slice(0, 7)}…${id.slice(-4)}` : id;
 }
 
-/**
- * The premium receipt ticket. Purely presentational — no actions, no state —
- * so it can be shared by the live success step and the marketing showcase.
- */
-export function ReceiptTicket({ data, id = 'pp-receipt' }: ReceiptTicketProps) {
-  const dateStr = formatDate(data.scheduledDate);
-  const timeStr = formatTime(data.scheduledDate);
-  const issueDate = formatIssueDate(data.bookedOn);
-  const whenLine = [dateStr, timeStr].filter(Boolean).join(' · ');
+function Label({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="text-[0.6rem] font-semibold uppercase tracking-[0.18em] text-base-content/50">
+      {children}
+    </div>
+  );
+}
 
-  // When the caller supplies the full service price, surface the balance still
-  // owed on the day (price − deposit). Additive: deposit-only bookings show 0.
-  const linkDepositDue =
-    typeof data.depositDue === 'number' && data.depositDue > 0 ? data.depositDue : 0;
-  const balanceDue =
-    typeof data.servicePrice === 'number' &&
-    Number.isFinite(data.servicePrice) &&
-    data.servicePrice > data.depositAmount
-      ? data.servicePrice - data.depositAmount
-      : 0;
+export function ReceiptTicket({ data, id = 'pp-receipt' }: ReceiptTicketProps) {
+  const currency = data.currency || 'usd';
+  const deposit = Math.max(0, data.depositAmount || 0);
+  const depositDue = typeof data.depositDue === 'number' && data.depositDue > 0 ? data.depositDue : 0;
+  const hasPrice = typeof data.servicePrice === 'number' && Number.isFinite(data.servicePrice) && data.servicePrice > 0;
+  const total = hasPrice ? (data.servicePrice as number) : Math.max(deposit, depositDue);
+  const paidNow = deposit;
+  const balance = Math.max(0, total - paidNow - depositDue);
+
+  const status: Status =
+    depositDue > 0
+      ? { label: 'Deposit due', tone: 'warning' }
+      : paidNow > 0 && balance > 0
+        ? { label: 'Deposit paid', tone: 'success' }
+        : paidNow > 0
+          ? { label: 'Paid', tone: 'success' }
+          : { label: 'Confirmed', tone: 'info' };
+  const toneClass =
+    status.tone === 'success'
+      ? 'bg-success/15 text-success'
+      : status.tone === 'warning'
+        ? 'bg-warning/20 text-warning-content'
+        : 'bg-info/15 text-info';
+
+  const issued = fmtDate(data.bookedOn ?? new Date(), { year: 'numeric', month: 'short', day: 'numeric' });
+  const apptDate = fmtDate(data.scheduledDate, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  const apptTime = fmtTime(data.scheduledDate);
+  const groomerLogo = safeHttpsImageSrc(data.logoUrl);
+  const business = data.businessName || 'Pet Grooming';
+  const paymentMethod = paidNow > 0 ? 'Card' : depositDue > 0 ? 'Payment link' : 'Pay on the day';
 
   return (
     <article
       id={id}
-      className="overflow-hidden rounded-box border border-base-content/10 bg-base-100 shadow-card"
+      className="overflow-hidden rounded-box border border-base-content/10 bg-base-100 text-base-content shadow-card"
     >
-      {/* Header band: Pawxis logo + business name, with document title */}
-      <header className="flex items-center justify-between gap-3 bg-base-200/60 px-6 py-5">
+      <div aria-hidden="true" className="h-1.5 bg-gradient-to-r from-primary via-primary to-accent" />
+
+      {/* Header: business identity + document title */}
+      <header className="flex items-start justify-between gap-4 px-6 pb-5 pt-6">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-base-100 shadow-card">
-            <Image
-              src="/pawxisLogo.png"
-              alt="Pawxis"
-              fill
-              className="object-contain p-1"
-              sizes="48px"
-            />
+          <span className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary/10 text-primary">
+            {groomerLogo ? (
+              <Image src={groomerLogo} alt={`${business} logo`} fill className="object-cover" sizes="44px" />
+            ) : (
+              <PawPrint className="h-5 w-5" aria-hidden="true" />
+            )}
           </span>
-          {safeHttpsImageSrc(data.logoUrl) && (
-            <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-base-100">
-              <Image
-                src={safeHttpsImageSrc(data.logoUrl) as string}
-                alt={`${data.businessName || 'Business'} logo`}
-                fill
-                className="object-cover"
-                sizes="40px"
-              />
-            </span>
-          )}
           <div className="min-w-0">
-            <h3 className="truncate text-base font-bold text-base-content">
-              {data.businessName || 'Pet Grooming'}
-            </h3>
-            <p className="text-xs text-base-content/50">Powered by Pawxis</p>
+            <h3 className="truncate text-base font-bold leading-tight">{business}</h3>
+            <p className="text-xs text-base-content/50">Mobile pet grooming</p>
           </div>
         </div>
-        <span className="shrink-0 text-right text-[0.6rem] font-semibold uppercase leading-tight tracking-[0.2em] text-primary">
-          Booking
-          <br />
-          Receipt
-        </span>
+        <div className="shrink-0 text-right">
+          <div className="text-lg font-extrabold tracking-[0.12em] text-base-content">INVOICE</div>
+          <div className="mt-0.5 font-mono text-xs text-base-content/60">{data.bookingRef || '—'}</div>
+        </div>
       </header>
 
-      {/* Accent band — recolors with the active theme */}
-      <div aria-hidden="true" className="h-1 bg-primary" />
-
-      <div className="px-6 py-6">
-        {/* Invoice meta: reference no. + issue date */}
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="text-[0.6rem] font-semibold uppercase tracking-[0.2em] text-base-content/50">
-              Reference
-            </div>
-            <div className="mt-1 font-mono text-xl font-bold tracking-widest text-primary">
-              {data.bookingRef || '—'}
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="text-[0.6rem] font-semibold uppercase tracking-[0.2em] text-base-content/50">
-              Issued
-            </div>
-            <div className="mt-1 text-sm font-semibold text-base-content">
-              {issueDate}
-            </div>
-          </div>
+      {/* Meta strip */}
+      <div className="mx-6 grid grid-cols-3 gap-3 rounded-box bg-base-200/70 px-4 py-3">
+        <div className="min-w-0">
+          <Label>Issued</Label>
+          <div className="mt-1 truncate text-xs font-semibold">{issued}</div>
         </div>
-
-        {/* Billed to */}
-        {(data.clientName || data.serviceAddress) && (
-          <div className="mt-6 border-t border-base-content/10 pt-4">
-            <div className="text-[0.6rem] font-semibold uppercase tracking-[0.2em] text-base-content/50">
-              Billed to
-            </div>
-            {data.clientName && (
-              <div className="mt-1 text-sm font-semibold text-base-content">
-                {data.clientName}
-              </div>
-            )}
-            {data.serviceAddress && (
-              <div className="text-sm text-base-content/60">
-                {data.serviceAddress}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Itemized line: service — date/time — amount */}
-        <div className="mt-6 overflow-hidden rounded-box border border-base-content/10">
-          <div className="flex items-center justify-between gap-3 bg-base-200/60 px-4 py-2.5">
-            <span className="text-[0.6rem] font-semibold uppercase tracking-[0.15em] text-base-content/50">
-              Description
-            </span>
-            <span className="text-[0.6rem] font-semibold uppercase tracking-[0.15em] text-base-content/50">
-              Amount
-            </span>
-          </div>
-          <div className="flex items-start justify-between gap-3 px-4 py-4">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 text-sm font-semibold text-base-content">
-                <PawPrint
-                  aria-hidden="true"
-                  className="h-4 w-4 shrink-0 text-primary"
-                />
-                <span className="truncate">
-                  {data.serviceName || 'Grooming service'}
-                </span>
-              </div>
-              <div className="mt-1 pl-6 text-xs text-base-content/60">
-                {data.petName ? `${data.petName} · ` : ''}
-                {whenLine || 'Scheduled — details in your email'}
-              </div>
-              <div className="mt-1 pl-6 text-xs text-base-content/50">
-                Deposit toward total
-              </div>
-            </div>
-            <div className="shrink-0 text-right font-mono text-sm font-semibold tabular-nums text-base-content">
-              {formatCurrency(data.depositAmount, data.currency)}
-            </div>
-          </div>
+        <div className="min-w-0">
+          <Label>Payment</Label>
+          <div className="mt-1 truncate text-xs font-semibold">{paymentMethod}</div>
         </div>
-
-        {/* Totals block */}
-        <div className="mt-5 space-y-2 border-t border-base-content/10 pt-4">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-base-content/60">
-              {linkDepositDue > 0 ? 'Deposit due (pay by link)' : 'Deposit received'}
-            </span>
-            <span className="font-mono tabular-nums text-base-content">
-              {formatCurrency(linkDepositDue > 0 ? linkDepositDue : data.depositAmount, data.currency)}
-            </span>
-          </div>
-          {balanceDue > 0 && (
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-base-content/60">Balance due on the day</span>
-              <span className="font-mono tabular-nums text-base-content">
-                {formatCurrency(balanceDue, data.currency)}
-              </span>
-            </div>
-          )}
-          <div className="flex items-center justify-between gap-3 border-t border-base-content/10 pt-3">
-            <div>
-              <div className="text-[0.6rem] font-semibold uppercase tracking-[0.2em] text-base-content/50">
-                Paid today
-              </div>
-              <div className="text-lg font-bold text-base-content">
-                {formatCurrency(data.depositAmount, data.currency)}
-                <span className="ml-1 text-xs font-normal text-base-content/50">
-                  {data.currency.toUpperCase()}
-                </span>
-              </div>
-            </div>
-            {linkDepositDue > 0 ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-warning/20 px-3 py-1 text-xs font-semibold text-warning-content">
-                Deposit pending
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-3 py-1 text-xs font-semibold text-success">
-                <CheckCircle2 aria-hidden="true" className="h-3.5 w-3.5" />
-                Deposit received
-              </span>
-            )}
-          </div>
+        <div className="min-w-0 text-right">
+          <Label>Status</Label>
+          <span className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide ${toneClass}`}>
+            {status.label}
+          </span>
         </div>
-
-        {data.paymentIntentId && (
-          <p className="mt-4 font-mono text-[0.65rem] text-base-content/40">
-            Payment ID: {data.paymentIntentId}
-          </p>
-        )}
       </div>
 
-      <p className="border-t border-base-content/10 bg-base-200/40 px-6 py-3 text-center text-xs text-base-content/60">
-        Present this reference when your groomer arrives.
-      </p>
+      {/* Parties */}
+      <div className="grid grid-cols-2 gap-4 px-6 pt-5">
+        <div className="min-w-0">
+          <Label>Billed to</Label>
+          <div className="mt-1 truncate text-sm font-semibold">{data.clientName || '—'}</div>
+          {data.serviceAddress && (
+            <div className="mt-0.5 text-xs leading-snug text-base-content/60">{data.serviceAddress}</div>
+          )}
+        </div>
+        <div className="min-w-0 text-right">
+          <Label>Appointment</Label>
+          <div className="mt-1 text-sm font-semibold">{apptDate || 'To be confirmed'}</div>
+          {apptTime && <div className="mt-0.5 text-xs text-base-content/60">{apptTime}</div>}
+        </div>
+      </div>
+
+      {/* Line items */}
+      <div className="px-6 pt-5">
+        <div className="flex items-center justify-between border-b border-base-content/15 pb-2">
+          <Label>Description</Label>
+          <Label>Amount</Label>
+        </div>
+        <div className="flex items-start justify-between gap-3 border-b border-base-content/10 py-3">
+          <div className="min-w-0">
+            <div className="text-sm font-semibold">{data.serviceName || 'Grooming service'}</div>
+            <div className="mt-0.5 text-xs text-base-content/60">
+              {data.petName ? `For ${data.petName}` : 'Grooming appointment'}
+            </div>
+          </div>
+          <div className="shrink-0 font-mono text-sm font-semibold tabular-nums">{money(total, currency)}</div>
+        </div>
+      </div>
+
+      {/* Totals */}
+      <div className="space-y-1.5 px-6 pt-3 text-sm">
+        <Row label="Subtotal" value={money(total, currency)} />
+        {paidNow > 0 && <Row label="Deposit paid" value={`\u2212 ${money(paidNow, currency)}`} />}
+        {depositDue > 0 && <Row label="Deposit due now (payment link)" value={money(depositDue, currency)} />}
+        <div className="mt-2 flex items-center justify-between rounded-box bg-primary/10 px-4 py-3">
+          <span className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+            {balance > 0 ? 'Balance due on the day' : depositDue > 0 ? 'Then due on the day' : 'Amount due'}
+          </span>
+          <span className="font-mono text-lg font-extrabold tabular-nums text-base-content">
+            {money(balance, currency)}
+          </span>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <footer className="mt-5 border-t border-base-content/10 px-6 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-[0.7rem] text-base-content/55">
+          <span>Show reference <span className="font-mono font-semibold text-base-content/80">{data.bookingRef || '—'}</span> on arrival.</span>
+          {data.paymentIntentId && <span className="font-mono">Payment {shortRef(data.paymentIntentId)}</span>}
+        </div>
+        <div className="mt-3 flex items-center justify-between text-[0.7rem] text-base-content/45">
+          <span>Thank you for your booking.</span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="relative h-3.5 w-3.5">
+              <Image src="/pawxisLogo.png" alt="" fill className="object-contain" sizes="14px" />
+            </span>
+            Powered by Pawxis
+          </span>
+        </div>
+      </footer>
     </article>
+  );
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-base-content/60">{label}</span>
+      <span className="font-mono tabular-nums">{value}</span>
+    </div>
   );
 }
 

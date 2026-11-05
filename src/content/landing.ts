@@ -350,18 +350,18 @@ export const landing: Landing = {
         body: 'Order Radar ranks the booking against your day, so you only say yes to the stops that fit.',
       },
       {
-        title: 'Receipt & reminders',
-        body: 'Everyone gets a branded receipt to download, plus reminders that quietly cut no-shows.',
+        title: 'Invoices & reminders',
+        body: 'Every client gets a professional invoice to download, plus reminders that quietly cut no-shows.',
       },
     ],
   },
 
   receipt: {
-    eyebrow: 'Branded receipts',
-    title: 'Every booking comes with a receipt clients can keep',
+    eyebrow: 'Professional invoices',
+    title: 'Every booking comes with an invoice clients can keep',
     subtitle:
-      'The moment a deposit is paid, Pawxis generates a branded booking receipt clients can download and show on arrival.',
-    downloadLabel: 'Download receipt',
+      'The moment a booking is confirmed, Pawxis creates a professional invoice in your name that clients can download as a PDF.',
+    downloadLabel: 'Download invoice (PDF)',
     sample: {
       reference: 'PP-XK4T9M',
       amount: 15,

@@ -205,9 +205,9 @@ export const forGroomers: ForGroomersContent = {
         icon: 'message-square',
       },
       {
-        title: 'Downloadable receipts',
+        title: 'Professional invoices',
         description:
-          'The moment a deposit is paid, Pawxis generates a branded receipt clients can download and keep.',
+          'Every booking gets a numbered invoice in your name, with deposit paid and balance due, ready to download as a PDF.',
         icon: 'receipt',
       },
       {
@@ -248,7 +248,7 @@ export const forGroomers: ForGroomersContent = {
         'Native calendar & ICS feed',
         'Two-way texting included',
         'Digital Pet Cards',
-        'Downloadable receipts & reminders',
+        'Professional invoices & reminders',
       ],
     },
     pro: {

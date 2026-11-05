@@ -28,6 +28,7 @@ export function PaidBookingView({ summary }: { summary: FulfilSummary }) {
           depositAmount: summary.depositAmount,
           currency: summary.currency,
           paymentIntentId: summary.paymentIntentId || undefined,
+          servicePrice: summary.servicePrice,
           bookedOn: new Date(),
         }}
       />
