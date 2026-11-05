@@ -25,13 +25,22 @@ body {
     visibility: visible;
   }
 
+  /* Same width, colours and backgrounds as on screen (browsers drop
+     background colours when printing unless told to keep them). */
   #pp-receipt {
     position: absolute;
-    inset: 0;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
     margin: 0;
-    max-width: none;
-    width: 100%;
-    box-shadow: none;
+    width: var(--pp-receipt-w, 28rem);
+    max-width: 100%;
+  }
+
+  #pp-receipt,
+  #pp-receipt * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   .pp-no-print {

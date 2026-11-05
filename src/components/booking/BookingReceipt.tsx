@@ -13,7 +13,7 @@
  * existing `@media print` isolation prints only the receipt. All actions meet
  * the 44px touch-target minimum.
  */
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Download, Printer, Loader2 } from 'lucide-react';
 import type { ReceiptData } from './ReceiptPDF';
@@ -23,20 +23,66 @@ export interface BookingReceiptProps {
   data: ReceiptData;
 }
 
+/** CSS px → PDF points (96 dpi screen → 72 dpi PDF). */
+const PX_TO_PT = 0.75;
+
 export function BookingReceipt({ data }: BookingReceiptProps) {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const ticketWrapRef = useRef<HTMLDivElement>(null);
+
+  /** The on-screen receipt article (the exact visual the client sees). */
+  function ticketNode(): HTMLElement | null {
+    return ticketWrapRef.current?.querySelector('article') ?? null;
+  }
+
+  /**
+   * Snapshot the on-screen receipt to a high-resolution PNG so the download is
+   * pixel-identical to the view (theme colours, fonts, logos, layout).
+   */
+  async function captureTicket(): Promise<{ dataUrl: string; width: number; height: number } | null> {
+    const node = ticketNode();
+    if (!node) return null;
+    const { toPng } = await import('html-to-image');
+    const rect = node.getBoundingClientRect();
+    const width = Math.ceil(rect.width);
+    const height = Math.ceil(rect.height);
+    const dataUrl = await toPng(node, {
+      width,
+      height,
+      pixelRatio: 3,
+      cacheBust: true,
+      backgroundColor: getComputedStyle(node).backgroundColor,
+    });
+    return { dataUrl, width, height };
+  }
 
   async function handleDownloadPdf() {
     setIsGeneratingPdf(true);
     try {
-      // Lazy-load the PDF engine + document only on demand so they stay out of
-      // the initial/SSR bundle (mirrors PetCardRenderer).
-      const [{ pdf }, { ReceiptPDF }] = await Promise.all([
-        import('@react-pdf/renderer'),
-        import('./ReceiptPDF'),
-      ]);
+      // Lazy-load the PDF engine only on demand so it stays out of the
+      // initial/SSR bundle (mirrors PetCardRenderer).
+      const reactPdf = await import('@react-pdf/renderer');
+      const { pdf, Document, Page, Image } = reactPdf;
 
-      const blob = await pdf(<ReceiptPDF data={data} />).toBlob();
+      let blob: Blob;
+      const shot = await captureTicket().catch(() => null);
+      if (shot) {
+        // One page sized exactly to the receipt, holding the snapshot.
+        const w = shot.width * PX_TO_PT;
+        const h = shot.height * PX_TO_PT;
+        blob = await pdf(
+          <Document title={`Receipt ${data.bookingRef}`} author={data.businessName || 'Pawxis'}>
+            <Page size={{ width: w, height: h }} style={{ padding: 0 }}>
+              {/* eslint-disable-next-line jsx-a11y/alt-text -- react-pdf Image, not <img> */}
+              <Image src={shot.dataUrl} style={{ width: w, height: h }} />
+            </Page>
+          </Document>
+        ).toBlob();
+      } else {
+        // Fallback: the drawn receipt document if the snapshot fails.
+        const { ReceiptPDF } = await import('./ReceiptPDF');
+        blob = await pdf(<ReceiptPDF data={data} />).toBlob();
+      }
 
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -59,13 +105,27 @@ export function BookingReceipt({ data }: BookingReceiptProps) {
   }
 
   function handlePrint() {
-    if (typeof window !== 'undefined') window.print();
+    if (typeof window === 'undefined') return;
+    // Print at the same width as on screen so text wraps identically; the
+    // print stylesheet reads this variable (see globals.css #pp-receipt).
+    const node = ticketNode();
+    if (node) {
+      node.style.setProperty('--pp-receipt-w', `${Math.ceil(node.getBoundingClientRect().width)}px`);
+      window.addEventListener(
+        'afterprint',
+        () => node.style.removeProperty('--pp-receipt-w'),
+        { once: true }
+      );
+    }
+    window.print();
   }
 
   return (
     <div className="mx-auto w-full max-w-md">
       {/* Shared presentational ticket — carries id="pp-receipt" for print. */}
-      <ReceiptTicket data={data} />
+      <div ref={ticketWrapRef}>
+        <ReceiptTicket data={data} />
+      </div>
 
       {/* Actions (hidden from the printout) */}
       <div className="pp-no-print mt-4 flex flex-col gap-3 sm:flex-row">
