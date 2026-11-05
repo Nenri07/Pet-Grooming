@@ -110,7 +110,7 @@ function readOnly(sub: SubscriptionInput, status: SubscriptionStatus): Entitleme
     tier: sub.plan === 'trial' ? 'pro' : sub.plan,
     status,
     features: [],
-    smsIncluded: Math.max(0, sub.smsIncluded ?? 0),
+    smsIncluded: Math.max(0, sub.smsIncluded ?? 0, PLANS[sub.plan]?.sms ?? 0),
     smsTopupBalance: Math.max(0, sub.smsTopupBalance ?? 0),
     inGracePeriod: false,
     active: false,
@@ -164,7 +164,7 @@ export function resolveEntitlements(
     features: FEATURE_KEYS.filter((f) =>
       hasFeature(sub.plan === 'trial' ? 'trial' : tier, f)
     ),
-    smsIncluded: Math.max(0, sub.smsIncluded ?? 0),
+    smsIncluded: Math.max(0, sub.smsIncluded ?? 0, PLANS[sub.plan]?.sms ?? 0),
     smsTopupBalance: Math.max(0, sub.smsTopupBalance ?? 0),
     inGracePeriod: inGrace,
     active: true,

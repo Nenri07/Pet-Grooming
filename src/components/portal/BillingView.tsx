@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { MESSAGES_PER_CLIENT, clientsCoveredBy } from '@/lib/plans';
 import {
   BadgeCheck,
   CalendarClock,
@@ -186,7 +187,7 @@ export function BillingView(props: BillingViewProps) {
           Billing &amp; plan
         </h1>
         <p className="mt-1 text-base-content/60">
-          Manage your subscription, invoices and SMS credits.
+          Manage your subscription, invoices and message credits.
         </p>
       </header>
 
@@ -325,7 +326,7 @@ export function BillingView(props: BillingViewProps) {
           <div className="mb-3 flex items-center gap-2">
             <MessageSquare className="h-5 w-5 text-primary" aria-hidden="true" />
             <h2 className="font-display text-lg font-semibold text-base-content">
-              SMS credits
+              Messages
             </h2>
           </div>
           <p className="text-2xl font-bold text-base-content">
@@ -340,16 +341,21 @@ export function BillingView(props: BillingViewProps) {
             aria-valuenow={smsPct}
             aria-valuemin={0}
             aria-valuemax={100}
-            aria-label="SMS usage this cycle"
+            aria-label="Messages used this month"
           >
             <div
               className={cx('h-full rounded-full', smsPct >= 100 ? 'bg-error' : 'bg-primary')}
               style={{ width: `${smsPct}%` }}
             />
           </div>
+          <p className="mt-2 text-xs text-base-content/60">
+            Confirmations, reminders, &ldquo;on my way&rdquo; and chat emails each count as one.
+            {' '}{smsIncluded.toLocaleString()} a month covers about {clientsCoveredBy(smsIncluded)} clients
+            (≈{MESSAGES_PER_CLIENT} each). Confirmations and reminders always go out, even at the limit.
+          </p>
           {smsTopupBalance > 0 && (
             <p className="mt-2 text-sm text-base-content/60">
-              + {smsTopupBalance} top-up credits available
+              + {smsTopupBalance.toLocaleString()} top-up messages available
             </p>
           )}
           <button
@@ -360,7 +366,7 @@ export function BillingView(props: BillingViewProps) {
           >
             {pending === 'topup'
               ? 'Opening…'
-              : `Top up ${smsTopup.messages} messages · $${smsTopup.price}`}
+              : `Top up ${smsTopup.messages.toLocaleString()} messages · ${smsTopup.price}`}
           </button>
         </Card>
       </div>

@@ -61,12 +61,12 @@ export function SmsCreditsPill({
         'inline-flex min-h-[36px] items-center gap-1.5 rounded-badge border border-base-content/10 bg-base-200 px-3 text-xs font-medium text-base-content/70 transition-colors hover:bg-base-300',
         className
       )}
-      title="SMS credits used this cycle"
-      aria-label={`SMS credits: ${used} of ${included} used`}
+      title="Client messages used this month (emails now, texts later)"
+      aria-label={`Messages: ${used} of ${included} used`}
     >
       <MessageSquare className="h-3.5 w-3.5 shrink-0 text-primary" aria-hidden="true" />
       <span>
-        SMS {used}/{included}
+        Messages {used}/{included}
       </span>
     </Link>
   );

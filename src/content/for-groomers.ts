@@ -199,7 +199,7 @@ export const forGroomers: ForGroomersContent = {
         image: 'featureCard',
       },
       {
-        title: 'Two-way SMS + reminders',
+        title: 'Client messaging + reminders',
         description:
           'Every client conversation in one inbox, with automatic reminders that quietly cut no-shows.',
         icon: 'message-square',

@@ -403,6 +403,13 @@ export async function sendManualMessage(input: {
 
     if (channel === 'email') {
       if (!client.email) return { ok: false, error: 'This client has no email on file.' };
+      const { canSendOptionalMessage, meterClientMessage } = await import('@/lib/messaging/usage');
+      if (!(await canSendOptionalMessage(groomerId))) {
+        return {
+          ok: false,
+          error: 'You\u2019ve used this month\u2019s messages. Top up in Billing, or send it with WhatsApp or your phone.',
+        };
+      }
       const { GroomerProfile } = await import('@/lib/db/models/groomer-profile');
       const { User } = await import('@/lib/db/models/user');
       const [profile, user] = await Promise.all([
@@ -419,6 +426,7 @@ export async function sendManualMessage(input: {
         groomerPhone: profile?.phone,
       });
       if (!sent) return { ok: false, error: "We couldn't send that email right now." };
+      await meterClientMessage(groomerId);
     }
 
     const { SmsMessage } = await import('@/lib/db/models/sms-message');

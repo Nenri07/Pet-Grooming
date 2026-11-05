@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { MESSAGES_PER_CLIENT, clientsCoveredBy } from '@/lib/plans';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -92,6 +93,10 @@ export interface RadarItem {
   fromPrevKm: number | null;
   extraDriveMin: number | null;
   label: string | null;
+  /** Time of the stop before this one ("11:00"), or null when it's the first. */
+  prevStopTime?: string | null;
+  /** Short weekday, e.g. "Thu". */
+  dateLabel?: string;
 }
 
 export interface MonthSummary {
@@ -128,6 +133,10 @@ export interface DashboardData {
   fillRecoveredThisMonth: number;
   /** UI hint: the plan lacks Fill My Day (server gate is authoritative, §13.1). */
   fillLocked: boolean;
+  /** Whether the groomer set a base address (needed for routing / Order Radar). */
+  routingReady?: boolean;
+  /** Pets due for their next groom within 14 days. */
+  rebookDue?: number;
 }
 
 interface DashboardViewProps {
@@ -532,45 +541,42 @@ function RadarRow({
   bookingMode: 'instant' | 'request';
   onOpen: (id: string) => void;
 }) {
-  // Text pattern (§10.5): "New booking · {km} km from your {time} stop ·
-  // +{min} min driving · {label}". Each fragment is omitted gracefully.
-  const parts: string[] = ['New booking'];
-  if (item.fromPrevKm != null) parts.push(`${item.fromPrevKm} km away`);
-  if (item.extraDriveMin != null) parts.push(`+${item.extraDriveMin} min driving`);
-  if (item.label) parts.push(item.label);
+  // "4.2 km from your 11:00 stop · +7 min driving" (Master Spec §10.5).
+  const distance =
+    item.fromPrevKm != null
+      ? `${item.fromPrevKm} km from ${item.prevStopTime ? `your ${item.prevStopTime} stop` : 'your base'}`
+      : null;
+  const when = [item.label, item.dateLabel, item.timeLabel].filter(Boolean).join(' ');
 
   return (
-    <div className="rounded-box border border-base-content/10 bg-base-100 p-3">
-      <button
-        type="button"
-        onClick={() => onOpen(item.id)}
-        className="block w-full text-left"
-      >
-        <p className="text-sm font-medium text-base-content">
-          {item.petName ?? 'New pet'}
-          <span className="text-base-content/60">
-            {' '}
-            · {item.timeLabel}
-          </span>
+    <div className="rounded-box border border-primary/20 bg-primary/5 p-4">
+      <p className="text-[0.7rem] font-bold uppercase tracking-[0.14em] text-primary">
+        New booking · Order Radar
+      </p>
+      <button type="button" onClick={() => onOpen(item.id)} className="mt-2 block w-full text-left">
+        <p className="text-sm text-base-content">
+          {distance ?? 'Route position unknown'}
+          {item.extraDriveMin != null && (
+            <>
+              {' · '}
+              <span className="font-semibold">+{item.extraDriveMin} min driving</span>
+            </>
+          )}
         </p>
-        <p className="mt-1 text-sm text-base-content/70">{parts.join(' · ')}</p>
+        <p className="mt-1 text-sm text-base-content/60">
+          {when}
+          {item.petName ? ` · ${item.petName}` : ''}
+          {item.clientName ? ` (${item.clientName})` : ''}
+        </p>
       </button>
-
-      {bookingMode === 'request' ? (
-        <div className="mt-3 flex flex-wrap gap-2">
-          {/* TODO(phase-3/6): wire Accept/Decline to the request-mode handler. */}
-          <button type="button" className="btn btn-primary btn-sm min-h-[40px]">
-            Accept
-          </button>
-          <button type="button" className="btn btn-ghost btn-sm min-h-[40px]">
-            Decline
-          </button>
-        </div>
-      ) : (
-        <p className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-success">
-          Auto-confirmed
-        </p>
-      )}
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <button type="button" onClick={() => onOpen(item.id)} className="btn btn-primary btn-sm min-h-[40px]">
+          {bookingMode === 'request' ? 'Review' : 'View'}
+        </button>
+        {bookingMode !== 'request' && (
+          <span className="text-xs font-medium text-success">Auto-confirmed</span>
+        )}
+      </div>
     </div>
   );
 }
@@ -607,10 +613,12 @@ function OrderRadarCard({
   radar,
   bookingMode,
   onOpen,
+  routingReady = true,
 }: {
   radar: RadarItem[];
   bookingMode: 'instant' | 'request';
   onOpen: (id: string) => void;
+  routingReady?: boolean;
 }) {
   return (
     <Card className="flex flex-col">
@@ -620,9 +628,19 @@ function OrderRadarCard({
           Order Radar
         </h2>
       </div>
-      {radar.length === 0 ? (
+      {!routingReady ? (
+        <div className="rounded-box bg-base-200 px-4 py-6 text-center">
+          <p className="text-sm font-medium text-base-content">Add your base address to turn on routing</p>
+          <p className="mt-1 text-sm text-base-content/60">
+            Order Radar measures each booking against where you start your day.
+          </p>
+          <Link href="/settings" className="btn btn-primary btn-sm mt-3 min-h-[40px]">
+            Set base address
+          </Link>
+        </div>
+      ) : radar.length === 0 ? (
         <p className="rounded-box bg-base-200 px-4 py-6 text-center text-sm text-base-content/60">
-          No new bookings right now.
+          No new bookings this week. New ones show here with their distance and extra driving.
         </p>
       ) : (
         <div className="flex flex-col gap-2">
@@ -685,7 +703,7 @@ function Metric({
   diff: React.ReactNode;
 }) {
   return (
-    <div className="rounded-box bg-base-200 p-3">
+    <div className="rounded-box bg-base-100 p-3 shadow-card">
       <p className="text-xs font-medium uppercase tracking-wide text-base-content/50">
         {label}
       </p>
@@ -695,42 +713,42 @@ function Metric({
   );
 }
 
-function ThisMonthCard({ summary }: { summary: MonthSummary }) {
+function KpiStrip({
+  summary,
+  smsUsed,
+  smsIncluded,
+}: {
+  summary: MonthSummary;
+  smsUsed: number;
+  smsIncluded: number;
+}) {
+  const pct = smsIncluded > 0 ? Math.min(100, Math.round((smsUsed / smsIncluded) * 100)) : 0;
   return (
-    <Card>
-      <div className="mb-4 flex items-center gap-2">
-        <TrendingUp className="h-5 w-5 text-primary" aria-hidden="true" />
-        <h2 className="font-display text-lg font-semibold text-base-content">
-          This month
-        </h2>
-      </div>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <Metric
-          label="Bookings"
-          diff={<DiffPill value={summary.bookingsDiffPct} />}
-        >
-          <NumberTicker value={summary.bookings} />
-        </Metric>
-        <Metric
-          label="Revenue"
-          diff={<DiffPill value={summary.revenueDiffPct} />}
-        >
-          <NumberTicker value={summary.revenue} prefix="$" decimals={0} />
-        </Metric>
-        <Metric label="Deposits collected" diff={null}>
-          <NumberTicker value={summary.estimatedServiceRevenue} prefix="$" decimals={0} />
-        </Metric>
-        <Metric
-          label="No-show rate"
-          diff={<DiffPill value={summary.noShowRateDiff} suffix="pt" invert />}
-        >
-          <NumberTicker value={summary.noShowRate} suffix="%" decimals={1} />
-        </Metric>
-      </div>
-      <p className="mt-3 text-xs text-base-content/50">
-        Compared with the previous month.
-      </p>
-    </Card>
+    <section aria-label="This month" className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+      <Metric label="Revenue" diff={<DiffPill value={summary.revenueDiffPct} />}>
+        <NumberTicker value={summary.revenue} prefix="$" decimals={0} />
+      </Metric>
+      <Metric label="Bookings" diff={<DiffPill value={summary.bookingsDiffPct} />}>
+        <NumberTicker value={summary.bookings} />
+      </Metric>
+      <Metric label="Deposits" diff={<span className="text-xs text-base-content/40">card, this month</span>}>
+        <NumberTicker value={summary.estimatedServiceRevenue} prefix="$" decimals={0} />
+      </Metric>
+      <Metric label="No-show rate" diff={<DiffPill value={summary.noShowRateDiff} suffix="pt" invert />}>
+        <NumberTicker value={summary.noShowRate} suffix="%" decimals={1} />
+      </Metric>
+      <Link href="/billing" className="col-span-2 rounded-box bg-base-100 p-3 shadow-card transition-colors hover:bg-base-200 lg:col-span-1">
+        <p className="text-xs font-medium uppercase tracking-wide text-base-content/50">Messages</p>
+        <p className="mt-1 text-2xl font-bold text-base-content">
+          {smsUsed}
+          <span className="text-sm font-medium text-base-content/50">/{smsIncluded}</span>
+        </p>
+        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-base-200" aria-hidden="true">
+          <div className={cx('h-full rounded-full', pct >= 100 ? 'bg-error' : 'bg-primary')} style={{ width: `${pct}%` }} />
+        </div>
+        <p className="mt-1 text-[0.7rem] text-base-content/50">≈{clientsCoveredBy(smsIncluded)} clients · {MESSAGES_PER_CLIENT}/client</p>
+      </Link>
+    </section>
   );
 }
 
@@ -836,22 +854,26 @@ function FillMyDayCard({
   );
 }
 
-function RebookingCard() {
+function RebookingCard({ due }: { due: number }) {
   return (
     <Card>
       <div className="mb-3 flex items-center gap-2">
         <RefreshCw className="h-5 w-5 text-primary" aria-hidden="true" />
-        <h2 className="font-display text-lg font-semibold text-base-content">
-          Rebooking due
-        </h2>
+        <h2 className="font-display text-lg font-semibold text-base-content">Rebooking due</h2>
       </div>
-      <p className="text-sm text-base-content/60">
-        Rebooking autopilot texts clients a prefilled booking link when their
-        pet is due for another groom — on a daily schedule, hands-free.
-      </p>
-      <span className="mt-3 inline-flex items-center rounded-badge bg-success/10 px-3 py-1 text-xs font-medium text-success">
-        Running daily
-      </span>
+      {due > 0 ? (
+        <>
+          <p className="text-2xl font-bold text-base-content">{due}</p>
+          <p className="text-sm text-base-content/60">
+            {due === 1 ? 'pet is' : 'pets are'} due for a groom in the next 14 days. Send a rebook nudge from the Inbox.
+          </p>
+          <Link href="/inbox" className="btn btn-primary btn-sm mt-3 min-h-[40px]">Open Inbox</Link>
+        </>
+      ) : (
+        <p className="text-sm text-base-content/60">
+          No pets due in the next 14 days. Each pet&apos;s next groom date is set when you complete an appointment.
+        </p>
+      )}
     </Card>
   );
 }
@@ -879,43 +901,6 @@ function PetCardsCard() {
   );
 }
 
-function SmsCreditsCard({ used, included }: { used: number; included: number }) {
-  const pct = included > 0 ? Math.min(100, Math.round((used / included) * 100)) : 0;
-  return (
-    <Card>
-      <div className="mb-3 flex items-center gap-2">
-        <MessageSquare className="h-5 w-5 text-primary" aria-hidden="true" />
-        <h2 className="font-display text-lg font-semibold text-base-content">
-          SMS credits
-        </h2>
-      </div>
-      {/* Live allowance/usage from entitlements + the SMS quota counter (§13.4). */}
-      <p className="text-2xl font-bold text-base-content">
-        {used}
-        <span className="text-base font-medium text-base-content/50">
-          /{included} used
-        </span>
-      </p>
-      <div
-        className="mt-3 h-2 w-full overflow-hidden rounded-full bg-base-200"
-        role="progressbar"
-        aria-valuenow={pct}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label="SMS usage this cycle"
-      >
-        <div
-          className={cx('h-full rounded-full', pct >= 100 ? 'bg-error' : 'bg-primary')}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      <Link href="/billing" className="btn btn-outline btn-sm mt-3 min-h-[40px]">
-        Top up
-      </Link>
-    </Card>
-  );
-}
-
 /* --------------------------------- View --------------------------------- */
 
 export function DashboardView({ data }: DashboardViewProps) {
@@ -932,6 +917,8 @@ export function DashboardView({ data }: DashboardViewProps) {
     fillGap,
     fillRecoveredThisMonth,
     fillLocked,
+    routingReady = true,
+    rebookDue = 0,
   } = data;
 
   const handleOpen = React.useCallback(
@@ -948,7 +935,7 @@ export function DashboardView({ data }: DashboardViewProps) {
 
   return (
     <div className="mx-auto w-full max-w-6xl">
-      <header className="mb-6">
+      <header className="mb-5">
         <h1 className="font-display text-2xl font-bold text-base-content sm:text-3xl">
           Dashboard
         </h1>
@@ -957,57 +944,38 @@ export function DashboardView({ data }: DashboardViewProps) {
         </p>
       </header>
 
-      {/* Bento: masonry-style columns that pack automatically and reflow as
-          cards appear/disappear. 1 col mobile → 2 (md) → 3 (xl). */}
-      <div className="columns-1 gap-4 md:columns-2 xl:columns-3 [&>*]:mb-4 [&>*]:break-inside-avoid">
-        <Reveal y={12} duration={0.28}>
-          <TodaysRouteCard
-            stops={stops}
-            onOpen={handleOpen}
-            onChanged={handleChanged}
-          />
-        </Reveal>
+      <KpiStrip summary={monthSummary} smsUsed={smsUsed} smsIncluded={smsIncluded} />
 
-        <Reveal y={12} duration={0.28} delay={0.04}>
-          <UpcomingCard upcoming={upcoming} onOpen={handleOpen} />
-        </Reveal>
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
+        {/* Main column: the day, then what's next */}
+        <div className="flex flex-col gap-4 lg:col-span-2">
+          <Reveal y={12} duration={0.28}>
+            <TodaysRouteCard stops={stops} onOpen={handleOpen} onChanged={handleChanged} />
+          </Reveal>
+          <Reveal y={12} duration={0.28} delay={0.04}>
+            <UpcomingCard upcoming={upcoming} onOpen={handleOpen} />
+          </Reveal>
+        </div>
 
-        <Reveal y={12} duration={0.28} delay={0.08}>
-          {radarLocked ? (
-            <OrderRadarLocked />
-          ) : (
-            <OrderRadarCard
-              radar={radar}
-              bookingMode={bookingMode}
-              onOpen={handleOpen}
-            />
-          )}
-        </Reveal>
-
-        <Reveal y={12} duration={0.28} delay={0.12}>
-          <ThisMonthCard summary={monthSummary} />
-        </Reveal>
-
-        <Reveal y={12} duration={0.28} delay={0.16}>
-          <FillMyDayCard
-            gap={fillGap}
-            recovered={fillRecoveredThisMonth}
-            locked={fillLocked}
-            onFilled={handleChanged}
-          />
-        </Reveal>
-
-        <Reveal y={12} duration={0.28} delay={0.2}>
-          <RebookingCard />
-        </Reveal>
-
-        <Reveal y={12} duration={0.28} delay={0.24}>
-          <PetCardsCard />
-        </Reveal>
-
-        <Reveal y={12} duration={0.28} delay={0.28}>
-          <SmsCreditsCard used={smsUsed} included={smsIncluded} />
-        </Reveal>
+        {/* Side column: routing + growth tools */}
+        <div className="flex flex-col gap-4">
+          <Reveal y={12} duration={0.28} delay={0.08}>
+            {radarLocked ? (
+              <OrderRadarLocked />
+            ) : (
+              <OrderRadarCard radar={radar} bookingMode={bookingMode} onOpen={handleOpen} routingReady={routingReady} />
+            )}
+          </Reveal>
+          <Reveal y={12} duration={0.28} delay={0.12}>
+            <FillMyDayCard gap={fillGap} recovered={fillRecoveredThisMonth} locked={fillLocked} onFilled={handleChanged} />
+          </Reveal>
+          <Reveal y={12} duration={0.28} delay={0.16}>
+            <RebookingCard due={rebookDue} />
+          </Reveal>
+          <Reveal y={12} duration={0.28} delay={0.2}>
+            <PetCardsCard />
+          </Reveal>
+        </div>
       </div>
     </div>
   );

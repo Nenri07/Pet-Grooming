@@ -560,7 +560,7 @@ export async function createManualAppointment(
     const { Service } = await import('@/lib/db/models/service');
 
     const [client, pet, service] = await Promise.all([
-      Client.findOne({ _id: clientId, groomerId }).select('_id').lean(),
+      Client.findOne({ _id: clientId, groomerId }).select('_id name email phone address location').lean(),
       Pet.findOne({ _id: petId, groomerId }).select('_id clientId').lean(),
       Service.findOne({ _id: serviceId, groomerId }).select('_id').lean(),
     ]);
@@ -593,6 +593,31 @@ export async function createManualAppointment(
       serviceAddress,
       notes,
     });
+
+    // Order Radar data for the new stop (best-effort, never blocks).
+    try {
+      const c = client as unknown as {
+        name?: string;
+        email?: string;
+        phone?: string;
+        address?: { street: string; city: string; state: string; postalCode: string };
+        location?: { lat: number; lng: number };
+      };
+      if (c.address) {
+        const { computeAndStoreRouteMeta } = await import('@/lib/calendar/commit');
+        await computeAndStoreRouteMeta({
+          groomerId,
+          appointmentId: String(created._id),
+          clientData: { name: c.name ?? '', email: c.email ?? '', phone: c.phone ?? '', address: c.address },
+          startAt: startMs,
+          endAt: endMs,
+          bufferMin,
+          knownLoc: c.location ?? null,
+        });
+      }
+    } catch (err) {
+      console.error('createManualAppointment: route annotation failed (non-fatal):', err);
+    }
 
     const { invalidateSlotsCache } = await import('@/lib/calendar/slots');
     await invalidateSlotsCache(groomerId, dayStr(startMs)).catch(() => {});

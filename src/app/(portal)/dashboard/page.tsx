@@ -259,9 +259,24 @@ export default async function DashboardPage() {
     .limit(3)
     .lean<LeanAppointment[]>();
 
+  // "from your 11:00 stop": look up each radar item's previous stop time.
+  const prevIds = radarDocs
+    .map((d) => d.routeMeta?.prevId)
+    .filter((v): v is NonNullable<typeof v> => Boolean(v))
+    .map(String);
+  const prevStops = prevIds.length
+    ? await Appointment.find({ _id: { $in: prevIds }, groomerId })
+        .select('_id scheduledDate')
+        .lean<Array<{ _id: unknown; scheduledDate: Date }>>()
+    : [];
+  const prevTime = new Map(prevStops.map((p) => [String(p._id), timeLabel(new Date(p.scheduledDate), tz)]));
+
   const radar: RadarItem[] = radarDocs.map((doc) => {
     const start = new Date(doc.scheduledDate);
+    const prevKey = doc.routeMeta?.prevId ? String(doc.routeMeta.prevId) : null;
     return {
+      prevStopTime: prevKey ? prevTime.get(prevKey) ?? null : null,
+      dateLabel: start.toLocaleDateString('en-US', { timeZone: tz, weekday: 'short' }),
       id: String(doc._id),
       petName: doc.petId?.name ?? null,
       clientName: doc.clientId?.name ?? null,
@@ -378,6 +393,13 @@ export default async function DashboardPage() {
   const entitlements = await getEntitlements(groomerId);
   const smsUsed = await getUsage(groomerId);
 
+  // Pets due for their next groom in the coming 14 days (rebooking autopilot).
+  const { Pet } = await import('@/lib/db/models/pet');
+  const rebookDue = await Pet.countDocuments({
+    groomerId,
+    nextDueAt: { $ne: null, $lte: addDays(now, 14) },
+  }).catch(() => 0);
+
   const data: DashboardData = {
     stops,
     upcoming,
@@ -392,6 +414,8 @@ export default async function DashboardPage() {
     fillGap,
     fillRecoveredThisMonth,
     fillLocked: !entitlements.features.includes('fillMyDay'),
+    routingReady: Boolean(profile?.baseLocation),
+    rebookDue,
   };
 
   return <DashboardView data={data} />;

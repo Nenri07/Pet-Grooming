@@ -70,6 +70,42 @@ function petCardUrlFor(cardId: string | undefined): string | undefined {
 }
 
 /**
+ * Best-effort Order Radar data for a new booking: where it sits in the day,
+ * how far from the previous stop, and how much driving it adds. Never fails
+ * the booking.
+ */
+async function annotateRoute(
+  groomerId: Types.ObjectId,
+  appointmentId: Types.ObjectId,
+  booking: BookingMetadata,
+  scheduledDate: Date,
+  scheduledEndDate: Date
+): Promise<void> {
+  try {
+    const { computeAndStoreRouteMeta } = await import('@/lib/calendar/commit');
+    const prof = await GroomerProfile.findOne({ userId: groomerId })
+      .select('bufferMin')
+      .lean<{ bufferMin?: number } | null>();
+    await computeAndStoreRouteMeta({
+      groomerId: String(groomerId),
+      appointmentId: String(appointmentId),
+      clientData: {
+        name: booking.owner.name,
+        email: booking.owner.email,
+        phone: booking.owner.phone,
+        address: booking.owner.address,
+      },
+      startAt: scheduledDate.getTime(),
+      endAt: scheduledEndDate.getTime(),
+      bufferMin: prof?.bufferMin ?? 10,
+      knownLoc: sanitizeLatLng(booking.owner.location) ?? null,
+    });
+  } catch (err) {
+    console.error('fulfil: route annotation failed (non-fatal):', err);
+  }
+}
+
+/**
  * The service the client picked, scoped to this groomer. A malformed or stale
  * id (service deleted/renamed after the page loaded) falls back to the
  * groomer's first active service so a paid booking is never lost.
@@ -595,6 +631,9 @@ export async function fulfilBookingByPaymentIntentId(
   // Clean up the server-side pending record (TTL would reap it anyway).
   await PendingBooking.deleteOne({ paymentIntentId: pendingKey });
 
+  // Order Radar: distance / extra driving for this stop (best-effort).
+  await annotateRoute(groomerId, appointment._id, booking, scheduledDate, scheduledEndDate);
+
   // Best-effort hold release + cache bust (never throws past this block).
   await releaseHoldAndBustCache(
     groomerId,
@@ -754,6 +793,9 @@ export async function fulfilFreeBooking(
     ...(linkDeposit ? { depositStatus: 'pending', depositDue: linkDeposit.amount } : {}),
   });
 
+  // Order Radar: distance / extra driving for this stop (best-effort).
+  await annotateRoute(groomerId, appointment._id, booking, scheduledDate, scheduledEndDate);
+
   // Best-effort hold release + cache bust (never throws past this block).
   await releaseHoldAndBustCache(groomerId, booking.holdId, scheduledDate, bookingRef);
 
@@ -874,7 +916,7 @@ async function sendBookingNotifications(
     const serviceAddress = formatServiceAddress(booking.owner.address);
     const currency = (ctx.currency || 'usd').toUpperCase();
 
-    await sendClientConfirmationEmail(booking.owner.email, {
+    const confirmationSent = await sendClientConfirmationEmail(booking.owner.email, {
       date: dateStr,
       time: timeStr,
       services: [ctx.serviceName],
@@ -891,6 +933,10 @@ async function sendBookingNotifications(
       groomerEmail,
       groomerPhone,
     });
+    if (confirmationSent) {
+      const { meterClientMessage } = await import('@/lib/messaging/usage');
+      await meterClientMessage(ctx.groomerId);
+    }
 
     await sendGroomerNotificationEmail({
       to: groomerEmail,

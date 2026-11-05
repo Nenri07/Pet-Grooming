@@ -332,7 +332,7 @@ export async function commitBooking(input: CommitBookingInput): Promise<CommitRe
  * routing is a nice-to-have overlay, never a commit blocker. When the location
  * is unknown (no geocoder configured), this returns without writing anything.
  */
-async function computeAndStoreRouteMeta(args: {
+export async function computeAndStoreRouteMeta(args: {
   groomerId: string;
   appointmentId: string;
   clientData: CommitClientData;
@@ -340,6 +340,8 @@ async function computeAndStoreRouteMeta(args: {
   endAt: number;
   bufferMin: number;
   serviceAddress?: string;
+  /** Exact pin from the map picker; skips geocoding when present. */
+  knownLoc?: { lat: number; lng: number } | null;
 }): Promise<void> {
   const { groomerId, appointmentId, clientData, startAt, endAt, bufferMin } = args;
 
@@ -361,8 +363,8 @@ async function computeAndStoreRouteMeta(args: {
   const profile = await GroomerProfile.findOne({ userId: groomerId }).lean();
   if (!profile?.baseLocation) return; // no base → nothing to route against
 
-  // Geocode the client's service address. Unknown location → skip silently.
-  const clientLoc = await geocodeStructured(clientData.address);
+  // Exact pin when the client used the map, else geocode the address.
+  const clientLoc = args.knownLoc ?? (await geocodeStructured(clientData.address));
   if (!clientLoc) return;
 
   // Persist the geocoded location on the client + this appointment for reuse.

@@ -73,23 +73,37 @@ const PRO_FEATURES = [
  * prices (annual ≈ 2 months free) and their included monthly SMS allowance.
  */
 export const PLANS = {
-  trial: { price: 0, days: 14, tier: 'pro', sms: 300 },
+  // `sms` is the monthly CLIENT MESSAGE allowance (emails today; texts later
+  // count against the same allowance). Field name kept for compatibility.
+  trial: { price: 0, days: 14, tier: 'pro', sms: 2000 },
   solo: {
     priceMonth: 29,
     priceYear: 290,
-    sms: 300,
+    sms: 800,
     features: SOLO_FEATURES,
   },
   pro: {
     priceMonth: 59,
     priceYear: 590,
-    sms: 800,
+    sms: 2000,
     features: PRO_FEATURES,
   },
 } as const;
 
-/** One-time SMS top-up bundle (Master Spec §13.1). */
-export const SMS_TOPUP = { messages: 500, price: 9 } as const;
+/**
+ * Typical client messages per client per month: confirmation, 2 reminders,
+ * "on my way", invoice/receipt, plus a few chat messages. Used to explain the
+ * allowance ("800 messages ≈ 80 clients").
+ */
+export const MESSAGES_PER_CLIENT = 10;
+
+/** About how many active clients a monthly message allowance covers. */
+export function clientsCoveredBy(messages: number): number {
+  return Math.max(0, Math.floor(messages / MESSAGES_PER_CLIENT));
+}
+
+/** One-time message top-up bundle. $5 for 1,000 messages (≈100 more clients). */
+export const SMS_TOPUP = { messages: 1000, price: 5 } as const;
 
 /**
  * Founding-member program (Master Spec §13.1, §13.2): a limited number of

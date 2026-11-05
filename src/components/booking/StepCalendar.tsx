@@ -47,7 +47,7 @@ interface SlotGroup {
 /** Discriminated UI state for the availability request. */
 type CalendarUiState =
   | { status: 'loading' }
-  | { status: 'ready'; slots: SerializedTimeSlot[] }
+  | { status: 'ready'; slots: SerializedTimeSlot[]; routed?: boolean; outsideArea?: boolean }
   | { status: 'error'; message: string };
 
 /** Local-date key (YYYY-MM-DD) for grouping slots by the day they fall on. */
@@ -132,6 +132,15 @@ export function StepCalendar({ state, dispatch, services, groomerSlug }: Booking
   // falling back to the first service if the index is out of range.
   const chosenService = services[state.selectedServiceIndex] ?? services[0];
   const serviceDurationMinutes = chosenService?.durationMinutes ?? 0;
+  // The client's address from step 2 ranks times against the groomer's route.
+  const owner = state.ownerDetails;
+  const locKey = owner?.location ? `${owner.location.lat},${owner.location.lng}` : '';
+  const addrKey = owner ? `${owner.address.street}|${owner.address.city}|${owner.address.postalCode}` : '';
+  const routingInput = React.useMemo(
+    () => ({ location: owner?.location ?? null, address: owner?.address ?? null }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [locKey, addrKey]
+  );
 
   /**
    * Fetch available slots for the next 14 days. Returns the fresh slot list on
@@ -143,25 +152,26 @@ export function StepCalendar({ state, dispatch, services, groomerSlug }: Booking
     const result = await getPublicAvailability({
       groomerSlug,
       serviceDurationMinutes,
+      ...routingInput,
     });
     if (result.ok) {
-      setUi({ status: 'ready', slots: result.slots });
+      setUi({ status: 'ready', slots: result.slots, routed: result.routed, outsideArea: result.outsideArea });
       return result.slots;
     }
     setUi({ status: 'error', message: result.error });
     return [];
-  }, [groomerSlug, serviceDurationMinutes]);
+  }, [groomerSlug, serviceDurationMinutes, routingInput]);
 
   React.useEffect(() => {
     let cancelled = false;
     setConflictMessage(null);
     setUi({ status: 'loading' });
 
-    getPublicAvailability({ groomerSlug, serviceDurationMinutes })
+    getPublicAvailability({ groomerSlug, serviceDurationMinutes, ...routingInput })
       .then((result) => {
         if (cancelled) return;
         if (result.ok) {
-          setUi({ status: 'ready', slots: result.slots });
+          setUi({ status: 'ready', slots: result.slots, routed: result.routed, outsideArea: result.outsideArea });
         } else {
           setUi({ status: 'error', message: result.error });
         }
@@ -177,7 +187,7 @@ export function StepCalendar({ state, dispatch, services, groomerSlug }: Booking
     return () => {
       cancelled = true;
     };
-  }, [groomerSlug, serviceDurationMinutes]);
+  }, [groomerSlug, serviceDurationMinutes, routingInput]);
 
   /**
    * Handle a slot selection (Requirements 6.4 / 6.3-boundary).
@@ -261,10 +271,18 @@ export function StepCalendar({ state, dispatch, services, groomerSlug }: Booking
         {hasNoAvailability && !conflictMessage && (
           <div className="alert rounded-2xl" role="status">
             <span>
-              There are no available times in the next 14 days. Please contact
-              the groomer directly to arrange an appointment.
+              {ui.status === 'ready' && ui.outsideArea
+                ? 'This address is outside the area this groomer covers. Please check the address, or contact the groomer directly.'
+                : 'There are no available times in the next 14 days. Please contact the groomer directly to arrange an appointment.'}
             </span>
           </div>
+        )}
+
+        {ui.status === 'ready' && ui.routed && groups.length > 0 && (
+          <p className="mb-3 text-xs text-base-content/60">
+            Times marked <span className="font-semibold text-success">Best fit</span> are on your
+            groomer&apos;s route that day, so they&apos;re most likely to arrive on time.
+          </p>
         )}
 
         {ui.status === 'ready' && groups.length > 0 && (
@@ -279,11 +297,18 @@ export function StepCalendar({ state, dispatch, services, groomerSlug }: Booking
                     <button
                       key={`${slot.start}`}
                       type="button"
-                      className="btn btn-outline min-h-11 h-11 rounded-btn"
+                      className={`btn min-h-11 h-auto rounded-btn flex-col gap-0 py-1.5 ${
+                        slot.label === 'Best fit' ? 'btn-success btn-outline border-2' : 'btn-outline'
+                      }`}
                       disabled={selecting}
                       onClick={() => void handleSelect(slot)}
                     >
-                      {formatTimeLabel(new Date(slot.start))}
+                      <span>{formatTimeLabel(new Date(slot.start))}</span>
+                      {slot.label && (
+                        <span className="text-[0.6rem] font-semibold uppercase tracking-wide opacity-80">
+                          {slot.label}
+                        </span>
+                      )}
                     </button>
                   ))}
                 </div>

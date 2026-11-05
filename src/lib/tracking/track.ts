@@ -244,7 +244,7 @@ async function sendOnMyWayEmail(args: {
     (profile as { businessName?: string } | null)?.businessName?.trim() || 'Pawxis';
 
   const { sendOnTheWayEmail } = await import('@/lib/email/send');
-  await sendOnTheWayEmail(email, {
+  const sent = await sendOnTheWayEmail(email, {
     businessName,
     petName: (pet as { name?: string } | null)?.name,
     trackUrl: trackLink(token),
@@ -252,4 +252,8 @@ async function sendOnMyWayEmail(args: {
     replyTo,
     groomerPhone: prof?.phone,
   });
+  if (sent) {
+    const { meterClientMessage } = await import('@/lib/messaging/usage');
+    await meterClientMessage(groomerId);
+  }
 }

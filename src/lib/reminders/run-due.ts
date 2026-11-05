@@ -126,7 +126,11 @@ export async function runDueReminders(now: Date = new Date()): Promise<SweepResu
             groomerPhone: profile?.phone,
             replyTo: profile?.businessEmail?.trim() || undefined,
           });
-          if (ok) result.emailed++;
+          if (ok) {
+            result.emailed++;
+            const { meterClientMessage } = await import('@/lib/messaging/usage');
+            await meterClientMessage(String(appt.groomerId));
+          }
         }
 
         if (smsHere && client?.phone) {
