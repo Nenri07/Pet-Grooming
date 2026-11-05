@@ -27,13 +27,13 @@ import { SmsCreditsPill } from './SmsCreditsPill';
 import { LogoutButton } from './LogoutButton';
 
 /**
- * PortalNav â€” the authenticated Groomer_Portal navigation shell (Master Spec Â§8).
+ * PortalNav — the authenticated Groomer_Portal navigation shell (Master Spec §8).
  *
  * Layout:
  *  - Desktop / tablet (md+): a COLLAPSIBLE left sidebar. A toggle narrows it to
  *    an icons-only rail; the collapsed state is persisted in localStorage so it
  *    survives reloads and route changes.
- *  - Mobile (<md): a fixed BOTTOM TAB BAR with five primary destinations â€”
+ *  - Mobile (<md): a fixed BOTTOM TAB BAR with five primary destinations —
  *    Today, Calendar, Inbox, Clients, More. "More" opens a bottom sheet holding
  *    the secondary destinations (Services / Availability / Analytics / Settings)
  *    plus the theme toggle.
@@ -43,7 +43,7 @@ import { LogoutButton } from './LogoutButton';
  * Motion is calm (CSS transitions only, â‰¤300ms). Every interactive element
  * meets the 44Ã—44px touch-target minimum. Colors are theme tokens only.
  *
- * _Master Spec: Â§8 (Portal UI). Requirements: 18.2, 19.1, 19.2._
+ * _Master Spec: §8 (Portal UI). Requirements: 18.2, 19.1, 19.2._
  */
 
 interface NavItem {
@@ -127,7 +127,7 @@ function SearchAffordance() {
         name="q"
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        placeholder="Search clientsâ€¦"
+        placeholder="Search clients…"
         aria-label="Search clients"
         className="input input-bordered h-11 w-full rounded-btn border-base-content/10 bg-base-200 pl-9 text-sm focus:border-primary focus:outline-none"
       />
