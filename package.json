@@ -39,6 +39,7 @@
     "date-fns": "^4.4.0",
     "date-fns-tz": "^3.2.0",
     "framer-motion": "^11.11.9",
+    "gifenc": "^1.0.3",
     "gsap": "^3.15.0",
     "html-to-image": "^1.11.13",
     "leaflet": "^1.9.4",

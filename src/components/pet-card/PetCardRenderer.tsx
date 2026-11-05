@@ -7,9 +7,10 @@
  * (Requirements 17.3, 17.4):
  *  - "Copy Shareable Link" copies the current /pet-card/{cardId} URL to the
  *    clipboard and shows a sonner toast confirmation.
- *  - "Download as PDF" generates the A5 PDF client-side via @react-pdf/renderer
- *    and triggers a download. The PDF engine is dynamically imported only when
- *    the button is pressed, so it never bloats the initial load or SSR.
+ *  - "Share card" records the live animated card as a GIF in the browser and
+ *    opens the phone's share sheet (WhatsApp, Facebook, X, …). Where sharing
+ *    files isn't supported it saves the GIF instead. Quick link-share buttons
+ *    for Facebook / WhatsApp / X sit underneath.
  *
  * Visuals use DaisyUI theme colors with rounded-2xl cards and a soft shadow,
  * and the layout is responsive from 320px wide (Requirements 17.1, 17.2, 17.5).
@@ -18,11 +19,11 @@
  *
  * _Requirements: 17.1, 17.2, 17.3, 17.4, 17.5, 17.6_
  */
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import {
   Link as LinkIcon,
-  Download,
+  Share2,
   CalendarClock,
   Loader2,
 } from 'lucide-react';
@@ -70,20 +71,10 @@ function formatDate(value: SerializedDate | undefined): string {
   });
 }
 
-/** Rebuild the canonical `PetCardData` (with real Date objects) for the PDF. */
-function toPdfData(data: PetCardViewData): PetCardData {
-  return {
-    ...data,
-    serviceHistory: data.serviceHistory.map((entry) => ({
-      ...entry,
-      date: toDate(entry.date) ?? new Date(),
-    })),
-    nextRecommendedDate: toDate(data.nextRecommendedDate) ?? undefined,
-  };
-}
-
 export function PetCardRenderer({ data, shareUrl }: PetCardRendererProps) {
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+  const cardWrapRef = useRef<HTMLDivElement>(null);
+  const shareText = `${data.name}'s pet card${data.branding?.businessName ? ` from ${data.branding.businessName}` : ''}`;
 
   async function handleCopyLink() {
     try {
@@ -108,43 +99,59 @@ export function PetCardRenderer({ data, shareUrl }: PetCardRendererProps) {
     }
   }
 
-  async function handleDownloadPdf() {
-    setIsGeneratingPdf(true);
+  async function handleShareCard() {
+    const node = cardWrapRef.current?.firstElementChild as HTMLElement | null;
+    if (!node) return;
+    setIsSharing(true);
     try {
-      // Lazy-load the PDF engine + document only on demand so they stay out of
-      // the initial/SSR bundle (Requirement 17.4).
-      const [{ pdf }, { PetCardPDF }] = await Promise.all([
-        import('@react-pdf/renderer'),
-        import('./PetCardPDF'),
-      ]);
+      const { recordNodeAsGif } = await import('@/lib/pet-card/record-gif');
+      const blob = await recordNodeAsGif(node);
+      const fileName = `${data.name.replace(/[^a-z0-9-_]+/gi, '_')}-pet-card.gif`;
+      const file = new File([blob], fileName, { type: 'image/gif' });
 
-      const blob = await pdf(<PetCardPDF data={toPdfData(data)} />).toBlob();
+      if (typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: shareText, text: `${shareText} ${shareUrl}` });
+          return;
+        } catch (err) {
+          // The user closed the share sheet: that's not an error.
+          if ((err as { name?: string })?.name === 'AbortError') return;
+        }
+      }
 
+      // No file sharing (most desktops): save the GIF so it can be posted.
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${data.name.replace(/[^a-z0-9-_]+/gi, '_')}-pet-card.pdf`;
+      link.download = fileName;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-
-      toast.success('Pet card downloaded');
+      toast.success('GIF saved. Post it from your gallery or downloads.');
     } catch {
-      toast.error('Could not generate the PDF. Please try again.', {
-        duration: Infinity,
-      });
+      toast.error('Could not create the GIF. Please try again.');
     } finally {
-      setIsGeneratingPdf(false);
+      setIsSharing(false);
     }
   }
+
+  const encodedUrl = encodeURIComponent(shareUrl);
+  const encodedText = encodeURIComponent(shareText);
+  const socialLinks = [
+    { label: 'Facebook', href: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}` },
+    { label: 'WhatsApp', href: `https://wa.me/?text=${encodedText}%20${encodedUrl}` },
+    { label: 'X', href: `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}` },
+  ];
 
   const nextDate = formatDate(data.nextRecommendedDate);
 
   return (
     <div className="mx-auto w-full max-w-xl">
       {/* Flagship animated hero card (motion + QR + gif-like ambient life) */}
-      <AnimatedPetCard data={data} shareUrl={shareUrl} />
+      <div ref={cardWrapRef}>
+        <AnimatedPetCard data={data} shareUrl={shareUrl} />
+      </div>
 
       {/* Supporting detail: coat notes, service history, next visit */}
       <article className="mt-4 overflow-hidden rounded-2xl border border-base-content/10 bg-base-100 shadow-card">
@@ -213,17 +220,31 @@ export function PetCardRenderer({ data, shareUrl }: PetCardRendererProps) {
         </button>
         <button
           type="button"
-          onClick={handleDownloadPdf}
-          disabled={isGeneratingPdf}
+          onClick={handleShareCard}
+          disabled={isSharing}
           className="btn btn-primary min-h-[44px] flex-1 gap-2"
         >
-          {isGeneratingPdf ? (
+          {isSharing ? (
             <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
           ) : (
-            <Download aria-hidden="true" className="h-4 w-4" />
+            <Share2 aria-hidden="true" className="h-4 w-4" />
           )}
-          {isGeneratingPdf ? 'Preparing PDF…' : 'Download as PDF'}
+          {isSharing ? 'Making your GIF…' : 'Share card (GIF)'}
         </button>
+      </div>
+      <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-sm">
+        <span className="text-base-content/60">Or share the link:</span>
+        {socialLinks.map((l) => (
+          <a
+            key={l.label}
+            href={l.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-ghost btn-sm min-h-[44px]"
+          >
+            {l.label}
+          </a>
+        ))}
       </div>
     </div>
   );
