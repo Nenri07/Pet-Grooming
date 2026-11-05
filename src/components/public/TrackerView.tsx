@@ -81,8 +81,8 @@ interface TrackerViewProps {
   initial: TrackerPayload;
 }
 
-/** Poll interval for the tracker (§11.2: every 10s). */
-const POLL_MS = 10_000;
+/** Poll interval for the tracker. */
+const POLL_MS = 5_000;
 
 export function TrackerView({ token, initial }: TrackerViewProps) {
   const [data, setData] = React.useState<TrackerPayload>(initial);
@@ -102,10 +102,18 @@ export function TrackerView({ token, initial }: TrackerViewProps) {
       }
     };
 
+    // Poll right away (the server-rendered snapshot may already be stale),
+    // then on an interval, and again whenever the tab comes back into view.
+    void poll();
     const id = setInterval(poll, POLL_MS);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void poll();
+    };
+    document.addEventListener('visibilitychange', onVisible);
     return () => {
       cancelled = true;
       clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisible);
     };
   }, [token, data.ended]);
 
@@ -162,7 +170,7 @@ export function TrackerView({ token, initial }: TrackerViewProps) {
             <div className="mt-5 flex items-center justify-center gap-2 text-primary">
               <Navigation className="h-6 w-6" aria-hidden="true" />
               <span className="text-3xl font-bold tabular-nums">
-                {etaLabel ?? 'Locating…'}
+                {etaLabel ?? (data.van ? 'On the way' : 'Locating…')}
               </span>
             </div>
 

@@ -22,8 +22,10 @@
  */
 import * as React from 'react';
 
-/** How often to post the van position while sharing (§11.2: ~20s). */
-const POSITION_INTERVAL_MS = 20_000;
+/** Minimum gap between position posts while sharing. */
+const MIN_POST_GAP_MS = 5_000;
+/** Re-post the last fix at least this often so the client never looks stale. */
+const HEARTBEAT_MS = 15_000;
 
 export type LiveEtaState = 'idle' | 'sharing' | 'starting' | 'error';
 
@@ -41,8 +43,10 @@ interface UseLiveEtaResult {
   stop: () => Promise<void>;
 }
 
-/** Read the current position as a promise (resolves null on failure/denial). */
-function getPosition(): Promise<{ lat: number; lng: number } | null> {
+type Fix = { lat: number; lng: number };
+
+/** One position read with the given accuracy (resolves null on failure). */
+function readPosition(highAccuracy: boolean, timeout: number): Promise<Fix | null> {
   return new Promise((resolve) => {
     if (typeof navigator === 'undefined' || !navigator.geolocation) {
       resolve(null);
@@ -51,9 +55,18 @@ function getPosition(): Promise<{ lat: number; lng: number } | null> {
     navigator.geolocation.getCurrentPosition(
       (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
       () => resolve(null),
-      { enableHighAccuracy: true, timeout: 8000, maximumAge: 10_000 }
+      { enableHighAccuracy: highAccuracy, timeout, maximumAge: 30_000 }
     );
   });
+}
+
+/**
+ * Fastest usable fix: a quick network/Wi-Fi fix first (usually < 1s), and
+ * GPS only if that fails. Waiting on GPS alone often timed out indoors and on
+ * laptops, so the trip started with no position at all.
+ */
+async function getPosition(): Promise<Fix | null> {
+  return (await readPosition(false, 4000)) ?? (await readPosition(true, 10_000));
 }
 
 async function postTrack(
@@ -83,32 +96,65 @@ export function useLiveEta(
   const [error, setError] = React.useState<string | null>(null);
   const [warning, setWarning] = React.useState<string | null>(null);
   const intervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+  const watchRef = React.useRef<number | null>(null);
+  const lastFixRef = React.useRef<Fix | null>(null);
+  const lastPostAtRef = React.useRef(0);
 
   const clearTimer = React.useCallback(() => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
+    if (watchRef.current !== null && typeof navigator !== 'undefined') {
+      navigator.geolocation?.clearWatch(watchRef.current);
+      watchRef.current = null;
+    }
   }, []);
+
+  const postFix = React.useCallback(
+    async (fix: Fix, force = false) => {
+      const now = Date.now();
+      if (!force && now - lastPostAtRef.current < MIN_POST_GAP_MS) return;
+      lastPostAtRef.current = now;
+      await postTrack(appointmentId, { action: 'position', lat: fix.lat, lng: fix.lng }).catch(
+        () => {}
+      );
+    },
+    [appointmentId]
+  );
 
   const beginPositionLoop = React.useCallback(() => {
     clearTimer();
-    intervalRef.current = setInterval(async () => {
-      const pos = await getPosition();
-      if (!pos) {
-        // Keep sharing (the trip is live) but tell the groomer their location
-        // isn't being read, so this never looks like a silent failure.
-        setWarning(
-          "Can't read your location — allow location access so the client can see your van move."
-        );
-        return;
-      }
-      setWarning(null);
-      await postTrack(appointmentId, { action: 'position', lat: pos.lat, lng: pos.lng }).catch(
-        () => {}
+    // Push every movement as the device reports it (throttled to one post per
+    // 5s) instead of sampling every 20s.
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      watchRef.current = navigator.geolocation.watchPosition(
+        (pos) => {
+          const fix = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          lastFixRef.current = fix;
+          setWarning(null);
+          void postFix(fix);
+        },
+        () => {
+          // Keep sharing (the trip is live) but tell the groomer their location
+          // isn't being read, so this never looks like a silent failure.
+          setWarning(
+            "Can't read your location — allow location access so the client can see your van move."
+          );
+        },
+        { enableHighAccuracy: true, maximumAge: 5_000 }
       );
-    }, POSITION_INTERVAL_MS);
-  }, [appointmentId, clearTimer]);
+    }
+    // Heartbeat: re-send the latest fix (or try a fresh read) so a parked van
+    // or a device that stops emitting still refreshes the client's view.
+    intervalRef.current = setInterval(async () => {
+      const fix = lastFixRef.current ?? (await getPosition());
+      if (fix) {
+        lastFixRef.current = fix;
+        void postFix(fix, true);
+      }
+    }, HEARTBEAT_MS);
+  }, [clearTimer, postFix]);
 
   // Resume the position loop if we mount already sharing.
   React.useEffect(() => {
@@ -138,6 +184,10 @@ export function useLiveEta(
         return;
       }
       setState('sharing');
+      if (pos) {
+        lastFixRef.current = pos;
+        lastPostAtRef.current = Date.now();
+      }
       if (!pos) {
         setWarning(
           "Started — but we couldn't read your location. Allow location access so the client can watch your van approach."

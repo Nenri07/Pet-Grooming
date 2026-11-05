@@ -53,7 +53,7 @@ export async function resolveTracker(token: string): Promise<TrackerData | null>
   const { GroomerProfile } = await import('@/lib/db/models/groomer-profile');
 
   const appt = await Appointment.findOne({ 'tracking.token': token })
-    .select('groomerId clientId petId location tracking')
+    .select('groomerId clientId petId location serviceAddress tracking')
     .lean();
   if (!appt) return null;
   const a = appt as unknown as {
@@ -61,6 +61,7 @@ export async function resolveTracker(token: string): Promise<TrackerData | null>
     clientId: unknown;
     petId: unknown;
     location?: LatLng;
+    serviceAddress?: string;
     tracking?: { arrivedAt?: Date };
   };
 
@@ -75,8 +76,27 @@ export async function resolveTracker(token: string): Promise<TrackerData | null>
   ]);
 
   // Destination: the appointment's geocoded location, else the client's.
-  const destination: LatLng | null =
+  let destination: LatLng | null =
     a.location ?? (client as { location?: LatLng } | null)?.location ?? null;
+
+  // Bookings made before map pins existed only stored the address text. Geocode
+  // it once (provider results are cached) and save it on the appointment so
+  // the ETA works and later polls skip this step.
+  if (!destination && a.serviceAddress && !a.tracking?.arrivedAt) {
+    try {
+      const { getGeocodeProvider } = await import('@/lib/routing/providers/geocode');
+      const coord = await getGeocodeProvider().geocode(a.serviceAddress);
+      if (coord) {
+        destination = { lat: coord.lat, lng: coord.lng };
+        await Appointment.updateOne(
+          { 'tracking.token': token },
+          { $set: { location: destination } }
+        ).catch(() => {});
+      }
+    } catch {
+      destination = null;
+    }
+  }
 
   // Current van position from Redis (may be null before the first ping).
   // `liveUnavailable` is true when Redis isn't configured — positions can
