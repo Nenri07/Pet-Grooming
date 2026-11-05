@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { depositLinkOffer } from '@/lib/billing/payment-link';
 import { connectDB } from '@/lib/db/connect';
 import { getRebook } from '@/lib/redis';
 import { GroomerProfile } from '@/lib/db/models/groomer-profile';
@@ -87,6 +88,11 @@ async function resolveRebook(token: string): Promise<ResolvedRebook | null> {
       typeof profile.depositAmount === 'number' && profile.depositAmount > 0,
     businessPhone,
     businessEmail,
+    depositLink: depositLinkOffer({
+      depositAmount: profile.depositAmount,
+      paymentsReady: effectiveStatus === 'complete',
+      depositPaymentLink: profile.depositPaymentLink,
+    }),
   };
 
   const p = pet as unknown as {

@@ -14,7 +14,7 @@ import {
   User,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
-import { updateAppointmentStatus } from '@/actions/appointments';
+import { markDepositReceived, updateAppointmentStatus } from '@/actions/appointments';
 import { canTransition } from '@/lib/appointments/status';
 import { LiveEtaControl } from '@/components/portal/LiveEtaControl';
 import { BeforeAfterPanel } from '@/components/portal/BeforeAfterPanel';
@@ -70,6 +70,8 @@ export interface AppointmentDetailData {
     /** Whether a trip is currently active (started, not arrived). */
     sharing: boolean;
   };
+  /** Deposit taken through the groomer's own payment link, when any. */
+  deposit?: { status: 'pending' | 'received'; amount: number } | null;
   /** Before/After photo URLs (§11.3). */
   beforePhotoUrl?: string | null;
   afterPhotoUrl?: string | null;
@@ -79,6 +81,51 @@ export interface AppointmentDetailData {
     logoUrl: string | null;
     bookingUrl: string | null;
   };
+}
+
+/** Pay-by-link deposit state with a "Mark received" action. */
+function DepositLinkStatus({
+  appointmentId,
+  deposit,
+}: {
+  appointmentId: string;
+  deposit: { status: 'pending' | 'received'; amount: number };
+}) {
+  const router = useRouter();
+  const [busy, setBusy] = React.useState(false);
+  const money = new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(
+    deposit.amount
+  );
+  const markReceived = async () => {
+    setBusy(true);
+    const res = await markDepositReceived(appointmentId);
+    setBusy(false);
+    if (res.ok) {
+      toast.success('Deposit marked as received.');
+      router.refresh();
+    } else {
+      toast.error(res.error);
+    }
+  };
+  return (
+    <Card className={cx('flex flex-wrap items-center justify-between gap-3', deposit.status === 'pending' && 'border-warning/40')}>
+      <div>
+        <p className="font-semibold text-base-content">
+          {deposit.status === 'pending' ? `Deposit pending: ${money}` : `Deposit received: ${money}`}
+        </p>
+        <p className="text-sm text-base-content/60">
+          {deposit.status === 'pending'
+            ? 'The client was sent your payment link. Check your account, then mark it received.'
+            : 'Paid through your payment link.'}
+        </p>
+      </div>
+      {deposit.status === 'pending' && (
+        <button type="button" className="btn btn-success min-h-[44px]" onClick={markReceived} disabled={busy}>
+          {busy ? 'Saving…' : 'Mark received'}
+        </button>
+      )}
+    </Card>
+  );
 }
 
 interface AppointmentDetailProps {
@@ -417,6 +464,8 @@ export function AppointmentDetail({ appointment }: AppointmentDetailProps) {
             </>
           )}
         </Card>
+
+        {appointment.deposit && <DepositLinkStatus appointmentId={appointment.id} deposit={appointment.deposit} />}
 
         {/* Live ETA (§11.2): "On my way" + Sharing banner. Hidden when the
             appointment is completed / cancelled. */}

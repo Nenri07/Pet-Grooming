@@ -95,6 +95,8 @@ export function ReceiptTicket({ data, id = 'pp-receipt' }: ReceiptTicketProps) {
 
   // When the caller supplies the full service price, surface the balance still
   // owed on the day (price − deposit). Additive: deposit-only bookings show 0.
+  const linkDepositDue =
+    typeof data.depositDue === 'number' && data.depositDue > 0 ? data.depositDue : 0;
   const balanceDue =
     typeof data.servicePrice === 'number' &&
     Number.isFinite(data.servicePrice) &&
@@ -225,9 +227,11 @@ export function ReceiptTicket({ data, id = 'pp-receipt' }: ReceiptTicketProps) {
         {/* Totals block */}
         <div className="mt-5 space-y-2 border-t border-base-content/10 pt-4">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-base-content/60">Deposit received</span>
+            <span className="text-base-content/60">
+              {linkDepositDue > 0 ? 'Deposit due (pay by link)' : 'Deposit received'}
+            </span>
             <span className="font-mono tabular-nums text-base-content">
-              {formatCurrency(data.depositAmount, data.currency)}
+              {formatCurrency(linkDepositDue > 0 ? linkDepositDue : data.depositAmount, data.currency)}
             </span>
           </div>
           {balanceDue > 0 && (
@@ -250,10 +254,16 @@ export function ReceiptTicket({ data, id = 'pp-receipt' }: ReceiptTicketProps) {
                 </span>
               </div>
             </div>
-            <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-3 py-1 text-xs font-semibold text-success">
-              <CheckCircle2 aria-hidden="true" className="h-3.5 w-3.5" />
-              Deposit received
-            </span>
+            {linkDepositDue > 0 ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-warning/20 px-3 py-1 text-xs font-semibold text-warning-content">
+                Deposit pending
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-3 py-1 text-xs font-semibold text-success">
+                <CheckCircle2 aria-hidden="true" className="h-3.5 w-3.5" />
+                Deposit received
+              </span>
+            )}
           </div>
         </div>
 

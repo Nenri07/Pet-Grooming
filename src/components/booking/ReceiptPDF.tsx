@@ -318,6 +318,8 @@ export interface ReceiptData {
   paymentIntentId?: string;
   /** When the booking was made (defaults to now at render time). */
   bookedOn?: string | Date;
+  /** Deposit still owed through the groomer's payment link (not yet paid). */
+  depositDue?: number;
   /**
    * Optional full service price. When provided and greater than the deposit,
    * the invoice shows a "balance due on the day" line. Additive only — callers

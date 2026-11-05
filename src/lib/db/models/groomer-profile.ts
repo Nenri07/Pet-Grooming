@@ -60,6 +60,8 @@ export interface IGroomerProfile {
   phone?: string;
   businessEmail?: string;
   depositAmount: number;
+  /** Groomer's own deposit payment link (PayPal.me, Stripe Payment Link, …). */
+  depositPaymentLink?: string;
   estimateRules: EstimateRule[];
   availabilityWindows: AvailabilityWindow[];
   blockedDates: BlockedDate[];
@@ -157,6 +159,7 @@ const groomerProfileSchema = new Schema<IGroomerProfile>(
     // Default 0: deposits need Stripe Connect, which a groomer must opt into.
     // A positive default left new booking pages showing "payments not set up".
     depositAmount: { type: Number, min: 0, max: 500, default: 0 },
+    depositPaymentLink: { type: String, maxlength: 500 },
     estimateRules: [estimateRuleSchema],
     availabilityWindows: [availabilityWindowSchema],
     blockedDates: [blockedDateSchema],

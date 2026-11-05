@@ -37,6 +37,13 @@ export interface IAppointment extends Document {
   scheduledEndDate: Date;
   status: AppointmentStatus;
   serviceAddress?: string;
+  /**
+   * Deposit paid through the groomer's own payment link (not Stripe):
+   * `pending` until the groomer marks it received.
+   */
+  depositStatus?: 'pending' | 'received';
+  /** Deposit amount owed via the payment link, in whole currency units. */
+  depositDue?: number;
   notes?: string;
   postGroomNotes?: string;
   /**
@@ -84,6 +91,8 @@ const appointmentSchema = new Schema<IAppointment>(
       default: 'upcoming',
     },
     serviceAddress: { type: String, maxlength: 500 },
+    depositStatus: { type: String, enum: ['pending', 'received'] },
+    depositDue: { type: Number, min: 0, max: 500 },
     notes: { type: String, maxlength: 500 },
     postGroomNotes: { type: String, maxlength: 2000 },
     // Additive human-friendly booking reference (display aid; see interface).

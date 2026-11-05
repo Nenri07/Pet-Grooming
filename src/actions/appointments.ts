@@ -693,3 +693,31 @@ export async function getManualBookingOptions(): Promise<ManualBookingOptionsRes
     return { ok: false, error: "We couldn't load your clients and services right now." };
   }
 }
+
+/**
+ * Mark a pay-by-link deposit as received (the groomer saw it arrive in their
+ * PayPal / Stripe / Square account). Scoped to the authed groomer's own
+ * appointment and only flips `pending` → `received`.
+ */
+export async function markDepositReceived(appointmentId: string): Promise<AppointmentActionResult> {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return { ok: false, error: 'You must be signed in.' };
+  if (typeof appointmentId !== 'string' || !/^[a-f0-9]{24}$/i.test(appointmentId)) {
+    return { ok: false, error: 'Appointment not found.' };
+  }
+  try {
+    await connectDB();
+    const res = await Appointment.updateOne(
+      { _id: appointmentId, groomerId: session.user.id, depositStatus: 'pending' },
+      { $set: { depositStatus: 'received' } }
+    );
+    if (res.matchedCount === 0) {
+      return { ok: false, error: 'No pending deposit on this appointment.' };
+    }
+    revalidatePath(`/appointments/${appointmentId}`);
+    return { ok: true };
+  } catch (err) {
+    console.error('[appointments] markDepositReceived failed:', err);
+    return { ok: false, error: 'Could not update the deposit. Please try again.' };
+  }
+}

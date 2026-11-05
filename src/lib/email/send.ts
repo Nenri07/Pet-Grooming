@@ -119,6 +119,12 @@ export interface ClientConfirmationDetails {
   currency?: string;
   /** Absolute public Digital Pet Card URL, included when minted at booking. */
   petCardUrl?: string;
+  /** Deposit still owed through the groomer's payment link. */
+  depositDue?: number;
+  /** Where to pay that deposit (validated payment-site link). */
+  depositLinkUrl?: string;
+  /** Provider name, e.g. "PayPal". */
+  depositLinkLabel?: string;
 }
 
 /** Details rendered into the Groomer notification email (Req 8.3). */
@@ -225,8 +231,24 @@ export async function sendClientConfirmationEmail(
       ${row('Services', servicesText)}
       ${row('Service address', details.serviceAddress)}
       ${row('Groomer', details.groomerName)}
-      ${row('Deposit paid', formatMoney(details.depositAmount, currency))}
+      ${
+        details.depositDue && details.depositDue > 0
+          ? row('Deposit due', formatMoney(details.depositDue, currency))
+          : row('Deposit paid', formatMoney(details.depositAmount, currency))
+      }
     </table>
+    ${
+      details.depositDue && details.depositDue > 0 && details.depositLinkUrl
+        ? `<p style="margin:20px 0 0;">
+      <a href="${escapeHtml(details.depositLinkUrl)}" style="display:inline-block;padding:12px 18px;background:#111827;color:#fff;border-radius:999px;font-size:14px;font-weight:600;text-decoration:none;">
+        Pay ${escapeHtml(formatMoney(details.depositDue, currency))} deposit with ${escapeHtml(details.depositLinkLabel ?? 'the payment link')}
+      </a>
+    </p>
+    <p style="margin:8px 0 0;font-size:12px;color:#6b7280;line-height:1.5;">
+      Your groomer confirms the deposit once it arrives.
+    </p>`
+        : ''
+    }
     <p style="margin:16px 0 0;font-size:13px;color:#6b7280;line-height:1.5;">
       We look forward to seeing you and your pet. If you need to make changes,
       please contact ${escapeHtml(details.groomerName)} directly.

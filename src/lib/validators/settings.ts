@@ -27,6 +27,11 @@
  * _Requirements: 15.1, 21.1_
  */
 import { z } from 'zod';
+import {
+  normalizePaymentLink,
+  PAYMENT_LINK_MAX_LENGTH,
+  PAYMENT_LINK_PROVIDERS,
+} from '@/lib/billing/payment-link';
 import type { CoatCondition } from '@/types';
 import { isValidPolygon } from '@/lib/routing/service-area';
 
@@ -170,6 +175,18 @@ export const settingsSchema = z.object({
   estimateRules: z.array(estimateRuleSchema),
 
   logoUrl: z.string().trim().optional().or(z.literal('')),
+
+  // Groomer's own deposit payment link. Only https links on known payment
+  // sites are accepted (see normalizePaymentLink).
+  depositPaymentLink: z
+    .string()
+    .trim()
+    .max(PAYMENT_LINK_MAX_LENGTH, { message: 'That link is too long.' })
+    .refine((v) => v === '' || normalizePaymentLink(v) !== null, {
+      message: `Paste a link from ${PAYMENT_LINK_PROVIDERS.join(', ')}.`,
+    })
+    .optional()
+    .or(z.literal('')),
 
   // --- Service area (routing). Both optional; a blank radius means no limit. ---
   baseAddress: z

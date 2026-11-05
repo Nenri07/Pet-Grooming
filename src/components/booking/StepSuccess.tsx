@@ -61,7 +61,14 @@ function formatAddress(address: {
 /** Finalisation lifecycle for the on-mount server call. */
 type FinalizeState =
   | { status: 'finalizing' }
-  | { status: 'done'; data: ReceiptData; degraded: boolean };
+  | { status: 'failed'; message: string }
+  | {
+      status: 'done';
+      data: ReceiptData;
+      degraded: boolean;
+      /** Set when the deposit is paid through the groomer's own link. */
+      depositLink?: { url: string; label: string; amount: number; currency: string };
+    };
 
 export function StepSuccess({
   state,
@@ -131,6 +138,7 @@ export function StepSuccess({
       depositAmount: number;
       currency: string;
       paymentIntentId: string;
+      depositDue?: number;
     }): ReceiptData => ({
       businessName: s.businessName,
       bookingRef: s.bookingRef || fallbackRefRef.current,
@@ -145,6 +153,7 @@ export function StepSuccess({
       // "Payment ID:" line.
       paymentIntentId: s.paymentIntentId || undefined,
       bookedOn: new Date(),
+      depositDue: s.depositDue,
     }),
     []
   );
@@ -190,18 +199,33 @@ export function StepSuccess({
         .then((result) => {
           if (cancelled) return;
           if (result.ok) {
+            const sm = result.summary;
             setFinalize({
               status: 'done',
               degraded: false,
-              data: receiptFromSummary(result.summary),
+              data: receiptFromSummary(sm),
+              depositLink:
+                sm.depositLinkUrl && sm.depositDue
+                  ? {
+                      url: sm.depositLinkUrl,
+                      label: sm.depositLinkLabel ?? 'the payment link',
+                      amount: sm.depositDue,
+                      currency: (sm.currency || 'usd').toUpperCase(),
+                    }
+                  : undefined,
             });
           } else {
-            showLocal();
+            // No payment was taken on this path, so a server "no" means the
+            // booking was NOT made. Say so instead of showing a fake receipt.
+            setFinalize({ status: 'failed', message: result.error });
           }
         })
         .catch(() => {
           if (cancelled) return;
-          showLocal();
+          setFinalize({
+            status: 'failed',
+            message: 'We couldn\u2019t finish your booking. Please try again.',
+          });
         });
 
       return () => {
@@ -252,6 +276,31 @@ export function StepSuccess({
       </div>
     );
   }
+
+  if (finalize.status === 'failed') {
+    return (
+      <div className="flex flex-col gap-4">
+        <div className="alert alert-error rounded-2xl" role="alert">
+          <AlertTriangle aria-hidden="true" className="h-5 w-5 shrink-0" />
+          <span>Your booking wasn&apos;t completed. {finalize.message}</span>
+        </div>
+        <button
+          type="button"
+          className="btn btn-primary min-h-[44px]"
+          onClick={() => setRetryKey((k) => k + 1)}
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
+
+  const depositLink = finalize.depositLink;
+  const depositMoney = depositLink
+    ? new Intl.NumberFormat(undefined, { style: 'currency', currency: depositLink.currency }).format(
+        depositLink.amount
+      )
+    : '';
 
   return (
     <div className="flex flex-col gap-6">
@@ -309,6 +358,26 @@ export function StepSuccess({
               </button>
             )}
           </div>
+        </div>
+      )}
+
+      {depositLink && (
+        <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4 text-center">
+          <p className="font-semibold text-base-content">
+            Pay your {depositMoney} deposit to lock in this time
+          </p>
+          <p className="mt-1 text-sm text-base-content/70">
+            Your groomer takes deposits with {depositLink.label}. They&apos;ll confirm it once it
+            arrives. The link is in your confirmation email too.
+          </p>
+          <a
+            href={depositLink.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-primary mt-3 min-h-[44px]"
+          >
+            Pay {depositMoney} with {depositLink.label}
+          </a>
         </div>
       )}
 

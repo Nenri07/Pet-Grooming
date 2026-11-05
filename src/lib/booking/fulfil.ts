@@ -26,6 +26,11 @@ import type Stripe from 'stripe';
 import { isValidObjectId, type Types } from 'mongoose';
 import { nanoid } from 'nanoid';
 import { sanitizeLatLng } from '@/lib/geo/mapbox-search';
+import {
+  normalizePaymentLink,
+  paymentLinkForAmount,
+  paymentLinkLabel,
+} from '@/lib/billing/payment-link';
 import { connectDB } from '@/lib/db/connect';
 import { GroomerProfile } from '@/lib/db/models/groomer-profile';
 import { Service } from '@/lib/db/models/service';
@@ -121,6 +126,12 @@ export interface FulfilSummary {
   /** The Stripe PaymentIntent / transaction id. */
   paymentIntentId: string;
   businessName: string;
+  /** Deposit still owed through the groomer's payment link (link bookings only). */
+  depositDue?: number;
+  /** Where the client pays that deposit. */
+  depositLinkUrl?: string;
+  /** Provider name for the link, e.g. "PayPal". */
+  depositLinkLabel?: string;
 }
 
 /** The result of a fulfilment attempt. */
@@ -651,7 +662,9 @@ export async function fulfilFreeBooking(
   await connectDB();
 
   const profile = await GroomerProfile.findOne({ groomerSlug: booking.groomerSlug })
-    .select('userId businessName')
+    .select(
+      'userId businessName depositAmount depositPaymentLink connectStatus stripeConnectChargesEnabled'
+    )
     .lean();
   if (!profile) {
     return {
@@ -663,6 +676,34 @@ export async function fulfilFreeBooking(
   const businessName =
     (typeof profile.businessName === 'string' && profile.businessName.trim()) ||
     'your groomer';
+
+  // Deposit rules are decided HERE from the groomer's settings, never from the
+  // client. This path creates bookings without a card payment, so it must not
+  // let a client skip a deposit the groomer requires.
+  const depositRequired =
+    typeof profile.depositAmount === 'number' && profile.depositAmount > 0;
+  let linkDeposit: { amount: number; url: string; label: string } | null = null;
+  if (depositRequired) {
+    const connectReady =
+      (profile.connectStatus ??
+        (profile.stripeConnectChargesEnabled === true ? 'complete' : 'not_started')) ===
+      'complete';
+    if (connectReady) {
+      return { ok: false, error: 'This booking needs a card deposit. Please go back and pay to confirm.' };
+    }
+    const link = normalizePaymentLink(profile.depositPaymentLink);
+    if (!link) {
+      return {
+        ok: false,
+        error: 'This groomer isn\u2019t taking online deposits yet. Please contact them to book.',
+      };
+    }
+    linkDeposit = {
+      amount: profile.depositAmount,
+      url: paymentLinkForAmount(link, profile.depositAmount, 'USD'),
+      label: paymentLinkLabel(link),
+    };
+  }
 
   const service = await resolveBookedService(groomerId, booking.serviceId);
 
@@ -698,6 +739,7 @@ export async function fulfilFreeBooking(
     notes: booking.pet.notes,
     bookingRef,
     source: 'public',
+    ...(linkDeposit ? { depositStatus: 'pending', depositDue: linkDeposit.amount } : {}),
   });
 
   // Best-effort hold release + cache bust (never throws past this block).
@@ -712,6 +754,9 @@ export async function fulfilFreeBooking(
     depositAmount: 0,
     currency: 'usd',
     petCardUrl,
+    depositDue: linkDeposit?.amount,
+    depositLinkUrl: linkDeposit?.url,
+    depositLinkLabel: linkDeposit?.label,
   });
 
   // Best-effort SMS confirmation + reminder scheduling (Master Spec §12.3).
@@ -742,6 +787,13 @@ export async function fulfilFreeBooking(
       currency: 'usd',
       paymentIntentId: '',
       businessName,
+      ...(linkDeposit
+        ? {
+            depositDue: linkDeposit.amount,
+            depositLinkUrl: linkDeposit.url,
+            depositLinkLabel: linkDeposit.label,
+          }
+        : {}),
     },
   };
 }
@@ -764,6 +816,9 @@ async function sendBookingNotifications(
     depositAmount: number;
     currency: string;
     petCardUrl?: string;
+    depositDue?: number;
+    depositLinkUrl?: string;
+    depositLinkLabel?: string;
   }
 ): Promise<void> {
   try {
@@ -789,6 +844,9 @@ async function sendBookingNotifications(
       depositAmount: ctx.depositAmount,
       currency,
       petCardUrl: ctx.petCardUrl,
+      depositDue: ctx.depositDue,
+      depositLinkUrl: ctx.depositLinkUrl,
+      depositLinkLabel: ctx.depositLinkLabel,
     });
 
     await sendGroomerNotificationEmail({

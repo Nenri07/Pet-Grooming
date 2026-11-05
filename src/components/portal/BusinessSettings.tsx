@@ -97,6 +97,7 @@ function toFormValues(settings: BusinessSettingsData): ServiceSettingsInput {
     phone: settings.phone,
     businessEmail: settings.businessEmail,
     depositAmount: settings.depositAmount,
+    depositPaymentLink: settings.depositPaymentLink ?? '',
     estimateRules: settings.estimateRules.map((rule) => ({
       coatCondition: rule.coatCondition ?? '',
       weightMin: rule.weightMin ?? ('' as unknown as number),
@@ -303,6 +304,33 @@ function BusinessProfileForm({ initialSettings }: BusinessSettingsProps) {
           {errors.depositAmount && (
             <p className="mt-1 text-sm text-error" role="alert">
               {errors.depositAmount.message}
+            </p>
+          )}
+        </div>
+
+        {/* Deposit payment link (used until online card payments are connected) */}
+        <div className="form-control">
+          <label className="label" htmlFor="settings-deposit-link">
+            <span className="label-text">Deposit payment link</span>
+          </label>
+          <input
+            id="settings-deposit-link"
+            type="url"
+            inputMode="url"
+            maxLength={500}
+            placeholder="e.g. paypal.me/yourname or a Stripe payment link"
+            className={cx('input input-bordered min-h-[44px] w-full', errors.depositPaymentLink && 'input-error')}
+            aria-invalid={errors.depositPaymentLink ? 'true' : 'false'}
+            {...register('depositPaymentLink')}
+          />
+          {errors.depositPaymentLink ? (
+            <p className="mt-1 text-sm text-error" role="alert">
+              {errors.depositPaymentLink.message}
+            </p>
+          ) : (
+            <p className="mt-1 text-xs text-base-content/60">
+              Clients pay the deposit through this link after booking, and you mark it received on
+              the appointment. Works with PayPal, Stripe payment links, Square, Cash App and Venmo.
             </p>
           )}
         </div>

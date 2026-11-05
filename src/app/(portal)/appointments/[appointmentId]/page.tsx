@@ -63,6 +63,8 @@ interface LeanAppointment {
   tracking?: { token?: string; startedAt?: Date; arrivedAt?: Date } | null;
   beforePhotoUrl?: string | null;
   afterPhotoUrl?: string | null;
+  depositStatus?: 'pending' | 'received' | null;
+  depositDue?: number | null;
 }
 
 /** Compose a client's address parts into a single display string. */
@@ -152,6 +154,10 @@ export default async function AppointmentDetailPage({
       sharing: Boolean(doc.tracking?.startedAt && !doc.tracking?.arrivedAt),
     },
     // Before/After (§11.3).
+    deposit:
+      doc.depositStatus && typeof doc.depositDue === 'number'
+        ? { status: doc.depositStatus, amount: doc.depositDue }
+        : null,
     beforePhotoUrl: doc.beforePhotoUrl ?? null,
     afterPhotoUrl: doc.afterPhotoUrl ?? null,
     branding: {

@@ -29,6 +29,7 @@
  * _Requirements: 15.1, 15.4, 15.5, 15.6, 21.1_
  */
 import { revalidatePath } from 'next/cache';
+import { normalizePaymentLink } from '@/lib/billing/payment-link';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { connectDB } from '@/lib/db/connect';
@@ -57,6 +58,8 @@ export interface BusinessSettingsData {
   phone: string;
   businessEmail: string;
   depositAmount: number;
+  /** Groomer's own deposit payment link, or ''. */
+  depositPaymentLink: string;
   estimateRules: SettingsEstimateRule[];
   logoUrl: string;
   groomerSlug: string;
@@ -112,6 +115,7 @@ function toSettingsData(profile: {
   phone?: string;
   businessEmail?: string;
   depositAmount: number;
+  depositPaymentLink?: string;
   estimateRules?: EstimateRule[];
   logoUrl?: string;
   groomerSlug?: string;
@@ -125,6 +129,7 @@ function toSettingsData(profile: {
     phone: profile.phone ?? '',
     businessEmail: profile.businessEmail ?? '',
     depositAmount: profile.depositAmount,
+    depositPaymentLink: profile.depositPaymentLink ?? '',
     estimateRules: (profile.estimateRules ?? []).map((rule) => ({
       coatCondition: rule.coatCondition,
       weightMin: rule.weightRange?.min,
@@ -200,7 +205,7 @@ export async function getBusinessSettings(): Promise<GetBusinessSettingsResult> 
 
     const profile = await GroomerProfile.findOne({ userId: session.user.id })
       .select(
-        'businessName phone businessEmail depositAmount estimateRules logoUrl groomerSlug baseAddress baseLocation serviceRadiusKm serviceAreaPolygon'
+        'businessName phone businessEmail depositAmount depositPaymentLink estimateRules logoUrl groomerSlug baseAddress baseLocation serviceRadiusKm serviceAreaPolygon'
       )
       .lean();
 
@@ -276,6 +281,7 @@ export async function updateBusinessSettings(
       businessEmail: data.businessEmail ? data.businessEmail : undefined,
       depositAmount: data.depositAmount,
       estimateRules: data.estimateRules.map(toPersistedRule),
+      depositPaymentLink: normalizePaymentLink(data.depositPaymentLink) ?? undefined,
       logoUrl: data.logoUrl ? data.logoUrl : undefined,
       baseAddress,
     };
@@ -321,7 +327,7 @@ export async function updateBusinessSettings(
       { new: true }
     )
       .select(
-        'businessName phone businessEmail depositAmount estimateRules logoUrl groomerSlug baseAddress baseLocation serviceRadiusKm serviceAreaPolygon'
+        'businessName phone businessEmail depositAmount depositPaymentLink estimateRules logoUrl groomerSlug baseAddress baseLocation serviceRadiusKm serviceAreaPolygon'
       )
       .lean();
 

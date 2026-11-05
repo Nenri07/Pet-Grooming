@@ -48,6 +48,12 @@ export interface BookingGroomer {
   businessPhone?: string;
   /** Optional business email, surfaced in the not-set-up card. */
   businessEmail?: string;
+  /**
+   * Set when a deposit is required, card payments aren't connected, and the
+   * groomer added their own payment link. The client books first, then pays
+   * the deposit through that link (the URL comes back with the booking).
+   */
+  depositLink?: { label: string; amount: number } | null;
 }
 
 /**
@@ -252,6 +258,48 @@ function NoDepositConfirm({
 }
 
 /**
+ * PayByLinkConfirm — Step 5 when the groomer takes deposits through their own
+ * payment link (PayPal.me, Stripe Payment Link, …). The client confirms the
+ * booking here; the next screen and the confirmation email carry the link.
+ */
+function PayByLinkConfirm({
+  label,
+  amount,
+  onConfirm,
+  onBack,
+}: {
+  label: string;
+  amount: number;
+  onConfirm: () => void;
+  onBack: () => void;
+}) {
+  const money = new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(amount);
+  return (
+    <div className="flex flex-col gap-4">
+      <div>
+        <h2 className="text-xl font-semibold text-base-content">Confirm your booking</h2>
+        <p className="text-sm text-base-content/60">Step 5 of 5 — {money} deposit</p>
+      </div>
+      <div className="alert rounded-2xl" role="status">
+        <span>
+          This groomer takes a {money} deposit with {label}. Confirm your booking, then
+          tap <strong>Pay with {label}</strong> on the next screen. The link is also in your
+          confirmation email.
+        </span>
+      </div>
+      <div className="flex gap-2">
+        <button type="button" className="btn btn-ghost rounded-btn min-h-11" onClick={onBack}>
+          Back
+        </button>
+        <button type="button" className="btn btn-primary rounded-btn min-h-11 flex-1" onClick={onConfirm}>
+          Confirm booking
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
  * BookingFlow — client container that drives the multi-step booking state
  * machine, renders the active step, shows a progress indicator, and animates
  * transitions between steps.
@@ -361,6 +409,28 @@ export function BookingFlow({ groomer, initialState, prefillNotice }: BookingFlo
         // aren't set up — show the labelled not-set-up state instead so the
         // client never reaches a dead charge (R17.1). When Connect is
         // complete, the existing StepPayment runs unchanged (R17.3).
+        // No card payments, but the groomer added their own payment link: book
+        // now, pay the deposit through the link on the next screen.
+        if (!depositBookingAllowed && groomer.depositLink) {
+          return (
+            <PayByLinkConfirm
+              label={groomer.depositLink.label}
+              amount={groomer.depositLink.amount}
+              onBack={() => dispatch({ type: 'GO_BACK' })}
+              onConfirm={() =>
+                dispatch({
+                  type: 'PAYMENT_SUCCESS',
+                  payload: {
+                    paymentIntentId: '',
+                    status: 'succeeded',
+                    amount: 0,
+                    currency: 'USD',
+                  },
+                })
+              }
+            />
+          );
+        }
         if (!depositBookingAllowed) {
           return (
             <PaymentsNotSetUp
