@@ -229,8 +229,14 @@ async function sendOnMyWayEmail(args: {
   const [client, pet, profile] = await Promise.all([
     Client.findById(a.clientId).select('email').lean(),
     Pet.findById(a.petId).select('name').lean(),
-    GroomerProfile.findOne({ userId: groomerId }).select('businessName').lean(),
+    GroomerProfile.findOne({ userId: groomerId }).select('businessName businessEmail phone').lean(),
   ]);
+  const prof = profile as { businessEmail?: string; phone?: string } | null;
+  let replyTo = prof?.businessEmail?.trim() || undefined;
+  if (!replyTo) {
+    const { User } = await import('@/lib/db/models/user');
+    replyTo = (await User.findById(groomerId).select('email').lean<{ email?: string } | null>())?.email;
+  }
   const email = (client as { email?: string } | null)?.email;
   if (!email) return;
 
@@ -243,5 +249,7 @@ async function sendOnMyWayEmail(args: {
     petName: (pet as { name?: string } | null)?.name,
     trackUrl: trackLink(token),
     etaMinutes: null,
+    replyTo,
+    groomerPhone: prof?.phone,
   });
 }

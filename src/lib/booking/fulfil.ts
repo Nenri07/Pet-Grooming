@@ -607,6 +607,9 @@ export async function fulfilBookingByPaymentIntentId(
   await sendBookingNotifications(booking, {
     groomerBusinessName: businessName,
     serviceName: service.name,
+    servicePrice: service.basePrice,
+    groomerId: String(groomerId),
+    appointmentId: String(appointment._id),
     scheduledDate,
     depositAmount: depositAmountOf(paymentIntent),
     currency: paymentIntent.currency ?? 'usd',
@@ -759,6 +762,9 @@ export async function fulfilFreeBooking(
   await sendBookingNotifications(booking, {
     groomerBusinessName: businessName,
     serviceName: service.name,
+    servicePrice: service.basePrice,
+    groomerId: String(groomerId),
+    appointmentId: String(appointment._id),
     scheduledDate,
     depositAmount: 0,
     currency: 'usd',
@@ -829,19 +835,42 @@ async function sendBookingNotifications(
     depositDue?: number;
     depositLinkUrl?: string;
     depositLinkLabel?: string;
+    servicePrice?: number;
+    groomerId?: string;
+    appointmentId?: string;
   }
 ): Promise<void> {
   try {
+    // Groomer contact + time zone: emails show the groomer's local time and
+    // replies go to the groomer, not to Pawxis.
+    let tz = 'UTC';
+    let groomerEmail: string | undefined;
+    let groomerPhone: string | undefined;
+    if (ctx.groomerId) {
+      const { User } = await import('@/lib/db/models/user');
+      const [prof, user] = await Promise.all([
+        GroomerProfile.findOne({ userId: ctx.groomerId })
+          .select('businessEmail phone timezone')
+          .lean<{ businessEmail?: string; phone?: string; timezone?: string } | null>(),
+        User.findById(ctx.groomerId).select('email').lean<{ email?: string } | null>(),
+      ]);
+      tz = prof?.timezone || 'UTC';
+      groomerEmail = prof?.businessEmail?.trim() || user?.email || undefined;
+      groomerPhone = prof?.phone?.trim() || undefined;
+    }
     const dateStr = ctx.scheduledDate.toLocaleDateString('en-US', {
+      timeZone: tz,
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric',
     });
     const timeStr = ctx.scheduledDate.toLocaleTimeString('en-US', {
+      timeZone: tz,
       hour: 'numeric',
       minute: '2-digit',
     });
+    const appBase = (process.env.NEXT_PUBLIC_APP_URL ?? '').replace(/\/$/, '');
     const serviceAddress = formatServiceAddress(booking.owner.address);
     const currency = (ctx.currency || 'usd').toUpperCase();
 
@@ -857,9 +886,18 @@ async function sendBookingNotifications(
       depositDue: ctx.depositDue,
       depositLinkUrl: ctx.depositLinkUrl,
       depositLinkLabel: ctx.depositLinkLabel,
+      petName: booking.pet.name,
+      servicePrice: ctx.servicePrice,
+      groomerEmail,
+      groomerPhone,
     });
 
     await sendGroomerNotificationEmail({
+      to: groomerEmail,
+      businessName: ctx.groomerBusinessName,
+      clientEmail: booking.owner.email,
+      appointmentUrl:
+        appBase && ctx.appointmentId ? `${appBase}/appointments/${ctx.appointmentId}` : undefined,
       date: dateStr,
       time: timeStr,
       services: [ctx.serviceName],

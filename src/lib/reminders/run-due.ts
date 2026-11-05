@@ -106,8 +106,8 @@ export async function runDueReminders(now: Date = new Date()): Promise<SweepResu
           Client.findById(appt.clientId).select('email phone').lean<{ email?: string; phone?: string } | null>(),
           Pet.findById(appt.petId).select('name').lean<{ name?: string } | null>(),
           GroomerProfile.findOne({ userId: appt.groomerId })
-            .select('businessName phone timezone')
-            .lean<{ businessName?: string; phone?: string; timezone?: string } | null>(),
+            .select('businessName businessEmail phone timezone')
+            .lean<{ businessName?: string; businessEmail?: string; phone?: string; timezone?: string } | null>(),
         ]);
         const tz = profile?.timezone || 'UTC';
         const when = new Date(appt.scheduledDate);
@@ -124,6 +124,7 @@ export async function runDueReminders(now: Date = new Date()): Promise<SweepResu
             time,
             serviceAddress: appt.serviceAddress,
             groomerPhone: profile?.phone,
+            replyTo: profile?.businessEmail?.trim() || undefined,
           });
           if (ok) result.emailed++;
         }
