@@ -144,7 +144,7 @@ Make every Solo and Pro claim true and enforced on the server. Work bottom-up: p
   - Commit only the changed source, test and spec files (never `.env` / `.env.bak`), push to `main`, and confirm the Vercel deployment status for the commit
   - _Requirements: 7.1, 7.2, 7.3_
 
-- [ ] 13. Follow-ups: remaining Pro tags and auto-fill on reschedule
+- [x] 13. Follow-ups: remaining Pro tags and auto-fill on reschedule
   - [x] 13.1 Tag the remaining Pro features in marketing copy
     - `src/content/landing.ts`: bento "Rebooking autopilot" gets `pro: true`
     - `src/content/for-groomers.ts`: the "Order Radar routing" and "Live \"on my way\" tracking" feature items (and any other item for a Pro_Feature: Fill My Day, before/after cards, rebooking autopilot) get a Pro marker, rendered as the same "Pro" pill used in `BentoFeatures.tsx` / `Comparison.tsx` (screen readers hear "Pro plan")
@@ -154,8 +154,21 @@ Make every Solo and Pro claim true and enforced on the server. Work bottom-up: p
     - In `src/actions/appointments.ts` `moveAppointment`, capture the old start/end before saving; after the save, best-effort `await autoFillCancelledSlot(groomerId, { scheduledDate: oldStart, scheduledEndDate: oldEnd })` in its own `try/catch`, only when the old and new windows do not overlap
     - Add a test (source guard or mocked unit test) that the reschedule path calls auto-fill with the old window and never fails the move
     - _Requirements: 3.3_
-  - [-] 13.3 Verify and release
+  - [x] 13.3 Verify and release
     - Full `npx vitest run` (only the two pre-existing `tests/calendar-holds.test.ts` failures allowed), `npx tsc --noEmit`, `npm run lint`, clean `npm run build`; commit only the changed files (never `.env` / `.env.bak`), push to `main`, confirm the Vercel deployment
+    - _Requirements: 7.1, 7.2_
+
+- [~] 14. Daily email cap guard (Resend free plan: 100 emails/day)
+  - [x] 14.1 Count sent emails per day and protect essential emails
+    - In `src/lib/email/send.ts` `deliver()`, after a successful Resend send (not in capture/preview mode), best-effort `INCR` a Redis counter `email:day:{YYYY-MM-DD}` (UTC) with a ~48h TTL; add the key builder/TTL to `src/lib/redis.ts` following its `keys` / `TTL` convention; never throw or block a send
+    - Add `EMAIL_DAILY_LIMIT` (env, default 100; `0` disables the guard) and pure helpers in a new `src/lib/email/daily-cap.ts`: `emailCapState(sent, limit)` returning `'ok' | 'warn' | 'reserve'` (warn at >= 80%, reserve at >= 90%), plus `getEmailsSentToday()`
+    - `canSendOptionalMessage` (`src/lib/messaging/usage.ts`) returns false while the platform is in `'reserve'`, so Fill My Day offers, rebooking nudges and optional Inbox emails pause and confirmations / reminders keep the remaining quota
+    - When the count first crosses the warn threshold on a day, send ONE alert email to the founder (`ADMIN_EMAIL`, falling back to `BUSINESS_EMAIL`) using a Redis `SET NX` marker per day: "Pawxis sent N of 100 emails today. Upgrade Resend to Pro to avoid dropped emails." Log `[email] daily cap` lines at warn/reserve, and log clearly when Resend rejects a send for quota (HTTP 429 / daily_quota_exceeded)
+    - Include `emailsToday` and the cap state in the `/api/cron/reminders` JSON response
+    - Tests: property test for `emailCapState` thresholds; unit tests that the alert sends once per day (mock Redis), that `canSendOptionalMessage` is false in `reserve`, and that preview/capture mode does not count
+    - _Requirements: 3.2, 4.4_
+  - [-] 14.2 Verify and release
+    - Full `npx vitest run` (only the two pre-existing `tests/calendar-holds.test.ts` failures allowed), `npx tsc --noEmit`, `npm run lint`, clean `npm run build`; do NOT change the `vercel.json` cron schedule (Hobby rejects crons more often than daily); commit only the changed files (never `.env` / `.env.bak`), push to `main`, confirm the Vercel deployment
     - _Requirements: 7.1, 7.2_
 
 ## Notes
@@ -176,7 +189,9 @@ Make every Solo and Pro claim true and enforced on the server. Work bottom-up: p
     { "id": 4, "tasks": ["4", "9"] },
     { "id": 5, "tasks": ["12"] },
     { "id": 6, "tasks": ["13.1", "13.2"] },
-    { "id": 7, "tasks": ["13.3"] }
+    { "id": 7, "tasks": ["13.3"] },
+    { "id": 8, "tasks": ["14.1"] },
+    { "id": 9, "tasks": ["14.2"] }
   ]
 }
 ```

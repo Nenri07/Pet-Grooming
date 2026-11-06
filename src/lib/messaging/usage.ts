@@ -9,6 +9,7 @@
  * Best-effort: never throws; a counting failure never blocks a send.
  */
 import { getUsage, incrementUsage } from '@/lib/sms/quota';
+import { isEmailReserveActive } from '@/lib/email/daily-cap';
 
 export async function messageAllowance(groomerId: string): Promise<{ used: number; included: number; topup: number }> {
   const { getEntitlements } = await import('@/lib/billing/entitlements');
@@ -31,9 +32,14 @@ export function hasAllowance(used: number, included: number, topup: number): boo
   return Math.max(0, used) < nonNegative(included) + nonNegative(topup);
 }
 
-/** True while the groomer still has messages left this month (plan + top-up). */
+/**
+ * True while the groomer still has messages left this month (plan + top-up)
+ * AND the platform is not in its daily email 'reserve' (>= 90% of the Resend
+ * daily limit), so essential emails keep the remaining quota. Fails open.
+ */
 export async function canSendOptionalMessage(groomerId: string): Promise<boolean> {
   try {
+    if (await isEmailReserveActive()) return false;
     const a = await messageAllowance(groomerId);
     return hasAllowance(a.used, a.included, a.topup);
   } catch {

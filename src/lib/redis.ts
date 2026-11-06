@@ -95,6 +95,10 @@ export const TTL = {
   // Once-per-UTC-day marker for the rebook-nudge sweep run from the reminders
   // cron. 25 h so it outlives the day it guards.
   REBOOK_DAILY: 90_000, // cron:rebook:{yyyy-mm-dd}  EX 90000 (25 h)
+  // Platform-wide count of emails sent per UTC day (Resend free plan: 100/day),
+  // and the once-per-day "nearing the cap" alert marker. 48 h so the counter
+  // outlives the day it counts.
+  EMAIL_DAY: 48 * 60 * 60, // email:day:{yyyy-mm-dd} / email:day:{yyyy-mm-dd}:alert EX 172800 (48 h)
   // --- Billing Phase 2: trial abuse-prevention + email verification ---
   // Phone OTP code (OtpSmsProvider fallback only; Twilio Verify stores its own).
   // `otp:{phoneHash}` → {codeHash,attempts}, ~10 min (R10.4).
@@ -138,6 +142,10 @@ export const keys = {
   rebook: (token: string) => `rebook:${token}`,
   // Once-per-day marker for the rebook-nudge sweep (UTC date), SET NX EX 90000.
   rebookDaily: (dateStr: string) => `cron:rebook:${dateStr}`,
+  // Emails sent platform-wide on a UTC day (INCR), EX 48h.
+  emailDay: (dateStr: string) => `email:day:${dateStr}`,
+  // Once-per-day marker for the founder's daily-cap alert (SET NX), EX 48h.
+  emailDayAlert: (dateStr: string) => `email:day:${dateStr}:alert`,
   // --- Billing Phase 2: trial abuse-prevention + email verification ---
   // R10.4 phone OTP code (OtpSmsProvider fallback) → {codeHash,attempts}, EX 600.
   // Keyed by the hashed phone (never the raw E.164) to match the IdentityBinding.

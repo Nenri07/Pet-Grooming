@@ -11,6 +11,7 @@
  */
 import { Resend } from 'resend';
 import { EMAIL_COPY } from './theme';
+import { isQuotaError, isTooManyRequests, recordEmailSent } from './daily-cap';
 import {
   button,
   cleanDisplayName,
@@ -63,13 +64,19 @@ function safeReplyTo(addr: string | undefined | null): string | undefined {
   return /^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/.test(a) ? a : undefined;
 }
 
-async function withRetry<T>(fn: () => Promise<T>, maxAttempts = 3, delayMs = 500): Promise<T> {
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  maxAttempts = 3,
+  delayMs = 500,
+  shouldRetry: (err: unknown) => boolean = () => true
+): Promise<T> {
   let lastError: unknown;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
       return await fn();
     } catch (err) {
       lastError = err;
+      if (!shouldRetry(err)) break;
       if (attempt < maxAttempts) await new Promise((r) => setTimeout(r, delayMs * attempt));
     }
   }
@@ -103,10 +110,18 @@ export async function captureEmails(fn: () => Promise<unknown>): Promise<Capture
   return out;
 }
 
-/** Send one email with HTML + plain text. Never throws. */
+/**
+ * Send one email with HTML + plain text. Never throws.
+ *
+ * Every email Resend accepts is counted toward the platform's daily cap
+ * (see ./daily-cap). Captured/preview emails are not counted. `capAlert: false`
+ * counts the email without checking for the founder alert (used by the alert
+ * email itself so it cannot trigger another alert).
+ */
 async function deliver(
   label: string,
-  msg: { from: string | null; to: string | undefined | null; subject: string; html: string; replyTo?: string }
+  msg: { from: string | null; to: string | undefined | null; subject: string; html: string; replyTo?: string },
+  opts: { capAlert?: boolean } = {}
 ): Promise<boolean> {
   const replyTo = safeReplyTo(msg.replyTo);
   if (captureHook) {
@@ -123,22 +138,69 @@ async function deliver(
   const resend = getResend();
   if (!resend || !msg.from || !msg.to) return false;
   try {
-    await withRetry(async () => {
-      const { error } = await resend.emails.send({
-        from: msg.from as string,
-        to: msg.to as string,
-        subject: msg.subject,
-        html: msg.html,
-        text: toPlainText(msg.html),
-        ...(replyTo ? { replyTo } : {}),
-      });
-      if (error) throw error;
-    });
-    return true;
+    await withRetry(
+      async () => {
+        const { error } = await resend.emails.send({
+          from: msg.from as string,
+          to: msg.to as string,
+          subject: msg.subject,
+          html: msg.html,
+          text: toPlainText(msg.html),
+          ...(replyTo ? { replyTo } : {}),
+        });
+        if (error) throw error;
+      },
+      3,
+      500,
+      // A used-up quota will not recover within seconds; do not retry it.
+      (err) => !isQuotaError(err)
+    );
   } catch (err) {
-    console.error(`[email] Failed to send ${label}:`, err);
+    if (isTooManyRequests(err)) {
+      console.error(
+        `[email] daily cap: Resend REJECTED ${label} for quota/rate limit (HTTP 429${
+          isQuotaError(err) ? `, ${(err as { name: string }).name}` : ''
+        }). Upgrade Resend to avoid dropped emails.`,
+        err
+      );
+    } else {
+      console.error(`[email] Failed to send ${label}:`, err);
+    }
     return false;
   }
+  // Best-effort: counting never throws or affects the send result.
+  await recordEmailSent(opts.capAlert === false ? undefined : sendDailyCapAlertEmail);
+  return true;
+}
+
+/**
+ * One-per-day alert to the founder when the platform nears the daily cap.
+ * Sent to `ADMIN_EMAIL`, falling back to `BUSINESS_EMAIL`. Never throws.
+ */
+export async function sendDailyCapAlertEmail(sent: number, limit: number): Promise<boolean> {
+  const to = process.env.ADMIN_EMAIL?.trim() || process.env.BUSINESS_EMAIL?.trim();
+  if (!to) {
+    console.warn('[email] daily cap: ADMIN_EMAIL / BUSINESS_EMAIL not set; no alert sent.');
+    return false;
+  }
+  const line = `Pawxis sent ${sent} of ${limit} emails today. Upgrade Resend to Pro to avoid dropped emails.`;
+  const body = [
+    paragraph(escapeHtml(line)),
+    paragraph(
+      'At 90% of the limit Pawxis pauses optional messages (Fill My Day offers, rebooking nudges, optional Inbox emails) so confirmations and reminders keep the remaining quota. The count resets at midnight UTC.',
+      true
+    ),
+  ].join('');
+  return deliver(
+    'daily cap alert',
+    {
+      from: fromHeader(null),
+      to,
+      subject: `Pawxis email usage: ${sent} of ${limit} today`,
+      html: layout({ brand: 'Pawxis', heading: 'Nearing today\u2019s email limit', body }),
+    },
+    { capAlert: false }
+  );
 }
 
 /** Digits-only phone for wa.me links (keeps a leading country code). */

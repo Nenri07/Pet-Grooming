@@ -12,6 +12,7 @@ import { timingSafeEqual } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { runDueReminders } from '@/lib/reminders/run-due';
 import { runRebookNudgesOncePerDay } from '@/lib/rebooking/daily';
+import { getEmailCapStatus } from '@/lib/email/daily-cap';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -38,7 +39,15 @@ async function handle(req: Request): Promise<Response> {
     console.error('[cron] rebook sweep failed:', err);
     rebook = { error: 'rebook_failed' };
   }
-  return NextResponse.json({ ok: true, ...result, rebook });
+  // Platform daily email cap (Resend free plan). Never throws.
+  const cap = await getEmailCapStatus();
+  return NextResponse.json({
+    ok: true,
+    ...result,
+    rebook,
+    emailsToday: cap.emailsToday,
+    emailCap: { state: cap.state, limit: cap.limit },
+  });
 }
 
 export const GET = handle;
