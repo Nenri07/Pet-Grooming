@@ -319,6 +319,7 @@ export const landing: Landing = {
     {
       title: 'Rebooking autopilot',
       body: 'Nudge clients to rebook on the right cycle for their pet\u2019s coat, automatically.',
+      pro: true,
     },
   ],
 

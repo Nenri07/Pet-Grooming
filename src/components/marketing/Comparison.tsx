@@ -3,6 +3,7 @@ import * as React from 'react';
 import { Check, X } from 'lucide-react';
 import { Reveal } from '@/components/motion';
 import { SectionHeading } from './SectionHeading';
+import { ProPill } from './ProPill';
 import { landing } from '@/content/landing';
 
 /**
@@ -82,11 +83,7 @@ export function Comparison() {
                     >
                       <span className="inline-flex flex-wrap items-center gap-2">
                         {row.label}
-                        {row.proOnly && (
-                          <span className="rounded-badge bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
-                            Pro<span className="sr-only"> plan</span>
-                          </span>
-                        )}
+                        {row.proOnly && <ProPill />}
                       </span>
                     </th>
                     <td className="p-4 text-center text-sm">

@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { staggerParent, fadeUp, reducedVariants, useReducedMotion } from '@/lib/animation';
 import { SectionHeading } from '@/components/marketing/SectionHeading';
+import { ProPill } from '@/components/marketing/ProPill';
 import { forGroomers, type BundleIcon, type BundleItem } from '@/content/for-groomers';
 import { images } from '@/content/images.generated';
 
@@ -86,8 +87,9 @@ export function WhatYouGet() {
                   <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                     <Icon className="h-5 w-5" aria-hidden="true" />
                   </span>
-                  <h3 className="mt-4 font-display text-lg font-bold text-base-content">
+                  <h3 className="mt-4 flex flex-wrap items-center gap-2 font-display text-lg font-bold text-base-content">
                     {f.title}
+                    {f.pro && <ProPill />}
                   </h3>
                   <p className="mt-2 text-sm text-base-content/70">{f.description}</p>
                 </div>

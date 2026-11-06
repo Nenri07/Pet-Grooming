@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { staggerParent, fadeUp, reducedVariants, useReducedMotion } from '@/lib/animation';
 import { SectionHeading } from './SectionHeading';
+import { ProPill } from './ProPill';
 import { landing, type Feature } from '@/content/landing';
 import { images } from '@/content/images.generated';
 
@@ -27,15 +28,6 @@ function cellClasses(size: Feature['size']): string {
     default:
       return '';
   }
-}
-
-/** Small "Pro" tag for cells whose copy needs the Pro plan; read as "Pro plan". */
-function ProPill() {
-  return (
-    <span className="rounded-badge bg-primary/10 px-2 py-0.5 font-sans text-xs font-semibold text-primary">
-      Pro<span className="sr-only"> plan</span>
-    </span>
-  );
 }
 
 export function BentoFeatures() {

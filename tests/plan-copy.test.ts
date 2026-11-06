@@ -74,6 +74,38 @@ describe('no overclaimed copy', () => {
     expect(text).not.toMatch(unbuilt);
   });
 
+  // _Requirements: 6.2_
+  const proFeature = /order radar|fill my day|on (my|the) way|rebooking autopilot|before\s*\/\s*after/i;
+  const soloFeature = /deposit|native calendar|pet card|reminder|client messaging/i;
+
+  const taggedItems = [
+    ...landing.features.map((f) => ({ surface: 'landing', title: f.title, pro: f.pro })),
+    ...forGroomers.whatYouGet.items.map((i) => ({ surface: 'for-groomers', title: i.title, pro: i.pro })),
+  ];
+
+  it('the title patterns match real items on both surfaces', () => {
+    const titles = taggedItems.map((i) => i.title);
+    expect(titles.some((t) => proFeature.test(t))).toBe(true);
+    expect(titles.some((t) => soloFeature.test(t))).toBe(true);
+    expect(titles).toContain('Rebooking autopilot');
+    expect(titles).toContain('Order Radar routing');
+    expect(titles).toContain('Live "on my way" tracking');
+  });
+
+  it.each(taggedItems.filter((i) => proFeature.test(i.title)))(
+    '$surface "$title" names a Pro feature and is tagged Pro',
+    ({ pro }) => {
+      expect(pro).toBe(true);
+    },
+  );
+
+  it.each(taggedItems.filter((i) => soloFeature.test(i.title)))(
+    '$surface "$title" names a Solo feature and is not tagged Pro',
+    ({ pro }) => {
+      expect(pro).toBeFalsy();
+    },
+  );
+
   it('route-related comparison rows are marked Pro-only', () => {
     const proLabels = [
       'Route-aware booking',

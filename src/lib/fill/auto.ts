@@ -29,6 +29,37 @@ export function shouldAutoFill(slotStartMs: number, nowMs: number): boolean {
 }
 
 /**
+ * PURE: the time freed by moving an appointment from the old window
+ * `[oldStartMs, oldEndMs)` to the new window `[newStartMs, newEndMs)`.
+ *
+ * Windows are half-open, so touching windows (`oldEnd === newStart` or
+ * `newEnd === oldStart`) do not overlap and the whole old window is freed.
+ * Returns the old window when the two windows do not overlap at all, and
+ * `null` when they overlap (partially or fully, including identical windows):
+ * a partial leftover is usually too short to sell. Also `null` for non-finite
+ * inputs or an empty/inverted window.
+ */
+export function freedWindowAfterMove(
+  oldStartMs: number,
+  oldEndMs: number,
+  newStartMs: number,
+  newEndMs: number
+): { startMs: number; endMs: number } | null {
+  if (
+    !Number.isFinite(oldStartMs) ||
+    !Number.isFinite(oldEndMs) ||
+    !Number.isFinite(newStartMs) ||
+    !Number.isFinite(newEndMs)
+  ) {
+    return null;
+  }
+  if (oldEndMs <= oldStartMs || newEndMs <= newStartMs) return null;
+  const overlaps = oldStartMs < newEndMs && newStartMs < oldEndMs;
+  if (overlaps) return null;
+  return { startMs: oldStartMs, endMs: oldEndMs };
+}
+
+/**
  * Start Fill My Day for a cancelled appointment's slot when the plan and the
  * timing allow it. Best-effort: never throws to the caller.
  *

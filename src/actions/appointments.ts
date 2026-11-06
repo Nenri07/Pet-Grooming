@@ -459,6 +459,9 @@ export async function rescheduleAppointment(
 
     const prevDay = dayStr(new Date(appointment.scheduledDate).getTime());
     const existingReminderIds = (appointment as { reminderJobIds?: string[] }).reminderJobIds;
+    // Capture the old window before it is overwritten (plan-claims-audit 3.3).
+    const oldStartMs = new Date(appointment.scheduledDate).getTime();
+    const oldEndMs = new Date(appointment.scheduledEndDate).getTime();
     appointment.scheduledDate = new Date(newStartMs);
     appointment.scheduledEndDate = new Date(newEndMs);
     await appointment.save();
@@ -483,6 +486,24 @@ export async function rescheduleAppointment(
     await invalidateSlotsCache(groomerId, prevDay).catch(() => {});
     if (newDay !== prevDay) {
       await invalidateSlotsCache(groomerId, newDay).catch(() => {});
+    }
+
+    // Best-effort: offer the freed time to Fill My Day candidates (3.3) when
+    // the old and new windows don't overlap. autoFillCancelledSlot enforces
+    // the 2h lead time and the fillMyDay plan gate. Never fails the move.
+    try {
+      const { freedWindowAfterMove, autoFillCancelledSlot } = await import(
+        '@/lib/fill/auto'
+      );
+      const freed = freedWindowAfterMove(oldStartMs, oldEndMs, newStartMs, newEndMs);
+      if (freed) {
+        await autoFillCancelledSlot(groomerId, {
+          scheduledDate: new Date(freed.startMs),
+          scheduledEndDate: new Date(freed.endMs),
+        });
+      }
+    } catch (err) {
+      console.error('[move] auto-fill failed (non-fatal):', err);
     }
 
     revalidatePath('/calendar');

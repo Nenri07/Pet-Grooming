@@ -465,6 +465,11 @@
         "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
         "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
         "timestamp": 1793945779409
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793947113866
       }
     ],
     "5. Message allowance predicate": [
@@ -664,6 +669,52 @@
         "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
         "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
         "timestamp": 1793945332208
+      }
+    ],
+    "13.1 Tag the remaining Pro features in marketing copy": [
+      {
+        "executionId": "1086fc3d-5542-4d6c-9115-e675f841de87",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793947754041
+      },
+      {
+        "executionId": "1086fc3d-5542-4d6c-9115-e675f841de87",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793947767822
+      },
+      {
+        "executionId": "1086fc3d-5542-4d6c-9115-e675f841de87",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793947925996
+      }
+    ],
+    "13.2 Offer the freed time when an appointment is rescheduled": [
+      {
+        "executionId": "1086fc3d-5542-4d6c-9115-e675f841de87",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793947754230
+      },
+      {
+        "executionId": "1086fc3d-5542-4d6c-9115-e675f841de87",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793947768481
+      },
+      {
+        "executionId": "1086fc3d-5542-4d6c-9115-e675f841de87",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793947926769
+      }
+    ],
+    "13.3 Verify and release": [
+      {
+        "executionId": "1086fc3d-5542-4d6c-9115-e675f841de87",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793947754396
+      },
+      {
+        "executionId": "1086fc3d-5542-4d6c-9115-e675f841de87",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793947933877
       }
     ]
   }

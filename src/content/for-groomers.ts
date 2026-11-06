@@ -71,6 +71,8 @@ export interface BundleItem {
    * the cell where a visual helps sell the point.
    */
   image?: 'featureBooking' | 'featureCard' | 'featureRoute';
+  /** When true, the cell shows a "Pro" pill: the item needs the Pro plan. */
+  pro?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -192,6 +194,7 @@ export const forGroomers: ForGroomersContent = {
           'Every new booking is ranked against your day, so you only say yes to the stops that fit your route.',
         icon: 'route',
         image: 'featureRoute',
+        pro: true,
       },
       {
         title: 'Digital Pet Cards',
@@ -217,6 +220,7 @@ export const forGroomers: ForGroomersContent = {
         description:
           'Send clients a live arrival link on the day, so they know exactly when your van pulls up.',
         icon: 'map-pin',
+        pro: true,
       },
     ],
   },

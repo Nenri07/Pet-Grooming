@@ -139,10 +139,24 @@ Make every Solo and Pro claim true and enforced on the server. Work bottom-up: p
     - Assert landing, for-groomers and billing read `PLAN_FEATURES`, and no copy file contains "two-way texting" or "texting"
     - _Requirements: 6.1, 6.5_
 
-- [-] 12. Final verification and release
+- [x] 12. Final verification and release
   - Run `npx vitest run` (only the two pre-existing `tests/calendar-holds.test.ts` failures allowed), `npx tsc --noEmit`, `npm run lint`, then a clean `npm run build`
   - Commit only the changed source, test and spec files (never `.env` / `.env.bak`), push to `main`, and confirm the Vercel deployment status for the commit
   - _Requirements: 7.1, 7.2, 7.3_
+
+- [ ] 13. Follow-ups: remaining Pro tags and auto-fill on reschedule
+  - [x] 13.1 Tag the remaining Pro features in marketing copy
+    - `src/content/landing.ts`: bento "Rebooking autopilot" gets `pro: true`
+    - `src/content/for-groomers.ts`: the "Order Radar routing" and "Live \"on my way\" tracking" feature items (and any other item for a Pro_Feature: Fill My Day, before/after cards, rebooking autopilot) get a Pro marker, rendered as the same "Pro" pill used in `BentoFeatures.tsx` / `Comparison.tsx` (screen readers hear "Pro plan")
+    - Extend `tests/plan-copy.test.ts` to assert every landing bento cell and for-groomers feature item naming a Pro_Feature is tagged Pro
+    - _Requirements: 6.2, 6.5_
+  - [x] 13.2 Offer the freed time when an appointment is rescheduled
+    - In `src/actions/appointments.ts` `moveAppointment`, capture the old start/end before saving; after the save, best-effort `await autoFillCancelledSlot(groomerId, { scheduledDate: oldStart, scheduledEndDate: oldEnd })` in its own `try/catch`, only when the old and new windows do not overlap
+    - Add a test (source guard or mocked unit test) that the reschedule path calls auto-fill with the old window and never fails the move
+    - _Requirements: 3.3_
+  - [-] 13.3 Verify and release
+    - Full `npx vitest run` (only the two pre-existing `tests/calendar-holds.test.ts` failures allowed), `npx tsc --noEmit`, `npm run lint`, clean `npm run build`; commit only the changed files (never `.env` / `.env.bak`), push to `main`, confirm the Vercel deployment
+    - _Requirements: 7.1, 7.2_
 
 ## Notes
 
@@ -160,7 +174,9 @@ Make every Solo and Pro claim true and enforced on the server. Work bottom-up: p
     { "id": 2, "tasks": ["2.2", "3.1", "6.3", "7.1", "8.1", "10.3", "11.3"] },
     { "id": 3, "tasks": ["2.3", "3.3", "6.4", "7.3", "8.2", "8.3", "10.4", "10.5", "11.4"] },
     { "id": 4, "tasks": ["4", "9"] },
-    { "id": 5, "tasks": ["12"] }
+    { "id": 5, "tasks": ["12"] },
+    { "id": 6, "tasks": ["13.1", "13.2"] },
+    { "id": 7, "tasks": ["13.3"] }
   ]
 }
 ```
