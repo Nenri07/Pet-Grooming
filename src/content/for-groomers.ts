@@ -14,6 +14,8 @@
  */
 
 import type { Cta } from '@/content/landing';
+import { PLAN_FEATURES } from '@/content/plan-features';
+import { PLANS } from '@/lib/plans';
 
 // ---------------------------------------------------------------------------
 // Hero
@@ -223,15 +225,15 @@ export const forGroomers: ForGroomersContent = {
     eyebrow: 'One bundle, not a pile of tools',
     title: 'Stop juggling three or four separate tools',
     subtitle:
-      'Most groomers stitch together a website builder, a booking tool, a texting service and a spreadsheet for pet notes. Pawxis is all of that in one place, on one bill, that actually talk to each other.',
+      'Most groomers stitch together a website builder, a booking tool, a reminder service and a spreadsheet for pet notes. Pawxis is all of that in one place, on one bill, that actually talk to each other.',
     replaces: [
       { label: 'Website builder', role: 'Your public site', icon: 'globe' },
       { label: 'Booking tool', role: 'Scheduling + deposits', icon: 'calendar-check' },
-      { label: 'SMS / texting service', role: 'Reminders + chat', icon: 'message-square' },
+      { label: 'Reminder & messaging tool', role: 'Reminders + client messages', icon: 'message-square' },
       { label: 'Pet records spreadsheet', role: 'Client & pet notes', icon: 'id-card' },
     ],
     bundleLabel: 'Pawxis',
-    note: 'Instead of paying for and wiring up several separate tools, you get one subscription where booking, texting, routing and your website already work together.',
+    note: 'Instead of paying for and wiring up several separate tools, you get one subscription where booking, client messaging, routing and your website already work together.',
   },
 
   pricing: {
@@ -242,26 +244,12 @@ export const forGroomers: ForGroomersContent = {
     solo: {
       name: 'Solo',
       tagline: 'Everything a one-van groomer needs to get booked.',
-      features: [
-        'Branded website at your own link',
-        'Online booking with deposits',
-        'Native calendar & ICS feed',
-        'Two-way texting included',
-        'Digital Pet Cards',
-        'Professional invoices & reminders',
-      ],
+      features: [...PLAN_FEATURES.solo],
     },
     pro: {
       name: 'Pro',
       tagline: 'Route smarts and automation that keep your day full.',
-      features: [
-        'Everything in Solo',
-        'Order Radar route ranking',
-        'Fill My Day auto-offers',
-        'Live "on my way" tracking',
-        'Rebooking autopilot',
-        'Before/after share cards',
-      ],
+      features: [...PLAN_FEATURES.pro],
     },
     cta: { label: 'Start free — 14 days', href: '/register' },
   },
@@ -288,9 +276,8 @@ export const forGroomers: ForGroomersContent = {
         'Yes. Your clients, pets and bookings are yours. Plans are month-to-month, and you can export your data any time — including before you leave.',
     },
     {
-      question: 'Do the text messages cost extra?',
-      answer:
-        'A monthly text allowance is included in every plan, so reminders and confirmations are covered out of the box. If you send a lot, you can top up any time.',
+      question: 'Do client messages cost extra?',
+      answer: `No. Every plan includes a monthly allowance of client emails (${PLANS.solo.sms.toLocaleString('en-US')} on Solo, ${PLANS.pro.sms.toLocaleString('en-US')} on Pro), so reminders and confirmations are covered out of the box. If you send a lot, you can top up any time.`,
     },
   ],
 

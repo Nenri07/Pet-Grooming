@@ -5,6 +5,7 @@ import { MESSAGES_PER_CLIENT, clientsCoveredBy } from '@/lib/plans';
 import {
   BadgeCheck,
   CalendarClock,
+  Check,
   CreditCard,
   MessageSquare,
   Sparkles,
@@ -13,6 +14,7 @@ import {
   Info,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
+import { PLAN_FEATURES } from '@/content/plan-features';
 import {
   createCheckoutSession,
   openBillingPortal,
@@ -227,7 +229,7 @@ export function BillingView(props: BillingViewProps) {
           <div>
             <p className="font-medium text-base-content">Billing isn&apos;t set up yet</p>
             <p className="mt-1 text-sm text-base-content/60">
-              Subscriptions and SMS top-ups will be available once payments are
+              Subscriptions and message top-ups will be available once payments are
               connected. Your plan details below still apply.
             </p>
           </div>
@@ -436,11 +438,17 @@ export function BillingView(props: BillingViewProps) {
                   /{interval === 'year' ? 'yr' : 'mo'}
                 </span>
               </p>
-              <p className="mt-1 text-sm text-base-content/60">
-                {p === 'pro'
-                  ? 'Order Radar, Fill My Day, live ETA, rebooking autopilot & more.'
-                  : 'Booking, deposits, native calendar, pet cards, reminders.'}
-              </p>
+              <ul className="mt-2 space-y-1 text-sm text-base-content/70">
+                {PLAN_FEATURES[p].map((f) => (
+                  <li key={f} className="flex items-start gap-2">
+                    <Check
+                      className="mt-0.5 h-4 w-4 shrink-0 text-primary"
+                      aria-hidden="true"
+                    />
+                    <span>{f}</span>
+                  </li>
+                ))}
+              </ul>
               <button
                 type="button"
                 disabled={!billingConfigured || pending !== null}

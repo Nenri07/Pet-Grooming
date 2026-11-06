@@ -29,6 +29,15 @@ function cellClasses(size: Feature['size']): string {
   }
 }
 
+/** Small "Pro" tag for cells whose copy needs the Pro plan; read as "Pro plan". */
+function ProPill() {
+  return (
+    <span className="rounded-badge bg-primary/10 px-2 py-0.5 font-sans text-xs font-semibold text-primary">
+      Pro<span className="sr-only"> plan</span>
+    </span>
+  );
+}
+
 export function BentoFeatures() {
   const reduced = useReducedMotion();
   const item = reduced ? reducedVariants : fadeUp;
@@ -65,8 +74,9 @@ export function BentoFeatures() {
               />
 
               <div className="relative">
-                <h3 className="font-display text-lg font-bold text-base-content">
+                <h3 className="flex flex-wrap items-center gap-2 font-display text-lg font-bold text-base-content">
                   {f.title}
+                  {f.pro && <ProPill />}
                 </h3>
                 <p className="mt-2 text-sm text-base-content/70">{f.body}</p>
               </div>

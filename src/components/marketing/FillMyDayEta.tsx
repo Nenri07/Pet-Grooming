@@ -7,7 +7,7 @@ import { images } from '@/content/images.generated';
 
 /**
  * FillMyDayEta (Section 7.5) — a split layout showing two phone mockups: a
- * waitlist SMS offer and a live ETA tracker, with a supporting photo behind
+ * Fill My Day email offer and a live ETA tracker, with a supporting photo behind
  * them on a parallax layer.
  *
  * Motion ownership (D4): GSAP owns the parallax on a DEDICATED wrapper around
@@ -82,9 +82,9 @@ export function FillMyDayEta() {
           <Reveal className="flex flex-col items-center gap-6 text-center">
             <Phone>
               <Bubble>
-                A slot just opened Thu 2:30 — reply YES to grab it.
+                A spot just opened Thu 2:30. Tap the link to claim it.
               </Bubble>
-              <Bubble from="you">YES</Bubble>
+              <Bubble from="you">Claim this time</Bubble>
               <Bubble>
                 You&rsquo;re booked in. See you Thursday! 🐾
               </Bubble>
@@ -94,8 +94,8 @@ export function FillMyDayEta() {
                 Fill My Day
               </h3>
               <p className="mt-2 text-base text-base-content/70">
-                Cancelled slots go straight to nearby waitlisted clients. First
-                to reply wins the spot.
+                Cancelled slots are emailed to waitlisted and due clients. The
+                first to claim the link gets the spot.
               </p>
             </div>
           </Reveal>

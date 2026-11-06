@@ -156,6 +156,15 @@ export default async function DashboardPage() {
   const todayStart = startOfDayInTz(now, tz);
   const todayEnd = endOfDayInTz(now, tz);
 
+  // Entitlements drive the SMS meter (real allowance/usage), the Order Radar
+  // lock and the Fill My Day lock (Master Spec §13.1, §13.4). Best-effort:
+  // getEntitlements falls back to a Pro-trial view, so the dashboard always
+  // renders even in a credential-free environment. Resolved up front so a
+  // groomer without Order Radar gets no route details (Req 1.3) and the
+  // travel / radar work is skipped for them.
+  const entitlements = await getEntitlements(groomerId);
+  const radarLocked = !entitlements.features.includes('orderRadar');
+
   // ---- Today's stops (non-cancelled, time-ordered) ----
   const todayDocs = await Appointment.find({
     groomerId,
@@ -175,8 +184,9 @@ export default async function DashboardPage() {
     const start = new Date(doc.scheduledDate);
     const from = doc.location ?? doc.clientId?.location ?? null;
 
+    // Route details (distance, drive minutes) are an Order Radar feature.
     let travelToNext: DashboardStop['travelToNext'] = null;
-    const next = todayDocs[i + 1];
+    const next = radarLocked ? undefined : todayDocs[i + 1];
     if (next) {
       // Prefer stored routeMeta on the *next* stop when it references this one.
       const nextMeta = next.routeMeta;
@@ -247,17 +257,20 @@ export default async function DashboardPage() {
   });
 
   // ---- Order Radar: upcoming appts (today→+7d) carrying routeMeta ----
-  const radarDocs = await Appointment.find({
-    groomerId,
-    scheduledDate: { $gte: todayStart, $lte: endOfDay(weekEnd) },
-    status: 'upcoming',
-    'routeMeta.extraDriveMin': { $exists: true },
-  })
-    .populate('clientId', 'name')
-    .populate('petId', 'name')
-    .sort({ createdAt: -1 })
-    .limit(3)
-    .lean<LeanAppointment[]>();
+  // Locked groomers get an empty radar; the card renders its locked state.
+  const radarDocs = radarLocked
+    ? []
+    : await Appointment.find({
+        groomerId,
+        scheduledDate: { $gte: todayStart, $lte: endOfDay(weekEnd) },
+        status: 'upcoming',
+        'routeMeta.extraDriveMin': { $exists: true },
+      })
+        .populate('clientId', 'name')
+        .populate('petId', 'name')
+        .sort({ createdAt: -1 })
+        .limit(3)
+        .lean<LeanAppointment[]>();
 
   // "from your 11:00 stop": look up each radar item's previous stop time.
   const prevIds = radarDocs
@@ -386,11 +399,7 @@ export default async function DashboardPage() {
     0
   );
 
-  // Entitlements drive the SMS meter (real allowance/usage) and the Order Radar
-  // lock hint (Master Spec §13.1, §13.4). Best-effort: getEntitlements falls
-  // back to a Pro-trial view and getUsage returns 0 when Redis is unconfigured,
-  // so the dashboard always renders even in a credential-free environment.
-  const entitlements = await getEntitlements(groomerId);
+  // getUsage returns 0 when Redis is unconfigured.
   const smsUsed = await getUsage(groomerId);
 
   // Pets due for their next groom in the coming 14 days (rebooking autopilot).
@@ -408,8 +417,9 @@ export default async function DashboardPage() {
     monthSummary,
     smsIncluded: entitlements.smsIncluded,
     smsUsed,
-    // UI hint only — the server gate on /api/portal/radar is authoritative.
-    radarLocked: !entitlements.features.includes('orderRadar'),
+    // Locked groomers also get radar: [] and travelToNext: null (Req 1.3);
+    // the server gate on /api/portal/radar stays authoritative for the API.
+    radarLocked,
     // Fill My Day (§11.1). UI hint; the /api/portal/fill gate is authoritative.
     fillGap,
     fillRecoveredThisMonth,

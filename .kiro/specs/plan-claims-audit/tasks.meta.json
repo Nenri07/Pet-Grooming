@@ -1,0 +1,670 @@
+{
+  "pbtResults": {
+    "1.2 Property test: lapsed accounts never accept bookings": {
+      "status": "passed",
+      "lastRunTimestamp": 1793943715010
+    },
+    "3.4 Property test: plan gate matrix": {
+      "status": "passed",
+      "lastRunTimestamp": 1793944384162
+    },
+    "5.2 Property test: optional messages respect the allowance": {
+      "status": "passed",
+      "lastRunTimestamp": 1793944550569
+    },
+    "7.4 Property test: auto-fill timing": {
+      "status": "passed",
+      "lastRunTimestamp": 1793944557305
+    },
+    "10.4 Property test: next visit follows the pet": {
+      "status": "passed",
+      "lastRunTimestamp": 1793945132653
+    },
+    "3.3 Property test: route ranking only for orderRadar": {
+      "status": "passed",
+      "lastRunTimestamp": 1793945466123
+    },
+    "8.3 Property test: one nudge per due cycle": {
+      "status": "passed",
+      "lastRunTimestamp": 1793945483743
+    }
+  },
+  "executionHistory": {
+    "1.1 Create `src/lib/billing/booking-guard.ts`": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793942976275
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793942993658
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793943354884
+      }
+    ],
+    "1.2 Property test: lapsed accounts never accept bookings": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793942976419
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793943555062
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944287718
+      }
+    ],
+    "2.1 Guard the server entry points": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793942976550
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793943552592
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944284029
+      }
+    ],
+    "2.2 Show a paused notice on the booking page": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793942976730
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944585429
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944911922
+      }
+    ],
+    "3.1 Gate route-ranked slots on `orderRadar`": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793942977016
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944582254
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944908952
+      }
+    ],
+    "3.2 Strip route details from the dashboard for locked groomers": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793942977260
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793942993972
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793943355161
+      }
+    ],
+    "3.4 Property test: plan gate matrix": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793942977464
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944302632
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944395243
+      }
+    ],
+    "4. Checkpoint: guard and gates": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793942977656
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793945635929
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793945772016
+      }
+    ],
+    "5.1 Extract `hasAllowance(used, included, topup)` in `src/lib/messaging/usage.ts`": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793942977846
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793942995543
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793943356448
+      }
+    ],
+    "6.1 Add `sendFillOfferEmail` to `src/lib/email/send.ts`": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793942978015
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793942996435
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793943357566
+      }
+    ],
+    "6.2 Add `sendRebookNudgeEmail` to `src/lib/email/send.ts`": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793942978194
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793943553235
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944284382
+      }
+    ],
+    "6.3 Add `fill-offer` and `rebook-nudge` entries to `src/app/api/dev/email-preview/route.ts`": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793942978356
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944924065
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793945327113
+      }
+    ],
+    "7.1 Send Fill offers by email in `src/lib/fill/fill.ts`": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793942978732
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944583214
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944910595
+      }
+    ],
+    "7.2 Create `src/lib/fill/auto.ts`": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793942978879
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793942997424
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793943358493
+      }
+    ],
+    "7.3 Call auto-fill on cancellation": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793942979025
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944937675
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793945331811
+      }
+    ],
+    "8.1 Switch nudges to email in `src/lib/rebooking/nudges.ts`": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793942979187
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944584348
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944911066
+      }
+    ],
+    "8.2 Create `src/lib/rebooking/daily.ts` and call it from the cron": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793942979341
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944938219
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793945328426
+      }
+    ],
+    "9. Checkpoint: messaging features": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793942979483
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793945636305
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793945772828
+      }
+    ],
+    "10.1 Add `isKnownCoat(coat)` to `src/lib/rebooking/interval.ts`": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793942979626
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793943370589
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793943542030
+      }
+    ],
+    "10.2 Rewrite `computeNextRecommendedDate` in `src/lib/pet-card/assemble.ts`": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793942979770
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793943553060
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944285726
+      }
+    ],
+    "10.3 Update both callers": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793942979958
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944582459
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944910060
+      }
+    ],
+    "10.4 Property test: next visit follows the pet": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793942980196
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944939318
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793945329372
+      }
+    ],
+    "11.1 Create `src/content/plan-features.ts`": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793942980437
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793943371427
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793943542712
+      }
+    ],
+    "11.2 Use the shared list everywhere": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793942980588
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793943553742
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944286878
+      }
+    ],
+    "11.3 Fix the remaining claims": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793942980746
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944924274
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793945330561
+      }
+    ],
+    "12. Final verification and release": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793942980908
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793945779409
+      }
+    ],
+    "5. Message allowance predicate": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793943356731
+      }
+    ],
+    "1. Booking guard for lapsed accounts": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944287899
+      }
+    ],
+    "5.2 Property test: optional messages respect the allowance": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944429966
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944460057
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944570563
+      }
+    ],
+    "7.4 Property test: auto-fill timing": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944430204
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944460296
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944571294
+      }
+    ],
+    "3. Pro gate on route ranking and dashboard radar data": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944910296
+      }
+    ],
+    "2. Wire the booking guard into every booking entry point": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944912088
+      }
+    ],
+    "2.3 Unit test: guard call sites reject a lapsed groomer": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944924483
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793945356488
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793945536791
+      }
+    ],
+    "3.3 Property test: route ranking only for orderRadar": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944925345
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793945357422
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793945537264
+      }
+    ],
+    "6.4 Unit tests for both emails via `captureEmails`": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944926437
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793945358678
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793945537801
+      }
+    ],
+    "8.3 Property test: one nudge per due cycle": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944927736
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793945359672
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793945539053
+      }
+    ],
+    "10.5 Unit test: completion sets `nextDueAt` from the coat": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944929262
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793945541133
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793945627372
+      }
+    ],
+    "11.4 Unit test: copy consistency": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793944929769
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793945360757
+      },
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793945540174
+      }
+    ],
+    "6. New client emails": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793945327362
+      }
+    ],
+    "8. Rebooking autopilot by email on the daily cron": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793945328618
+      }
+    ],
+    "10. Coat-based next visit on the pet card": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793945329783
+      }
+    ],
+    "11. Plan copy matches the product": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793945330747
+      }
+    ],
+    "7. Fill My Day by email and on cancellation": [
+      {
+        "executionId": "1905a06e-522c-43ff-9691-7bdbc5d07bac",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793945332208
+      }
+    ]
+  }
+}

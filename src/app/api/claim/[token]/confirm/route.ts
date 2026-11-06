@@ -41,6 +41,7 @@ export async function POST(
     expired: 404,
     taken: 409,
     commit_failed: 409,
+    bookings_paused: 403,
     error: 500,
   };
   return NextResponse.json(

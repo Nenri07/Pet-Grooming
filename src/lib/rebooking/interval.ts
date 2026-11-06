@@ -31,14 +31,24 @@ export const COAT_INTERVAL_WEEKS: Record<CoatCondition, number> = {
 };
 
 /**
+ * PURE: whether a coat has its own entry in {@link COAT_INTERVAL_WEEKS}.
+ * Uses an own-property check so inherited keys (e.g. "toString") don't count.
+ */
+export function isKnownCoat(
+  coat: CoatCondition | string | null | undefined
+): coat is CoatCondition {
+  return (
+    typeof coat === 'string' &&
+    Object.prototype.hasOwnProperty.call(COAT_INTERVAL_WEEKS, coat)
+  );
+}
+
+/**
  * PURE: the default rebooking interval (weeks) for a coat. Unknown / undefined
  * coats fall back to {@link FALLBACK_WEEKS}.
  */
 export function defaultIntervalWeeks(coat: CoatCondition | string | null | undefined): number {
-  if (coat && coat in COAT_INTERVAL_WEEKS) {
-    return COAT_INTERVAL_WEEKS[coat as CoatCondition];
-  }
-  return FALLBACK_WEEKS;
+  return isKnownCoat(coat) ? COAT_INTERVAL_WEEKS[coat] : FALLBACK_WEEKS;
 }
 
 /**

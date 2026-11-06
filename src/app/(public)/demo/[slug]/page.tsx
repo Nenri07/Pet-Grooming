@@ -156,7 +156,7 @@ export default function DemoPage({ params }: DemoPageProps) {
               {
                 step: '3',
                 title: 'Confirm & pay deposit',
-                body: 'Deposits and SMS confirmations cut no-shows automatically.',
+                body: 'Deposits and email confirmations cut no-shows automatically.',
               },
             ].map((s) => (
               <div

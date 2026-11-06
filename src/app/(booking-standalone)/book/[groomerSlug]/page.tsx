@@ -8,6 +8,9 @@ import { connectDB } from '@/lib/db/connect';
 import { GroomerProfile } from '@/lib/db/models/groomer-profile';
 import { Service } from '@/lib/db/models/service';
 import { BookingFlow, type BookingGroomer } from '@/components/booking/BookingFlow';
+import { BookingsPaused } from '@/components/booking/BookingsPaused';
+import { getEntitlements } from '@/lib/billing/entitlements';
+import { acceptsBookings } from '@/lib/billing/booking-guard';
 import { safeHttpsImageSrc } from '@/lib/images';
 
 /**
@@ -92,8 +95,14 @@ async function loadGroomerSeoData(slug: string): Promise<GroomerSeoData | null> 
   };
 }
 
-/** Load the groomer profile (by slug) and their active services. */
-async function loadGroomer(slug: string): Promise<BookingGroomer | null> {
+/**
+ * Load the groomer profile (by slug) and their active services. Also returns
+ * the owning user id so the page can check entitlements (lapsed accounts get
+ * the paused notice instead of the wizard, Req 2.1).
+ */
+async function loadGroomer(
+  slug: string
+): Promise<{ groomer: BookingGroomer; groomerId: string } | null> {
   await connectDB();
 
   const profile = await GroomerProfile.findOne({ groomerSlug: slug })
@@ -138,7 +147,7 @@ async function loadGroomer(slug: string): Promise<BookingGroomer | null> {
       ? profile.businessEmail.trim()
       : undefined;
 
-  return {
+  const groomer: BookingGroomer = {
     slug,
     businessName: profile.businessName ?? 'Pet Grooming',
     logoUrl: profile.logoUrl ?? null,
@@ -162,6 +171,8 @@ async function loadGroomer(slug: string): Promise<BookingGroomer | null> {
     businessPhone,
     businessEmail,
   };
+
+  return { groomer, groomerId: String(profile.userId) };
 }
 
 /**
@@ -277,26 +288,50 @@ function buildLocalBusinessJsonLd(
 }
 
 export default async function BookingPage({ params }: BookingPageProps) {
-  const [groomer, seoData] = await Promise.all([
+  const [loaded, seoData] = await Promise.all([
     loadGroomer(params.groomerSlug),
     loadGroomerSeoData(params.groomerSlug),
   ]);
 
-  if (!groomer) {
+  if (!loaded) {
     notFound();
   }
 
+  const { groomer, groomerId } = loaded;
+
+  // Lapsed accounts keep their page but stop taking NEW bookings (Req 2.1).
+  // getEntitlements falls back to the trial view on a DB error, so an outage
+  // never hides the wizard.
+  const ent = await getEntitlements(groomerId);
+  const paused = !acceptsBookings(ent);
+
   const jsonLd = seoData ? buildLocalBusinessJsonLd(seoData) : null;
+
+  const jsonLdScript = jsonLd && (
+    <script
+      type="application/ld+json"
+      // Structured data is server-rendered from trusted DB fields.
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
+
+  if (paused) {
+    return (
+      <main className="min-h-screen bg-base-200 px-4 py-8 sm:py-12">
+        {jsonLdScript}
+        <BookingsPaused
+          businessName={groomer.businessName}
+          logoUrl={groomer.logoUrl}
+          phone={groomer.businessPhone}
+          email={groomer.businessEmail}
+        />
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-base-200 px-4 py-8 sm:py-12">
-      {jsonLd && (
-        <script
-          type="application/ld+json"
-          // Structured data is server-rendered from trusted DB fields.
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-      )}
+      {jsonLdScript}
       <div className="mx-auto mb-6 flex w-full max-w-xl flex-col items-center text-center">
         {safeHttpsImageSrc(groomer.logoUrl) ? (
           <Image

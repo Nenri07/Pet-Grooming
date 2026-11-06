@@ -2,8 +2,8 @@
  * Rebooking-autopilot daily job (POST /api/qstash/rebook-nudges) — Master Spec §11.4, §16.
  *
  * QStash calls this once a day; it sweeps pets due within 7 days with no future
- * appointment + SMS consent and sends a `rebook_nudge` with a `/rebook/{token}`
- * link, throttled to one nudge + one 5-day reminder per pet. Each groomer is
+ * appointment and an owner email, and emails a rebook nudge with a
+ * `/rebook/{token}` link, at most once per pet per due cycle. Each groomer is
  * Pro-gated (`rebookAutopilot`) inside {@link runRebookNudges}.
  *
  * AUTH: two accepted triggers —

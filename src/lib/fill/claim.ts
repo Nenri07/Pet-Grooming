@@ -94,7 +94,7 @@ export async function resolveClaim(token: string): Promise<ResolvedClaim | null>
 /** Outcome of a claim confirmation. */
 export type ConfirmClaimResult =
   | { ok: true; appointmentId: string }
-  | { ok: false; reason: 'expired' | 'taken' | 'commit_failed' | 'error' };
+  | { ok: false; reason: 'expired' | 'taken' | 'commit_failed' | 'bookings_paused' | 'error' };
 
 /**
  * Confirm a claim: win the slot first-to-win, then book it for the winner.
@@ -107,6 +107,18 @@ export async function confirmClaim(token: string): Promise<ConfirmClaimResult> {
 
     const record = await getClaim(token);
     if (!record) return { ok: false, reason: 'expired' };
+
+    // Lapsed accounts take no new bookings (Requirement 2.2). Checked before
+    // the win so a paused groomer's slot is not marked as claimed.
+    const { assertAcceptingBookings, BookingsPausedError } = await import(
+      '@/lib/billing/booking-guard'
+    );
+    try {
+      await assertAcceptingBookings(record.gid);
+    } catch (err) {
+      if (err instanceof BookingsPausedError) return { ok: false, reason: 'bookings_paused' };
+      throw err;
+    }
 
     // FIRST TO WIN (§11.1 step 5): SET claimwon NX. Losers get 'taken'.
     const won = await tryWinClaim(record.gid, record.startMs, record.clientId);

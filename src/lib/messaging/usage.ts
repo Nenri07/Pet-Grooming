@@ -1,5 +1,5 @@
 /**
- * Client-message metering (emails today, texts later — one shared allowance).
+ * Client-message metering (emails today, texts later - one shared allowance).
  *
  * Every message a client receives counts once against the groomer's monthly
  * allowance (plan + top-up). Essential messages (confirmations, reminders,
@@ -16,11 +16,26 @@ export async function messageAllowance(groomerId: string): Promise<{ used: numbe
   return { used, included: ent.smsIncluded, topup: ent.smsTopupBalance };
 }
 
+/** Clamp to a finite, non-negative number (NaN / Infinity / negatives become 0). */
+function nonNegative(n: number): number {
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+/**
+ * PURE: true while `used` is below the monthly allowance (`included + topup`).
+ * Non-finite or negative `included` / `topup` count as 0, so a bad allowance
+ * value never grants unlimited optional messages. A negative `used` counts as
+ * 0; a NaN `used` denies (NaN compares false).
+ */
+export function hasAllowance(used: number, included: number, topup: number): boolean {
+  return Math.max(0, used) < nonNegative(included) + nonNegative(topup);
+}
+
 /** True while the groomer still has messages left this month (plan + top-up). */
 export async function canSendOptionalMessage(groomerId: string): Promise<boolean> {
   try {
     const a = await messageAllowance(groomerId);
-    return a.used < a.included + a.topup;
+    return hasAllowance(a.used, a.included, a.topup);
   } catch {
     return true;
   }

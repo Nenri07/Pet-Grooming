@@ -21,6 +21,13 @@
  * _Requirements: 7.3, 7.5, 17.2_
  */
 import { fulfilFreeBooking, type FulfilSummary } from '@/lib/booking/fulfil';
+import { connectDB } from '@/lib/db/connect';
+import { GroomerProfile } from '@/lib/db/models/groomer-profile';
+import {
+  assertAcceptingBookings,
+  BookingsPausedError,
+  BOOKINGS_PAUSED_MESSAGE,
+} from '@/lib/billing/booking-guard';
 import type { OwnerDetailsInput, PetInfoInput } from '@/types';
 
 /** Input captured from the booking flow state for a no-deposit booking. */
@@ -86,6 +93,23 @@ export async function finalizeFreeBooking(
     Number.isFinite(slotEndMs) && slotEndMs > slotStartMs
       ? new Date(slotEndMs).toISOString()
       : undefined;
+
+  // Lapsed accounts take no new bookings (Requirement 2.2). An unknown slug is
+  // left to fulfilFreeBooking, which already reports it.
+  await connectDB();
+  const profile = await GroomerProfile.findOne({ groomerSlug })
+    .select('userId')
+    .lean<{ userId: unknown } | null>();
+  if (profile) {
+    try {
+      await assertAcceptingBookings(String(profile.userId));
+    } catch (err) {
+      if (err instanceof BookingsPausedError) {
+        return { ok: false, error: BOOKINGS_PAUSED_MESSAGE };
+      }
+      throw err;
+    }
+  }
 
   const result = await fulfilFreeBooking({
     groomerSlug,

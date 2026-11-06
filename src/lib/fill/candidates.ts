@@ -38,13 +38,19 @@ export interface Gap {
 export interface FillCandidate {
   /** Client id. */
   clientId: string;
-  /** Client display name (for SMS + logging). */
+  /** Client display name (for the offer + logging). */
   name?: string;
   /** Destination phone (E.164 preferred). */
   phone?: string;
+  /** Client email; the Fill offer is delivered here. */
+  email?: string;
   /** Geocoded service-address coordinates; absent → dropped. */
   location?: LatLng | null;
-  /** Whether the client has opted out of SMS (STOP); true → dropped. */
+  /**
+   * Whether the client has opted out of SMS (STOP); true → dropped. The
+   * orchestrator passes false for clients reached by email, since an SMS
+   * opt-out does not apply to an email offer.
+   */
   smsOptOut?: boolean | null;
   /** Pet id, when this candidate came from a due-pet (for prefill/logging). */
   petId?: string;

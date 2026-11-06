@@ -389,12 +389,11 @@ export async function generateDigitalPetCard(
       status: appt.status,
     }));
 
-    // Groomer branding + configured service interval for the next-visit date.
+    // Groomer branding + the service interval, used only as the next-visit
+    // fallback when the pet's coat has no mapped interval.
     const profile = await GroomerProfile.findOne({ userId: session.user.id })
       .select('businessName logoUrl phone businessEmail serviceIntervalDays')
       .lean();
-
-    const intervalDays = profile?.serviceIntervalDays ?? 42;
 
     // Delegate the DB-free shaping to the pure assembly helper so behavior
     // stays in one place (Requirement 17.1 / Property 11).
@@ -411,6 +410,8 @@ export async function generateDigitalPetCard(
         coatCondition: pet.coatCondition,
         specialFlags: pet.specialFlags ?? [],
         notes: pet.notes ?? undefined,
+        nextDueAt: pet.nextDueAt ?? null,
+        rebookIntervalWeeks: pet.rebookIntervalWeeks ?? null,
       },
       serviceHistory,
       branding: {
@@ -419,7 +420,7 @@ export async function generateDigitalPetCard(
         phone: profile?.phone ?? undefined,
         businessEmail: profile?.businessEmail ?? undefined,
       },
-      intervalDays,
+      fallbackIntervalDays: profile?.serviceIntervalDays ?? null,
       appBaseUrl: process.env.NEXT_PUBLIC_APP_URL ?? '',
     });
 

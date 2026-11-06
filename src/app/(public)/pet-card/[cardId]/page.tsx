@@ -54,6 +54,8 @@ interface LoadedPet {
   specialFlags?: string[];
   notes?: string;
   digitalCardId?: string;
+  nextDueAt?: Date;
+  rebookIntervalWeeks?: number;
 }
 
 /**
@@ -107,8 +109,6 @@ async function assembleCard(pet: LoadedPet): Promise<AssembledPetCard> {
     status: appt.status,
   }));
 
-  const intervalDays = profile?.serviceIntervalDays ?? 42;
-
   return assemblePetCard({
     cardId: pet.digitalCardId as string,
     pet: {
@@ -122,6 +122,8 @@ async function assembleCard(pet: LoadedPet): Promise<AssembledPetCard> {
       coatCondition: pet.coatCondition,
       specialFlags: pet.specialFlags ?? [],
       notes: pet.notes ?? undefined,
+      nextDueAt: pet.nextDueAt ?? null,
+      rebookIntervalWeeks: pet.rebookIntervalWeeks ?? null,
     },
     serviceHistory,
     branding: {
@@ -130,7 +132,8 @@ async function assembleCard(pet: LoadedPet): Promise<AssembledPetCard> {
       phone: profile?.phone ?? undefined,
       businessEmail: profile?.businessEmail ?? undefined,
     },
-    intervalDays,
+    // Used only when the pet's coat has no mapped interval.
+    fallbackIntervalDays: profile?.serviceIntervalDays ?? null,
     appBaseUrl: process.env.NEXT_PUBLIC_APP_URL ?? '',
   });
 }

@@ -193,6 +193,20 @@ export async function updateAppointmentStatus(
       } catch (err) {
         console.error('[status] cancelReminders failed (non-fatal):', err);
       }
+
+      // Best-effort: offer the freed slot via Fill My Day when it starts more
+      // than 2 hours out and the plan includes it (plan-claims-audit 3.3).
+      // Awaited so a serverless invocation doesn't return before the work is
+      // done; never fails the status change.
+      try {
+        const { autoFillCancelledSlot } = await import('@/lib/fill/auto');
+        await autoFillCancelledSlot(session.user.id, {
+          scheduledDate: appointment.scheduledDate,
+          scheduledEndDate: appointment.scheduledEndDate,
+        });
+      } catch (err) {
+        console.error('[status] auto-fill failed (non-fatal):', err);
+      }
     }
 
     // The status change is now immediate and authoritative in Mongo. The

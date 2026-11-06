@@ -78,6 +78,13 @@ vi.mock('@/lib/calendar/holds', () => ({
   SlotHeldError: class SlotHeldError extends Error {},
 }));
 
+// The lapsed-account booking guard reads entitlements from the DB; these tests
+// cover the Connect gate, so treat the groomer as active.
+vi.mock('@/lib/billing/booking-guard', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/billing/booking-guard')>()),
+  assertAcceptingBookings: vi.fn(async () => undefined),
+}));
+
 // Import the subjects AFTER the mocks are registered.
 import { handleAccountUpdated } from '@/app/api/webhooks/stripe/helpers';
 import {

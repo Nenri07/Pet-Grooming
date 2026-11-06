@@ -67,6 +67,25 @@ const SAMPLES: Record<string, () => Promise<unknown>> = {
       replyTo: 'hello@happypaws.example',
       groomerPhone: '+1 512 555 0142',
     }),
+  'fill-offer': () =>
+    send.sendFillOfferEmail('jordan@example.com', {
+      businessName: 'Happy Paws',
+      petName: 'Bella',
+      date: 'Thu, Jun 12',
+      time: '2:30 PM',
+      claimUrl: 'https://www.pawxis.app/claim/sample',
+      replyTo: 'hello@happypaws.example',
+      groomerPhone: '+1 512 555 0142',
+    }),
+  'rebook-nudge': () =>
+    send.sendRebookNudgeEmail('jordan@example.com', {
+      businessName: 'Happy Paws',
+      petName: 'Bella',
+      dueDate: 'Mon, Jul 21',
+      bookUrl: 'https://www.pawxis.app/rebook/sample',
+      replyTo: 'hello@happypaws.example',
+      groomerPhone: '+1 512 555 0142',
+    }),
   verification: () => send.sendEmailVerification('groomer@example.com', 'https://www.pawxis.app/verify-email?token=sample'),
   trial: () => send.sendTrialEndingEmail('groomer@example.com', { trialEndsOn: 'Monday, July 21', billingUrl: 'https://www.pawxis.app/billing' }),
 };

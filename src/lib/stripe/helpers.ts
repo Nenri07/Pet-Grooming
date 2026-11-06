@@ -50,6 +50,11 @@ import { isRedisConfigured } from '@/lib/redis';
 import { generateBookingRef } from '@/lib/booking/reference';
 import { computeApplicationFee } from '@/lib/billing/fees';
 import { getPlatformFeePercent } from '@/lib/billing/config';
+import {
+  assertAcceptingBookings,
+  BookingsPausedError,
+  BOOKINGS_PAUSED_MESSAGE,
+} from '@/lib/billing/booking-guard';
 import type { OwnerDetailsInput, PetInfoInput } from '@/types';
 
 /** Hard fallback deposit if neither the profile nor the env configure one. */
@@ -199,6 +204,15 @@ export async function createDepositPaymentIntent(
         ok: false,
         error: "We couldn't start the payment because this groomer is unavailable.",
       };
+    }
+
+    // Lapsed accounts take no new bookings (Requirement 2.2). Checked before
+    // any hold, charge or PendingBooking.
+    try {
+      await assertAcceptingBookings(profile.userId.toString());
+    } catch (err) {
+      if (err instanceof BookingsPausedError) return { ok: false, error: BOOKINGS_PAUSED_MESSAGE };
+      throw err;
     }
 
     // GATE (R16.1 / R17.1, refined R16.1/16.2): a deposit booking requires a

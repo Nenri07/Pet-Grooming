@@ -28,7 +28,7 @@ interface ClaimViewProps {
   alreadyTaken: boolean;
 }
 
-type ClaimState = 'idle' | 'confirming' | 'won' | 'taken' | 'error';
+type ClaimState = 'idle' | 'confirming' | 'won' | 'taken' | 'paused' | 'error';
 
 function formatWhen(ms: number, timezone: string): string {
   const d = new Date(ms);
@@ -67,7 +67,9 @@ export function ClaimView({
         return;
       }
       const data = (await res.json().catch(() => ({}))) as { reason?: string };
-      if (res.status === 409 || data.reason === 'taken' || data.reason === 'commit_failed') {
+      if (data.reason === 'bookings_paused') {
+        setState('paused');
+      } else if (res.status === 409 || data.reason === 'taken' || data.reason === 'commit_failed') {
         setState('taken');
       } else if (res.status === 404 || data.reason === 'expired') {
         setState('error');
@@ -108,6 +110,16 @@ export function ClaimView({
             <p className="mt-3 text-base-content/70">
               Your spot on {formatWhen(startMs, timezone)} is booked. {business} will be in touch
               with the details.
+            </p>
+          </div>
+        ) : state === 'paused' ? (
+          <div className="text-center">
+            <h1 className="font-display text-2xl font-bold text-base-content">
+              Online booking is paused
+            </h1>
+            <p className="mt-3 text-base-content/70">
+              {business} isn&apos;t taking online bookings right now. Please contact them directly
+              to book.
             </p>
           </div>
         ) : state === 'taken' ? (

@@ -22,6 +22,13 @@
 import { connectDB } from '@/lib/db/connect';
 import { GroomerProfile } from '@/lib/db/models/groomer-profile';
 import { getAvailableSlots } from '@/lib/calendar/availability';
+import {
+  assertAcceptingBookings,
+  BookingsPausedError,
+  BOOKINGS_PAUSED_MESSAGE,
+} from '@/lib/billing/booking-guard';
+import { checkFeature, getEntitlements } from '@/lib/billing/entitlements';
+import { shapeSlotsForPlan } from '@/lib/calendar/slot-shaping';
 
 /** The number of calendar days of availability to display (Requirement 6.1). */
 const AVAILABILITY_WINDOW_DAYS = 14;
@@ -115,6 +122,22 @@ export async function getPublicAvailability(
       };
     }
 
+    // Lapsed accounts take no new bookings (Requirement 2.2).
+    try {
+      await assertAcceptingBookings(String(profile.userId));
+    } catch (err) {
+      if (err instanceof BookingsPausedError) {
+        return { ok: false, error: BOOKINGS_PAUSED_MESSAGE };
+      }
+      throw err;
+    }
+
+    // Route ranking ("Best fit", outside-area) is a Pro feature (Requirement
+    // 1.1, 1.2). The entitlements read is cached for 60s, so this second
+    // resolution after the guard is cheap.
+    const ent = await getEntitlements(String(profile.userId));
+    const routingAllowed = checkFeature(ent, 'orderRadar') === null;
+
     // 2. Compute the [now, now + 14 days] window (Requirement 6.1).
     const startDate = new Date();
     const endDate = new Date(startDate.getTime());
@@ -131,10 +154,16 @@ export async function getPublicAvailability(
     // 4. Route-aware ranking: label slots that fit the groomer's day and drop
     //    ones outside the service area / over the max detour. Best-effort —
     //    any failure falls back to the plain list so booking always works.
-    let finalSlots = slots;
+    //    Only plans with `orderRadar` get ranking; others get plain slots.
+    let finalSlots = shapeSlotsForPlan(slots, { routingAllowed });
     let routed = false;
     let outsideArea = false;
-    if (profile.baseLocation && slots.length > 0 && (input.location || input.address)) {
+    if (
+      routingAllowed &&
+      profile.baseLocation &&
+      slots.length > 0 &&
+      (input.location || input.address)
+    ) {
       try {
         const routedResult = await routeSlots(String(profile.userId), profile, slots, input);
         if (routedResult) {

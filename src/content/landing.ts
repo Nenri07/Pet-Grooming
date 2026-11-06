@@ -11,6 +11,9 @@
  * remaining sections are stubbed with typed placeholders to be filled later.
  */
 
+import { PLAN_FEATURES } from '@/content/plan-features';
+import { PLANS } from '@/lib/plans';
+
 // ---------------------------------------------------------------------------
 // Shared primitives
 // ---------------------------------------------------------------------------
@@ -103,6 +106,8 @@ export interface Feature {
   size?: 'normal' | 'wide' | 'tall';
   /** When true, the featured booking image is shown inside the cell. */
   withImage?: boolean;
+  /** When true, the cell shows a "Pro" pill: part of the copy needs the Pro plan. */
+  pro?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -117,6 +122,8 @@ export interface ComparisonRow {
   pawport: boolean | string;
   /** Typical software's answer. */
   typical: boolean | string;
+  /** When true, the row needs the Pro plan and shows a "Pro" pill. */
+  proOnly?: boolean;
 }
 
 export interface Comparison {
@@ -290,14 +297,15 @@ export const landing: Landing = {
       body: 'A branded page where clients pick a service and a time that fits your route — no back-and-forth.',
       size: 'wide',
       withImage: true,
+      pro: true,
     },
     {
       title: 'Deposits',
       body: 'Take a deposit up front so no-shows cost them, not you.',
     },
     {
-      title: 'Two-way texting',
-      body: 'Every client conversation in one inbox, with reminders that cut no-shows.',
+      title: 'Client messaging',
+      body: 'Confirmations, reminders and messages by email, sent in your name. Replies come straight to your inbox.',
     },
     {
       title: 'Native calendar',
@@ -377,10 +385,10 @@ export const landing: Landing = {
   comparison: {
     otherLabel: 'Typical grooming software',
     rows: [
-      { label: 'Route-aware booking', pawport: true, typical: false },
-      { label: 'Shows extra driving per booking', pawport: true, typical: false },
-      { label: 'Auto-fills cancelled slots', pawport: true, typical: false },
-      { label: 'Text messaging included', pawport: true, typical: 'Extra add-on' },
+      { label: 'Route-aware booking', pawport: true, typical: false, proOnly: true },
+      { label: 'Shows extra driving per booking', pawport: true, typical: false, proOnly: true },
+      { label: 'Auto-fills cancelled slots', pawport: true, typical: false, proOnly: true },
+      { label: 'Client messaging included', pawport: true, typical: 'Extra add-on' },
       { label: 'Digital Pet Cards', pawport: true, typical: false },
       { label: 'Built for a solo van', pawport: true, typical: 'Built for salons' },
       { label: 'Starting price', pawport: '$29/mo', typical: '$49+/mo' },
@@ -395,14 +403,7 @@ export const landing: Landing = {
         monthly: 29,
         annual: 290,
         tagline: 'Everything a one-van groomer needs to get booked.',
-        features: [
-          'Branded booking page',
-          'Deposits & no-show protection',
-          'Native calendar & ICS feed',
-          'Two-way texting included',
-          'Digital Pet Cards',
-          'Appointment reminders',
-        ],
+        features: [...PLAN_FEATURES.solo],
         cta: { label: 'Start free — 14 days', href: '/register' },
       },
       {
@@ -410,14 +411,7 @@ export const landing: Landing = {
         monthly: 59,
         annual: 590,
         tagline: 'Route smarts and automation that keep your day full.',
-        features: [
-          'Everything in Solo',
-          'Order Radar route ranking',
-          'Fill My Day auto-offers',
-          'Live \u201con the way\u201d tracking',
-          'Rebooking autopilot',
-          'Before/after share cards',
-        ],
+        features: [...PLAN_FEATURES.pro],
         cta: { label: 'Start free — 14 days', href: '/register' },
         featured: true,
       },
@@ -426,9 +420,8 @@ export const landing: Landing = {
 
   faq: [
     {
-      question: 'Do the text messages cost extra?',
-      answer:
-        'No. A monthly text allowance is included in every plan, so appointment reminders and confirmations are covered out of the box. If you send a lot, you can top up any time.',
+      question: 'Do client messages cost extra?',
+      answer: `No. Every plan includes a monthly allowance of client emails (${PLANS.solo.sms.toLocaleString('en-US')} on Solo, ${PLANS.pro.sms.toLocaleString('en-US')} on Pro), so confirmations and reminders are covered out of the box. If you send a lot, you can top up any time.`,
     },
     {
       question: 'Can I cancel any time?',

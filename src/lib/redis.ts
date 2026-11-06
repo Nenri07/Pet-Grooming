@@ -92,6 +92,9 @@ export const TTL = {
   // §11.4 uses `/rebook/{token}` — give it a generous 30-day life so a nudge
   // link stays valid across the reminder cycle.
   REBOOK: 30 * 24 * 60 * 60, // rebook:{token}          EX 30d (§11.4)
+  // Once-per-UTC-day marker for the rebook-nudge sweep run from the reminders
+  // cron. 25 h so it outlives the day it guards.
+  REBOOK_DAILY: 90_000, // cron:rebook:{yyyy-mm-dd}  EX 90000 (25 h)
   // --- Billing Phase 2: trial abuse-prevention + email verification ---
   // Phone OTP code (OtpSmsProvider fallback only; Twilio Verify stores its own).
   // `otp:{phoneHash}` → {codeHash,attempts}, ~10 min (R10.4).
@@ -133,6 +136,8 @@ export const keys = {
   track: (token: string) => `track:${token}`,
   // §11.4 rebook link token → {gid,clientId,petId}, EX 30d.
   rebook: (token: string) => `rebook:${token}`,
+  // Once-per-day marker for the rebook-nudge sweep (UTC date), SET NX EX 90000.
+  rebookDaily: (dateStr: string) => `cron:rebook:${dateStr}`,
   // --- Billing Phase 2: trial abuse-prevention + email verification ---
   // R10.4 phone OTP code (OtpSmsProvider fallback) → {codeHash,attempts}, EX 600.
   // Keyed by the hashed phone (never the raw E.164) to match the IdentityBinding.

@@ -58,7 +58,7 @@ export function softwareApplicationJsonLd() {
     operatingSystem: 'Web',
     url,
     description:
-      'Mobile pet grooming booking software with route-aware scheduling, deposits, two-way texting and no-show protection built for solo mobile groomers.',
+      'Mobile pet grooming booking software with route-aware scheduling, deposits, client messaging and no-show protection built for solo mobile groomers.',
     offers: {
       '@type': 'Offer',
       price: cheapest,
@@ -125,7 +125,7 @@ export function bundleProductJsonLd() {
     url,
     category: 'BusinessApplication',
     description:
-      'A bundle for solo mobile pet groomers: your own branded website plus the booking, deposits, routing, two-way SMS and digital pet records behind it — one subscription.',
+      'A bundle for solo mobile pet groomers: your own branded website plus the booking, deposits, routing, client messaging and digital pet records behind it — one subscription.',
     brand: { '@type': 'Brand', name: 'Pawxis' },
     offers: {
       '@type': 'AggregateOffer',

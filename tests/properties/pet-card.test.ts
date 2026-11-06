@@ -92,16 +92,31 @@ describe('Feature: pawport, Property 11: Digital Pet Card data completeness', ()
         // At least one completed service entry (1..8), so the up-to-5 cap is exercised.
         fc.array(serviceHistoryEntryArb, { minLength: 1, maxLength: 8 }),
         nonEmptyText, // branding.businessName (non-empty)
-        fc.integer({ min: 7, max: 90 }), // intervalDays
-        (cardId, pet, serviceHistory, businessName, intervalDays) => {
+        fc.option(fc.integer({ min: 7, max: 90 }), { nil: null }), // fallbackIntervalDays
+        fc.option(
+          fc.date({
+            min: new Date('2000-01-01T00:00:00.000Z'),
+            max: new Date('2040-12-31T00:00:00.000Z'),
+            noInvalidDate: true,
+          }),
+          { nil: null }
+        ), // stored nextDueAt
+        (cardId, pet, serviceHistory, businessName, fallbackIntervalDays, nextDueAt) => {
           const card = assemblePetCard({
             cardId,
-            pet,
+            pet: { ...pet, nextDueAt },
             serviceHistory,
             branding: { businessName },
-            intervalDays,
+            fallbackIntervalDays,
             appBaseUrl: APP_BASE_URL,
           });
+
+          // A next visit is always shown: the stored nextDueAt wins, otherwise
+          // it is derived from the most recent service.
+          expect(card.nextRecommendedDate).toBeInstanceOf(Date);
+          if (nextDueAt) {
+            expect(card.nextRecommendedDate?.getTime()).toBe(nextDueAt.getTime());
+          }
 
           // Pet identity fields equal the inputs.
           expect(card.name).toBe(pet.name);

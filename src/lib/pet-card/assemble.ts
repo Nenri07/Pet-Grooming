@@ -21,30 +21,78 @@ import type {
   CoatCondition,
   WeightUnit,
 } from '@/types';
+// Import the pure interval module directly (not the rebooking barrel) so this
+// module stays DB-free.
+import { computeNextDueAt, isKnownCoat } from '@/lib/rebooking/interval';
 
 /** Maximum number of service-history entries surfaced on the card. */
 export const MAX_SERVICE_HISTORY_ENTRIES = 5;
 
+/** Inputs for {@link computeNextRecommendedDate}. */
+export interface NextRecommendedDateInput {
+  /** The pet's stored next-due date (set when an appointment is completed). */
+  nextDueAt?: Date | string | null;
+  /** The date of the most recent completed service, or null. */
+  lastServiceDate: Date | null;
+  /** The pet's coat condition, used to look up the coat-based interval. */
+  coat?: string | null;
+  /** The pet's per-pet rebooking interval override, in weeks. */
+  rebookIntervalWeeks?: number | null;
+  /** The groomer's `serviceIntervalDays`, used only when the coat is unmapped. */
+  fallbackIntervalDays?: number | null;
+}
+
+/** PURE: parse a Date-or-string into a valid Date, or null. */
+function toValidDate(value: Date | string | null | undefined): Date | null {
+  if (value === null || value === undefined || value === '') return null;
+  const d = value instanceof Date ? new Date(value.getTime()) : new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 /**
- * Compute the next recommended grooming date as the last completed service
- * date plus the groomer's configured service interval (in days).
+ * Compute the Next_Visit_Date shown on a Digital Pet Card.
  *
- * Pure function (no I/O, no globals). Returns `null` when there is no last
- * service date, i.e. the pet has no completed appointments yet (Requirement
- * 17.1 — next recommended date is derived from the last service).
+ * Pure function (no I/O, no globals). Rules, in order:
+ *  1. A valid stored `nextDueAt` wins (Requirement 5.1).
+ *  2. No last completed service → `null` (Requirement 5.3).
+ *  3. A known coat or a positive per-pet override → last service plus the
+ *     Coat_Interval via {@link computeNextDueAt} (Requirement 5.2).
+ *  4. Otherwise → last service plus `fallbackIntervalDays` days when that is a
+ *     positive number, else the 6-week fallback interval (Requirement 5.5).
  *
- * @param lastServiceDate The date of the most recent completed service, or null.
- * @param intervalDays    The groomer's configured service interval, in days.
- * @returns The next recommended date, or null when there is no last service.
+ * _Requirements: 5.1, 5.2, 5.3, 5.5_
  */
 export function computeNextRecommendedDate(
-  lastServiceDate: Date | null,
-  intervalDays: number
+  input: NextRecommendedDateInput
 ): Date | null {
+  const { nextDueAt, lastServiceDate, coat, rebookIntervalWeeks, fallbackIntervalDays } =
+    input;
+
+  const stored = toValidDate(nextDueAt);
+  if (stored) return stored;
+
   if (!lastServiceDate) return null;
-  const next = new Date(lastServiceDate.getTime());
-  next.setDate(next.getDate() + intervalDays);
-  return next;
+
+  const hasOverride =
+    typeof rebookIntervalWeeks === 'number' &&
+    Number.isFinite(rebookIntervalWeeks) &&
+    rebookIntervalWeeks > 0;
+
+  if (isKnownCoat(coat) || hasOverride) {
+    return computeNextDueAt(lastServiceDate, coat, rebookIntervalWeeks);
+  }
+
+  if (
+    typeof fallbackIntervalDays === 'number' &&
+    Number.isFinite(fallbackIntervalDays) &&
+    fallbackIntervalDays > 0
+  ) {
+    const next = new Date(lastServiceDate.getTime());
+    next.setDate(next.getDate() + fallbackIntervalDays);
+    return next;
+  }
+
+  return computeNextDueAt(lastServiceDate, coat, null);
 }
 
 /** The pet fields required to assemble a Digital Pet Card. */
@@ -59,6 +107,10 @@ export interface AssemblePetInput {
   coatCondition: CoatCondition;
   specialFlags?: string[];
   notes?: string;
+  /** Stored next-due date, set when an appointment is completed. */
+  nextDueAt?: Date | string | null;
+  /** Per-pet rebooking interval override, in weeks. */
+  rebookIntervalWeeks?: number | null;
 }
 
 /** Inputs required to assemble a Digital Pet Card. */
@@ -74,8 +126,11 @@ export interface AssemblePetCardInput {
   serviceHistory: ServiceHistoryEntry[];
   /** The groomer's branding shown on the card. */
   branding: GroomerBranding;
-  /** The groomer's configured service interval, in days. */
-  intervalDays: number;
+  /**
+   * The groomer's `serviceIntervalDays`, used only when the pet's coat cannot
+   * be mapped to an interval and there is no per-pet override.
+   */
+  fallbackIntervalDays?: number | null;
   /** The public app base URL used to build the shareable link. */
   appBaseUrl: string;
 }
@@ -89,25 +144,29 @@ export type AssembledPetCard = PetCardData & { shareableUrl: string };
  * Pure and DB-free:
  *  - keeps the up-to-5 most recent completed service entries (slices the
  *    newest-first history to {@link MAX_SERVICE_HISTORY_ENTRIES}),
- *  - computes the next recommended date from the most recent completed service
- *    date + `intervalDays` (via {@link computeNextRecommendedDate}),
+ *  - computes the next recommended date from the pet's stored `nextDueAt`, or
+ *    the most recent completed service date + the pet's Coat_Interval (via
+ *    {@link computeNextRecommendedDate}),
  *  - builds `shareableUrl` as `${appBaseUrl}/pet-card/${cardId}`.
  *
- * @param input The loaded pet, service history, branding, interval, and base URL.
+ * @param input The loaded pet, service history, branding, fallback interval, and base URL.
  * @returns The `PetCardData` plus a `shareableUrl`.
  */
 export function assemblePetCard(input: AssemblePetCardInput): AssembledPetCard {
-  const { cardId, pet, serviceHistory, branding, intervalDays, appBaseUrl } =
+  const { cardId, pet, serviceHistory, branding, fallbackIntervalDays, appBaseUrl } =
     input;
 
   const trimmedHistory = serviceHistory.slice(0, MAX_SERVICE_HISTORY_ENTRIES);
 
   const lastServiceDate =
     trimmedHistory.length > 0 ? new Date(trimmedHistory[0].date) : null;
-  const nextRecommendedDate = computeNextRecommendedDate(
+  const nextRecommendedDate = computeNextRecommendedDate({
+    nextDueAt: pet.nextDueAt,
     lastServiceDate,
-    intervalDays
-  );
+    coat: pet.coatCondition,
+    rebookIntervalWeeks: pet.rebookIntervalWeeks,
+    fallbackIntervalDays,
+  });
 
   return {
     cardId,

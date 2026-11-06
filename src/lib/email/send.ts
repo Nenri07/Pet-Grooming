@@ -424,3 +424,92 @@ export async function sendClientMessageEmail(to: string, d: ClientMessageDetails
     html: layout({ brand: business, heading: `A message from ${business}`, body, footer: EMAIL_COPY.footer(business) }),
   });
 }
+
+// ---------------------------------------------------------------------------
+// Fill My Day offer (client)
+// ---------------------------------------------------------------------------
+
+export interface FillOfferDetails {
+  businessName: string;
+  petName?: string;
+  /** Human-readable date in the groomer's time zone. */
+  date: string;
+  time: string;
+  claimUrl: string;
+  /** Groomer's email for Reply-To. */
+  replyTo?: string;
+  groomerPhone?: string;
+}
+
+export async function sendFillOfferEmail(to: string, d: FillOfferDetails): Promise<boolean> {
+  const business = d.businessName?.trim() || 'Your groomer';
+  const pet = d.petName?.trim();
+  const forPet = pet ? ` for ${escapeHtml(pet)}` : '';
+  const body = [
+    paragraph(`${escapeHtml(business)} has an opening${forPet}. If this time works for you, you can claim it now.`),
+    detailRows([
+      ['Date', d.date],
+      ['Time', d.time],
+      pet ? ['Pet', pet] : null,
+    ]),
+    button(d.claimUrl, 'Claim this time'),
+    `<div style="margin-top:18px;">${paragraph('This offer went to a few clients. The first one to claim it gets the slot.', true)}</div>`,
+    d.groomerPhone ? paragraph(contactLinks(d.groomerPhone), true) : '',
+  ].join('');
+  return deliver('fill offer', {
+    from: fromHeader(business),
+    to,
+    replyTo: d.replyTo,
+    subject: `${business} has an opening on ${d.date} at ${d.time}`,
+    html: layout({
+      brand: business,
+      heading: 'A spot just opened up',
+      body,
+      preheader: `${d.date} at ${d.time}`,
+      footer: EMAIL_COPY.footer(business),
+    }),
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Rebooking nudge (client)
+// ---------------------------------------------------------------------------
+
+export interface RebookNudgeDetails {
+  businessName: string;
+  petName: string;
+  /** Human-readable due date in the groomer's time zone. */
+  dueDate: string;
+  bookUrl: string;
+  /** Groomer's email for Reply-To. */
+  replyTo?: string;
+  groomerPhone?: string;
+}
+
+export async function sendRebookNudgeEmail(to: string, d: RebookNudgeDetails): Promise<boolean> {
+  const business = d.businessName?.trim() || 'Your groomer';
+  const pet = d.petName?.trim() || 'your pet';
+  // Sentence-start form: "Your pet is due…" when the fallback is used.
+  const Pet = pet.charAt(0).toUpperCase() + pet.slice(1);
+  const body = [
+    paragraph(
+      `${escapeHtml(Pet)} is due for a groom around <strong>${escapeHtml(d.dueDate)}</strong>. Book a time that suits you with ${escapeHtml(business)}.`
+    ),
+    button(d.bookUrl, `Book ${pet}\u2019s visit`),
+    d.groomerPhone ? `<div style="margin-top:16px;">${paragraph(contactLinks(d.groomerPhone), true)}</div>` : '',
+    `<div style="margin-top:8px;">${paragraph(escapeHtml(EMAIL_COPY.replyHint(business)), true)}</div>`,
+  ].join('');
+  return deliver('rebook nudge', {
+    from: fromHeader(business),
+    to,
+    replyTo: d.replyTo,
+    subject: `${Pet} is due for a groom`,
+    html: layout({
+      brand: business,
+      heading: `Time for ${pet}\u2019s next groom`,
+      body,
+      preheader: `Due around ${d.dueDate}`,
+      footer: EMAIL_COPY.footer(business),
+    }),
+  });
+}

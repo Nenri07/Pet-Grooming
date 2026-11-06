@@ -19,6 +19,11 @@ import { generateBookingRef } from '@/lib/booking/reference';
 import { fulfilBookingByPaymentIntentId, type FulfilResult } from '@/lib/booking/fulfil';
 import { appBaseUrl, loadOwnStripe, type OwnStripeAccount } from '@/lib/stripe/own-account';
 import type { DepositMetadata } from '@/lib/stripe/helpers';
+import {
+  assertAcceptingBookings,
+  BookingsPausedError,
+  BOOKINGS_PAUSED_MESSAGE,
+} from '@/lib/billing/booking-guard';
 
 const DAY = 24 * 60 * 60 * 1000;
 /** Stripe's minimum Checkout lifetime is 30 minutes. */
@@ -44,6 +49,16 @@ export async function startOwnStripeCheckout(
     .select('userId depositAmount businessName')
     .lean<{ userId: unknown; depositAmount?: number; businessName?: string } | null>();
   if (!profile) return { ok: false, error: 'This groomer is unavailable.' };
+
+  // Lapsed accounts take no new bookings (Requirement 2.2). Checked before any
+  // hold or Checkout Session is created.
+  try {
+    await assertAcceptingBookings(String(profile.userId));
+  } catch (err) {
+    if (err instanceof BookingsPausedError) return { ok: false, error: BOOKINGS_PAUSED_MESSAGE };
+    throw err;
+  }
+
   const amount = typeof profile.depositAmount === 'number' ? profile.depositAmount : 0;
   if (!(amount > 0)) return { ok: false, error: 'No deposit is needed for this booking.' };
 

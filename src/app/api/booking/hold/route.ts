@@ -10,6 +10,7 @@
  *
  * Rate-limited with the hold limiter keyed by `hold:{ip}` (10/min/IP); on limit
  * returns 429. On {@link SlotHeldError} returns 409 { error: 'slot_taken' }.
+ * For a lapsed account returns 403 { error: 'bookings_paused' }.
  * On success returns { holdId }.
  *
  * Graceful degradation: when Redis is NOT configured (local/dev without Upstash
@@ -28,6 +29,11 @@ import { GroomerProfile } from '@/lib/db/models/groomer-profile';
 import { createHold, SlotHeldError } from '@/lib/calendar/holds';
 import { holdRateLimit, checkRateLimit } from '@/lib/ratelimit';
 import { isRedisConfigured } from '@/lib/redis';
+import {
+  assertAcceptingBookings,
+  BookingsPausedError,
+  BOOKINGS_PAUSED_MESSAGE,
+} from '@/lib/billing/booking-guard';
 
 // Redis needs Node APIs; the Edge runtime lacks them.
 export const runtime = 'nodejs';
@@ -109,6 +115,10 @@ export async function POST(req: Request): Promise<Response> {
       return NextResponse.json({ error: 'groomer_not_found' }, { status: 404 });
     }
 
+    // Lapsed accounts take no new bookings (Requirement 2.2). Checked before
+    // the Redis fallback so a lapsed page never gets a synthetic OK either.
+    await assertAcceptingBookings(resolvedGroomerId);
+
     // Local/dev fallback: without Upstash configured we can't place a real hold.
     // Return a synthetic OK so the client flow proceeds; commit-time re-check in
     // Mongo still prevents double-booking, so correctness is preserved.
@@ -119,6 +129,12 @@ export async function POST(req: Request): Promise<Response> {
     const { holdId } = await createHold(resolvedGroomerId, startMs, endMs, clientEmail);
     return NextResponse.json({ ok: true, held: true, holdId });
   } catch (err) {
+    if (err instanceof BookingsPausedError) {
+      return NextResponse.json(
+        { error: 'bookings_paused', message: BOOKINGS_PAUSED_MESSAGE },
+        { status: 403 }
+      );
+    }
     if (err instanceof SlotHeldError) {
       return NextResponse.json({ error: 'slot_taken' }, { status: 409 });
     }
