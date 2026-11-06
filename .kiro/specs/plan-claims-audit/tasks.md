@@ -171,14 +171,14 @@ Make every Solo and Pro claim true and enforced on the server. Work bottom-up: p
     - Full `npx vitest run` (only the two pre-existing `tests/calendar-holds.test.ts` failures allowed), `npx tsc --noEmit`, `npm run lint`, clean `npm run build`; do NOT change the `vercel.json` cron schedule (Hobby rejects crons more often than daily); commit only the changed files (never `.env` / `.env.bak`), push to `main`, confirm the Vercel deployment
     - _Requirements: 7.1, 7.2_
 
-- [ ] 15. Fix the top-up button price label
+- [x] 15. Fix the top-up button price label
   - [x] 15.1 Show the dollar sign on the top-up button
     - `src/components/portal/BillingView.tsx` line ~371 renders `· ${smsTopup.price}` inside a template literal, so the `$` is consumed and the button reads "· 5"; render `· $${smsTopup.price}` (or format with `Intl.NumberFormat` USD) so it reads "Top up 1,000 messages · $5"
     - Search `src/` for other places that render `SMS_TOPUP.price`, plan prices or money inside template literals with the same missing `$` (e.g. `SmsCreditsPill.tsx`, billing / for-groomers copy) and fix them
     - Extend `tests/plan-copy.test.ts` (source-text check) so the BillingView top-up label includes a `$` before the price
     - _Requirements: 6.5_
 
-  - [-] 15.2 Final verify, commit everything worth keeping, release
+  - [x] 15.2 Final verify, commit everything worth keeping, release
     - Full `npx vitest run` (only the two pre-existing `tests/calendar-holds.test.ts` failures allowed), `npx tsc --noEmit`, `npm run lint`, clean `npm run build`
     - The founder is about to wipe this machine and re-clone, so commit every non-secret change: the 15.1 files, `.kiro/specs/plan-claims-audit/*`, `.kiro/specs/email-verify-link-fails/*`, `docs/PAWXIS_FINAL_REPORT.md` (after checking it contains no secrets). NEVER stage `.env`, `.env.bak` or any file containing keys; confirm `.env*` is gitignored
     - Push to `main`, confirm the Vercel deployment, and confirm `git status` is clean except ignored files
