@@ -368,7 +368,7 @@ export function BillingView(props: BillingViewProps) {
           >
             {pending === 'topup'
               ? 'Opening…'
-              : `Top up ${smsTopup.messages.toLocaleString()} messages · ${smsTopup.price}`}
+              : `Top up ${smsTopup.messages.toLocaleString()} messages · $${smsTopup.price}`}
           </button>
         </Card>
       </div>

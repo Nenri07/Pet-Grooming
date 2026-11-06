@@ -158,7 +158,7 @@ Make every Solo and Pro claim true and enforced on the server. Work bottom-up: p
     - Full `npx vitest run` (only the two pre-existing `tests/calendar-holds.test.ts` failures allowed), `npx tsc --noEmit`, `npm run lint`, clean `npm run build`; commit only the changed files (never `.env` / `.env.bak`), push to `main`, confirm the Vercel deployment
     - _Requirements: 7.1, 7.2_
 
-- [~] 14. Daily email cap guard (Resend free plan: 100 emails/day)
+- [x] 14. Daily email cap guard (Resend free plan: 100 emails/day)
   - [x] 14.1 Count sent emails per day and protect essential emails
     - In `src/lib/email/send.ts` `deliver()`, after a successful Resend send (not in capture/preview mode), best-effort `INCR` a Redis counter `email:day:{YYYY-MM-DD}` (UTC) with a ~48h TTL; add the key builder/TTL to `src/lib/redis.ts` following its `keys` / `TTL` convention; never throw or block a send
     - Add `EMAIL_DAILY_LIMIT` (env, default 100; `0` disables the guard) and pure helpers in a new `src/lib/email/daily-cap.ts`: `emailCapState(sent, limit)` returning `'ok' | 'warn' | 'reserve'` (warn at >= 80%, reserve at >= 90%), plus `getEmailsSentToday()`
@@ -167,8 +167,21 @@ Make every Solo and Pro claim true and enforced on the server. Work bottom-up: p
     - Include `emailsToday` and the cap state in the `/api/cron/reminders` JSON response
     - Tests: property test for `emailCapState` thresholds; unit tests that the alert sends once per day (mock Redis), that `canSendOptionalMessage` is false in `reserve`, and that preview/capture mode does not count
     - _Requirements: 3.2, 4.4_
-  - [-] 14.2 Verify and release
+  - [x] 14.2 Verify and release
     - Full `npx vitest run` (only the two pre-existing `tests/calendar-holds.test.ts` failures allowed), `npx tsc --noEmit`, `npm run lint`, clean `npm run build`; do NOT change the `vercel.json` cron schedule (Hobby rejects crons more often than daily); commit only the changed files (never `.env` / `.env.bak`), push to `main`, confirm the Vercel deployment
+    - _Requirements: 7.1, 7.2_
+
+- [ ] 15. Fix the top-up button price label
+  - [x] 15.1 Show the dollar sign on the top-up button
+    - `src/components/portal/BillingView.tsx` line ~371 renders `· ${smsTopup.price}` inside a template literal, so the `$` is consumed and the button reads "· 5"; render `· $${smsTopup.price}` (or format with `Intl.NumberFormat` USD) so it reads "Top up 1,000 messages · $5"
+    - Search `src/` for other places that render `SMS_TOPUP.price`, plan prices or money inside template literals with the same missing `$` (e.g. `SmsCreditsPill.tsx`, billing / for-groomers copy) and fix them
+    - Extend `tests/plan-copy.test.ts` (source-text check) so the BillingView top-up label includes a `$` before the price
+    - _Requirements: 6.5_
+
+  - [-] 15.2 Final verify, commit everything worth keeping, release
+    - Full `npx vitest run` (only the two pre-existing `tests/calendar-holds.test.ts` failures allowed), `npx tsc --noEmit`, `npm run lint`, clean `npm run build`
+    - The founder is about to wipe this machine and re-clone, so commit every non-secret change: the 15.1 files, `.kiro/specs/plan-claims-audit/*`, `.kiro/specs/email-verify-link-fails/*`, `docs/PAWXIS_FINAL_REPORT.md` (after checking it contains no secrets). NEVER stage `.env`, `.env.bak` or any file containing keys; confirm `.env*` is gitignored
+    - Push to `main`, confirm the Vercel deployment, and confirm `git status` is clean except ignored files
     - _Requirements: 7.1, 7.2_
 
 ## Notes
@@ -190,8 +203,9 @@ Make every Solo and Pro claim true and enforced on the server. Work bottom-up: p
     { "id": 5, "tasks": ["12"] },
     { "id": 6, "tasks": ["13.1", "13.2"] },
     { "id": 7, "tasks": ["13.3"] },
-    { "id": 8, "tasks": ["14.1"] },
-    { "id": 9, "tasks": ["14.2"] }
+    { "id": 8, "tasks": ["14.1", "15.1"] },
+    { "id": 9, "tasks": ["14.2"] },
+    { "id": 10, "tasks": ["15.2"] }
   ]
 }
 ```

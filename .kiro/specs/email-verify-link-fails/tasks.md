@@ -116,7 +116,7 @@ Live-site fix for fresh verification links showing "invalid or expired". Tests f
   - Run `npx vitest run tests/email-verify-link.test.ts tests/properties/email-verify-link.test.ts` only. Do not run the full suite; DB-backed tests fail locally for environmental reasons
   - Ensure all tests pass, ask the user if questions arise.
 
-- [-] 5. Commit and push to main
+- [x] 5. Commit and push to main
   - In PowerShell, chain with `;`, not `&&`
   - Run `git status` and confirm `.env` and `.env.bak` are not staged
   - Stage only the changed files by name: `git add src/lib/verification/email-confirm-flow.ts src/lib/identity/email.ts src/app/verify-email/VerifyEmailClient.tsx src/actions/verification.ts tests/email-verify-link.test.ts tests/properties/email-verify-link.test.ts .kiro/specs/email-verify-link-fails/`

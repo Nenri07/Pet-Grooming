@@ -746,6 +746,42 @@
         "executionId": "a48abcb9-4968-4c4a-8e07-b105013a49fe",
         "chatSessionId": "sess_cc9f46fc-fc0b-4609-98b2-b224d8e0166a",
         "timestamp": 1793950513197
+      },
+      {
+        "executionId": "a48abcb9-4968-4c4a-8e07-b105013a49fe",
+        "chatSessionId": "sess_cc9f46fc-fc0b-4609-98b2-b224d8e0166a",
+        "timestamp": 1793951319453
+      }
+    ],
+    "14. Daily email cap guard (Resend free plan: 100 emails/day)": [
+      {
+        "executionId": "a48abcb9-4968-4c4a-8e07-b105013a49fe",
+        "chatSessionId": "sess_cc9f46fc-fc0b-4609-98b2-b224d8e0166a",
+        "timestamp": 1793951319613
+      }
+    ],
+    "15.1 Show the dollar sign on the top-up button": [
+      {
+        "executionId": "1526337e-0cf2-4ce8-a1bb-caa4d9f2f80f",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793972118519
+      },
+      {
+        "executionId": "1526337e-0cf2-4ce8-a1bb-caa4d9f2f80f",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793974586775
+      },
+      {
+        "executionId": "1526337e-0cf2-4ce8-a1bb-caa4d9f2f80f",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793974834939
+      }
+    ],
+    "15.2 Final verify, commit everything worth keeping, release": [
+      {
+        "executionId": "1526337e-0cf2-4ce8-a1bb-caa4d9f2f80f",
+        "chatSessionId": "sess_c6af58e5-a819-43ef-8f77-66ad70be6c63",
+        "timestamp": 1793974845159
       }
     ]
   }

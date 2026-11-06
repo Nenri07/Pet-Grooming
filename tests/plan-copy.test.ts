@@ -59,6 +59,15 @@ describe('plan feature lists are shared across surfaces', () => {
     expect(src).not.toContain('& more');
     expect(src).not.toContain('&amp; more');
   });
+
+  it('BillingView top-up label shows a $ before the price', () => {
+    const src = readSrc('src/components/portal/BillingView.tsx');
+    const label = src.match(/`Top up [^`]*`/)?.[0];
+    expect(label, 'top-up label template literal').toBeDefined();
+    // `$${smsTopup.price}` renders "$5"; a bare `${smsTopup.price}` renders "5".
+    expect(label).toMatch(/\$\$\{smsTopup\.price\}|Intl\.NumberFormat|formatMoney/);
+    expect(label).not.toMatch(/[^$]\$\{smsTopup\.price\}/);
+  });
 });
 
 describe('no overclaimed copy', () => {
