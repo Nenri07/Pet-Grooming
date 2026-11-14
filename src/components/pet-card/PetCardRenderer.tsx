@@ -12,7 +12,7 @@
  *    files isn't supported it saves the GIF instead. Quick link-share buttons
  *    for Facebook / WhatsApp / X sit underneath.
  *
- * Visuals use DaisyUI theme colors with rounded-2xl cards and a soft shadow,
+ * Visuals use DaisyUI theme colors with rounded-xl cards and a soft shadow,
  * and the layout is responsive from 320px wide (Requirements 17.1, 17.2, 17.5).
  * Service dates are strings after serialization from the server component, so
  * `nextRecommendedDate` and each history date are re-parsed for display.
@@ -157,9 +157,9 @@ export function PetCardRenderer({ data, shareUrl }: PetCardRendererProps) {
       </div>
 
       {/* Supporting detail: coat notes, service history, next visit */}
-      <article className="mt-4 overflow-hidden rounded-2xl border border-base-content/10 bg-base-100 shadow-card">
+      <article className="mt-4 overflow-hidden rounded-xl border border-base-300 bg-base-100 shadow-card">
         {data.notes && (
-          <section className="border-b border-base-content/10 px-5 py-4">
+          <section className="border-b border-base-300 px-5 py-4">
             <h3 className="mb-1 text-base font-semibold text-primary">
               Coat notes
             </h3>
@@ -199,7 +199,7 @@ export function PetCardRenderer({ data, shareUrl }: PetCardRendererProps) {
 
         {/* Next recommended grooming date */}
         {nextDate && (
-          <section className="border-t border-base-content/10 px-5 py-4">
+          <section className="border-t border-base-300 px-5 py-4">
             <p className="inline-flex items-center gap-2 rounded-xl bg-accent/10 px-3 py-2 text-sm text-base-content">
               <CalendarClock aria-hidden="true" className="h-4 w-4 text-accent" />
               <span>

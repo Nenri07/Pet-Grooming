@@ -72,7 +72,7 @@ function isMapboxToken(value: string | null | undefined): value is string {
  */
 function Notice() {
   return (
-    <div className="rounded-box border border-base-content/10 bg-base-200 p-4 text-sm text-base-content/70">
+    <div className="rounded-lg border border-base-300 bg-base-200 p-4 text-sm text-base-content/70">
       Add a Mapbox token (<code className="font-mono">NEXT_PUBLIC_MAPBOX_TOKEN</code>) to draw an
       exact service area on a map. Until then, bookings use the service radius above.
     </div>
@@ -213,7 +213,7 @@ function ServiceAreaMap({ token, baseLocation, value, onChange }: ServiceAreaMap
     <div className="flex flex-col gap-2">
       <div
         ref={containerRef}
-        className={`${MAP_HEIGHT} relative w-full overflow-hidden rounded-box border border-base-content/10 shadow-card`}
+        className={`${MAP_HEIGHT} relative w-full overflow-hidden rounded-lg border border-base-300 shadow-card`}
       />
       <p className="text-xs text-base-content/60">
         Draw your service area with the polygon tool; use the trash tool to clear it.

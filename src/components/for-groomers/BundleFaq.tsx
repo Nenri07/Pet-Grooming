@@ -23,7 +23,7 @@ export function BundleFaq() {
           {forGroomers.faq.map((item, i) => (
             <details
               key={item.question}
-              className="collapse collapse-arrow rounded-box border border-base-content/10 bg-base-100"
+              className="collapse collapse-arrow rounded-lg border border-base-300 bg-base-100"
               {...(i === 0 ? { open: true } : {})}
             >
               <summary className="collapse-title flex min-h-[44px] items-center font-display text-lg font-semibold text-base-content">

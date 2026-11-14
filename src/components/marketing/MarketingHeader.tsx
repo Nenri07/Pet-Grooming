@@ -42,7 +42,7 @@ export function MarketingHeader() {
     <div ref={scopeRef as React.RefObject<HTMLDivElement>}>
       <header
         data-header
-        className="fixed inset-x-0 top-0 z-50 flex h-36 items-center justify-between px-gutter transition-[height,background-color,box-shadow] duration-300 [&.is-scrolled]:h-28 [&.is-scrolled]:bg-base-100/80 [&.is-scrolled]:shadow-soft [&.is-scrolled]:backdrop-blur"
+        className="fixed inset-x-0 top-0 z-50 flex h-36 items-center justify-between px-gutter transition-[height,background-color,box-shadow] duration-300 [&.is-scrolled]:h-28 [&.is-scrolled]:bg-base-100 [&.is-scrolled]:border-b [&.is-scrolled]:border-base-300 [&.is-scrolled]:shadow-soft"
       >
         <Link href="/" className="inline-flex items-center text-primary">
           <Image

@@ -98,7 +98,7 @@ export function ReceiptTicket({ data, id = 'pp-receipt' }: ReceiptTicketProps) {
   return (
     <article
       id={id}
-      className="overflow-hidden rounded-box border border-base-content/10 bg-base-100 text-base-content shadow-card"
+      className="overflow-hidden rounded-lg border border-base-300 bg-base-100 text-base-content shadow-card"
     >
       <div aria-hidden="true" className="h-1.5 bg-gradient-to-r from-primary via-primary to-accent" />
 
@@ -124,7 +124,7 @@ export function ReceiptTicket({ data, id = 'pp-receipt' }: ReceiptTicketProps) {
       </header>
 
       {/* Meta strip */}
-      <div className="mx-6 grid grid-cols-3 gap-3 rounded-box bg-base-200/70 px-4 py-3">
+      <div className="mx-6 grid grid-cols-3 gap-3 rounded-lg bg-base-200/70 px-4 py-3">
         <div className="min-w-0">
           <Label>Issued</Label>
           <div className="mt-1 truncate text-xs font-semibold">{issued}</div>
@@ -163,7 +163,7 @@ export function ReceiptTicket({ data, id = 'pp-receipt' }: ReceiptTicketProps) {
           <Label>Description</Label>
           <Label>Amount</Label>
         </div>
-        <div className="flex items-start justify-between gap-3 border-b border-base-content/10 py-3">
+        <div className="flex items-start justify-between gap-3 border-b border-base-300 py-3">
           <div className="min-w-0">
             <div className="text-sm font-semibold">{data.serviceName || 'Grooming service'}</div>
             <div className="mt-0.5 text-xs text-base-content/60">
@@ -179,7 +179,7 @@ export function ReceiptTicket({ data, id = 'pp-receipt' }: ReceiptTicketProps) {
         <Row label="Subtotal" value={money(total, currency)} />
         {paidNow > 0 && <Row label="Deposit paid" value={`\u2212 ${money(paidNow, currency)}`} />}
         {depositDue > 0 && <Row label="Deposit due now (payment link)" value={money(depositDue, currency)} />}
-        <div className="mt-2 flex items-center justify-between rounded-box bg-primary/10 px-4 py-3">
+        <div className="mt-2 flex items-center justify-between rounded-lg bg-primary/10 px-4 py-3">
           <span className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
             {balance > 0 ? 'Balance due on the day' : depositDue > 0 ? 'Then due on the day' : 'Amount due'}
           </span>
@@ -190,7 +190,7 @@ export function ReceiptTicket({ data, id = 'pp-receipt' }: ReceiptTicketProps) {
       </div>
 
       {/* Footer */}
-      <footer className="mt-5 border-t border-base-content/10 px-6 py-4">
+      <footer className="mt-5 border-t border-base-300 px-6 py-4">
         <div className="flex flex-wrap items-center justify-between gap-2 text-[0.7rem] text-base-content/55">
           <span>Show reference <span className="font-mono font-semibold text-base-content/80">{data.bookingRef || '—'}</span> on arrival.</span>
           {data.paymentIntentId && <span className="font-mono">Payment {shortRef(data.paymentIntentId)}</span>}

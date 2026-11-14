@@ -122,7 +122,7 @@ export function RegisterForm({
 
       <CardContent>
         {claimBusinessName && (
-          <div className="mb-4 rounded-box border border-primary/20 bg-primary/5 p-3 text-sm text-base-content">
+          <div className="mb-4 rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm text-base-content">
             You&apos;re claiming the preview built for{' '}
             <span className="font-semibold">{claimBusinessName}</span>. Finish
             signing up to make it yours.

@@ -284,7 +284,7 @@ export function StepSuccess({
   if (finalize.status === 'failed') {
     return (
       <div className="flex flex-col gap-4">
-        <div className="alert alert-error rounded-2xl" role="alert">
+        <div className="alert alert-error rounded-xl" role="alert">
           <AlertTriangle aria-hidden="true" className="h-5 w-5 shrink-0" />
           <span>Your booking wasn&apos;t completed. {finalize.message}</span>
         </div>
@@ -334,7 +334,7 @@ export function StepSuccess({
 
       {/* Non-blocking notification warning (Requirement 8.1). */}
       {showWarning && (
-        <div className="alert alert-warning rounded-2xl" role="status">
+        <div className="alert alert-warning rounded-xl" role="status">
           <span>
             Your booking is confirmed, but some notifications (confirmation email
             or calendar invite) may still be pending. No action is needed on your
@@ -345,7 +345,7 @@ export function StepSuccess({
 
       {/* Graceful fallback note when the server couldn't confirm (Req 7.6). */}
       {finalize.degraded && (
-        <div className="alert alert-info rounded-2xl" role="status">
+        <div className="alert alert-info rounded-xl" role="status">
           <AlertTriangle aria-hidden="true" className="h-5 w-5 shrink-0" />
           <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <span>
@@ -366,7 +366,7 @@ export function StepSuccess({
       )}
 
       {depositLink && (
-        <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4 text-center">
+        <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 text-center">
           <p className="font-semibold text-base-content">
             Pay your {depositMoney} deposit to lock in this time
           </p>

@@ -252,14 +252,14 @@ function PaymentForm({
 
       {/* Temporary unavailability / timeout (Req 7.6). */}
       {unavailable && (
-        <div className="alert alert-warning rounded-2xl" role="alert">
+        <div className="alert alert-warning rounded-xl" role="alert">
           <span>{UNAVAILABLE_MESSAGE}</span>
         </div>
       )}
 
       {/* Stripe error message (Req 7.4). Always shown when present. */}
       {stripeError && (
-        <div className="alert alert-error rounded-2xl" role="alert">
+        <div className="alert alert-error rounded-xl" role="alert">
           <span>{stripeError}</span>
         </div>
       )}
@@ -267,7 +267,7 @@ function PaymentForm({
       {/* After the 3rd exhausted attempt, show the contact message TOGETHER
           with the Stripe error above (Req 7.4). */}
       {attemptsExhausted && (
-        <div className="alert alert-error rounded-2xl" role="alert">
+        <div className="alert alert-error rounded-xl" role="alert">
           <span>{CONTACT_GROOMER_MESSAGE}</span>
         </div>
       )}
@@ -406,7 +406,7 @@ export function StepPayment({ state, dispatch, services, groomerSlug }: BookingS
 
         {intent.status === 'unavailable' && (
           <div className="flex flex-col gap-3">
-            <div className="alert alert-warning rounded-2xl" role="alert">
+            <div className="alert alert-warning rounded-xl" role="alert">
               <span>{intent.message}</span>
             </div>
             {/* Retry is only meaningful when Stripe.js could actually load. */}

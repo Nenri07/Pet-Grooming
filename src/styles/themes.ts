@@ -45,72 +45,22 @@ export interface ThemeDef {
 export const THEMES: readonly ThemeDef[] = [
   {
     id: 'pawport_light',
-    label: 'Ivory Spa',
+    label: 'Light',
     swatch: {
-      primary: 'oklch(42% 0.11 255)',
-      secondary: 'oklch(74% 0.08 170)',
-      accent: 'oklch(80% 0.09 15)',
-      base: 'oklch(98.5% 0.008 85)',
+      primary: 'oklch(48% 0.13 195)',
+      secondary: 'oklch(60% 0.10 175)',
+      accent: 'oklch(70% 0.10 40)',
+      base: 'oklch(99% 0.005 85)',
     },
   },
   {
     id: 'pawport_dark',
-    label: 'Midnight Spa',
+    label: 'Dark',
     swatch: {
-      primary: 'oklch(74% 0.12 245)',
-      secondary: 'oklch(78% 0.09 175)',
-      accent: 'oklch(82% 0.10 20)',
-      base: 'oklch(18% 0.025 265)',
-    },
-  },
-  {
-    id: 'pawport_meadow',
-    label: 'Fresh Meadow',
-    swatch: {
-      primary: 'oklch(52% 0.12 150)',
-      secondary: 'oklch(68% 0.09 130)',
-      accent: 'oklch(78% 0.11 75)',
-      base: 'oklch(98.5% 0.012 130)',
-    },
-  },
-  {
-    id: 'pawport_sand',
-    label: 'Golden Sand',
-    swatch: {
-      primary: 'oklch(58% 0.13 55)',
-      secondary: 'oklch(72% 0.10 40)',
-      accent: 'oklch(66% 0.14 25)',
-      base: 'oklch(98% 0.016 75)',
-    },
-  },
-  {
-    id: 'pawport_blossom',
-    label: 'Soft Blossom',
-    swatch: {
-      primary: 'oklch(60% 0.15 355)',
-      secondary: 'oklch(74% 0.09 330)',
-      accent: 'oklch(80% 0.09 30)',
-      base: 'oklch(99% 0.01 350)',
-    },
-  },
-  {
-    id: 'pawport_ocean',
-    label: 'Fresh Bath',
-    swatch: {
-      primary: 'oklch(56% 0.11 210)',
-      secondary: 'oklch(72% 0.10 185)',
-      accent: 'oklch(80% 0.09 70)',
-      base: 'oklch(98.5% 0.012 200)',
-    },
-  },
-  {
-    id: 'pawport_charcoal',
-    label: 'Luxe Charcoal',
-    swatch: {
-      primary: 'oklch(80% 0.13 75)',
-      secondary: 'oklch(72% 0.06 40)',
-      accent: 'oklch(78% 0.12 55)',
-      base: 'oklch(20% 0.006 60)',
+      primary: 'oklch(72% 0.13 195)',
+      secondary: 'oklch(70% 0.10 175)',
+      accent: 'oklch(75% 0.10 40)',
+      base: 'oklch(14% 0.005 260)',
     },
   },
 ] as const;
@@ -125,7 +75,7 @@ export const themeIds = THEMES.map((t) => t.id);
 export const themes = themeIds;
 
 /** The dark-scheme themes (color-scheme: dark), handy for icon/label choices. */
-export const darkThemes = new Set<string>(['pawport_dark', 'pawport_charcoal']);
+export const darkThemes = new Set<string>(['pawport_dark']);
 
 /** Default theme when no preference is stored. */
 export const defaultTheme = 'pawport_light';

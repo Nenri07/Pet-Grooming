@@ -29,7 +29,7 @@ import {
 const AddressPickerMap = dynamic(() => import('./AddressPickerMap'), {
   ssr: false,
   loading: () => (
-    <div className="h-72 w-full animate-pulse rounded-box border border-base-content/10 bg-base-200 sm:h-80" />
+    <div className="h-72 w-full animate-pulse rounded-lg border border-base-300 bg-base-200 sm:h-80" />
   ),
 });
 
@@ -232,7 +232,7 @@ export function AddressPicker({
               {searching && <Loader2 className="h-4 w-4 animate-spin opacity-60" aria-hidden="true" />}
             </label>
             {suggestions.length > 0 && (
-              <ul className="menu absolute z-20 mt-1 w-full rounded-box border border-base-content/10 bg-base-100 p-1 shadow-card">
+              <ul className="menu absolute z-20 mt-1 w-full rounded-lg border border-base-300 bg-base-100 p-1 shadow-card">
                 {suggestions.map((s, i) => (
                   <li key={`${s.lat},${s.lng},${i}`}>
                     <button type="button" className="text-left" onClick={() => chooseSuggestion(s)}>
@@ -268,7 +268,7 @@ export function AddressPicker({
             </p>
           </div>
 
-          <div className="mt-3 min-h-[3rem] rounded-box bg-base-200 px-4 py-3 text-sm">
+          <div className="mt-3 min-h-[3rem] rounded-lg bg-base-200 px-4 py-3 text-sm">
             {resolving ? (
               <span className="inline-flex items-center gap-2 text-base-content/60">
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Finding address…

@@ -443,7 +443,7 @@ function StepServices({
           Your services ({services.length})
         </h3>
         {services.length === 0 ? (
-          <p className="rounded-2xl bg-base-200 px-4 py-3 text-sm text-base-content/60">
+          <p className="rounded-xl bg-base-200 px-4 py-3 text-sm text-base-content/60">
             Add at least one service to continue.
           </p>
         ) : (
@@ -451,7 +451,7 @@ function StepServices({
             {services.map((service) => (
               <li
                 key={service.id}
-                className="flex items-center justify-between gap-3 rounded-2xl bg-base-200 px-4 py-2"
+                className="flex items-center justify-between gap-3 rounded-xl bg-base-200 px-4 py-2"
               >
                 <span className="min-w-0 truncate text-sm font-medium text-base-content">
                   {service.name}

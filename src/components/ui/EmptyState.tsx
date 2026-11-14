@@ -49,23 +49,23 @@ export function EmptyState({
   return (
     <div
       className={cx(
-        'flex flex-col items-center justify-center rounded-2xl bg-base-100 px-6 py-12 text-center shadow-card',
+        'flex flex-col items-center justify-center rounded-xl bg-base-100 border border-base-300 px-6 py-12 text-center',
         className
       )}
       role="status"
     >
       {icon && (
-        <div className="mb-4 text-base-content/40" aria-hidden="true">
+        <div className="mb-4 text-base-content/30" aria-hidden="true">
           {icon}
         </div>
       )}
       <h3 className="text-lg font-semibold text-base-content">{title}</h3>
-      <p className="mt-1 max-w-sm text-base-content/60">{description}</p>
+      <p className="mt-1 max-w-sm text-sm text-base-content/60">{description}</p>
       {action &&
         (action.href ? (
           <a
             href={action.href}
-            className="btn btn-primary mt-6 min-h-[44px]"
+            className="btn btn-primary mt-6 rounded-lg px-4 py-2 text-sm font-medium min-h-0 h-auto"
             onClick={action.onClick}
           >
             {action.label}
@@ -73,7 +73,7 @@ export function EmptyState({
         ) : (
           <button
             type="button"
-            className="btn btn-primary mt-6 min-h-[44px]"
+            className="btn btn-primary mt-6 rounded-lg px-4 py-2 text-sm font-medium min-h-0 h-auto"
             onClick={action.onClick}
           >
             {action.label}

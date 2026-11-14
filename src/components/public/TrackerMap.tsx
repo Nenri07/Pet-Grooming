@@ -134,7 +134,7 @@ export function TrackerMap({ van, destination, etaLabel, business }: TrackerMapP
   if (!mounted) {
     return (
       <div
-        className={`${MAP_HEIGHT} w-full animate-pulse rounded-box border border-base-content/10 bg-base-200`}
+        className={`${MAP_HEIGHT} w-full animate-pulse rounded-lg border border-base-300 bg-base-200`}
         aria-hidden="true"
       />
     );
@@ -142,7 +142,7 @@ export function TrackerMap({ van, destination, etaLabel, business }: TrackerMapP
 
   return (
     <div
-      className={`${MAP_HEIGHT} relative w-full overflow-hidden rounded-box border border-base-content/10 shadow-card`}
+      className={`${MAP_HEIGHT} relative w-full overflow-hidden rounded-lg border border-base-300 shadow-card`}
     >
       <MapContainer
         center={center}

@@ -72,14 +72,14 @@ export function AddressPickerMap({ token, center, zoom = 16, onMoveEnd }: Addres
 
   if (errored) {
     return (
-      <div className="flex h-72 items-center justify-center rounded-box border border-base-content/10 bg-base-200 p-4 text-center text-sm text-base-content/70">
+      <div className="flex h-72 items-center justify-center rounded-lg border border-base-300 bg-base-200 p-4 text-center text-sm text-base-content/70">
         The map couldn&apos;t load on this device. Search for your address above instead.
       </div>
     );
   }
 
   return (
-    <div className="relative h-72 w-full overflow-hidden rounded-box border border-base-content/10 sm:h-80">
+    <div className="relative h-72 w-full overflow-hidden rounded-lg border border-base-300 sm:h-80">
       <div ref={containerRef} className="absolute inset-0" />
       {/* Fixed centre pin: its tip marks the exact spot. */}
       <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-full">

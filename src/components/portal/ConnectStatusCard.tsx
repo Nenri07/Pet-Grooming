@@ -202,7 +202,7 @@ export function ConnectStatusCard({
       {!connectConfigured ? (
         <div
           role="status"
-          className="flex items-start gap-3 rounded-box border border-base-content/10 bg-base-200 p-4"
+          className="flex items-start gap-3 rounded-lg border border-base-300 bg-base-200 p-4"
         >
           <Info className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
           <div>
@@ -221,7 +221,7 @@ export function ConnectStatusCard({
         <div className="flex flex-col gap-3">
           <div
             role="status"
-            className="flex items-start gap-3 rounded-box border border-success/30 bg-success/10 p-4"
+            className="flex items-start gap-3 rounded-lg border border-success/30 bg-success/10 p-4"
           >
             <CheckCircle2
               className="mt-0.5 h-5 w-5 shrink-0 text-success"
@@ -263,7 +263,7 @@ export function ConnectStatusCard({
         <div className="flex flex-col gap-3">
           <div
             role="status"
-            className="flex items-start gap-3 rounded-box border border-info/30 bg-info/10 p-4"
+            className="flex items-start gap-3 rounded-lg border border-info/30 bg-info/10 p-4"
           >
             <Info className="mt-0.5 h-5 w-5 shrink-0 text-info" aria-hidden="true" />
             <div>
@@ -301,7 +301,7 @@ export function ConnectStatusCard({
             <div
               role="status"
               className={cx(
-                'flex items-start gap-3 rounded-box border p-4',
+                'flex items-start gap-3 rounded-lg border p-4',
                 currentStatus === 'disabled'
                   ? 'border-error/30 bg-error/10'
                   : 'border-warning/30 bg-warning/10'

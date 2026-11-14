@@ -49,7 +49,7 @@ export function LegalPage({ title, intro, children }: LegalPageProps) {
 
       <div
         role="note"
-        className="mt-6 flex items-start gap-3 rounded-box border border-warning/30 bg-warning/10 p-4 text-sm text-base-content"
+        className="mt-6 flex items-start gap-3 rounded-lg border border-warning/30 bg-warning/10 p-4 text-sm text-base-content"
       >
         <AlertTriangle
           className="mt-0.5 h-5 w-5 shrink-0 text-warning"

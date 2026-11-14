@@ -58,7 +58,7 @@ export function SmsCreditsPill({
     <Link
       href="/billing"
       className={cx(
-        'inline-flex min-h-[36px] items-center gap-1.5 rounded-badge border border-base-content/10 bg-base-200 px-3 text-xs font-medium text-base-content/70 transition-colors hover:bg-base-300',
+        'inline-flex min-h-[36px] items-center gap-1.5 rounded-badge border border-base-300 bg-base-200 px-3 text-xs font-medium text-base-content/70 transition-colors hover:bg-base-300',
         className
       )}
       title="Client messages used this month (emails now, texts later)"

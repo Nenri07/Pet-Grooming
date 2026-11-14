@@ -50,7 +50,7 @@ export function BookingsPaused({ businessName, logoUrl, phone, email }: Bookings
             Online booking is paused
           </h2>
 
-          <div className="alert alert-info rounded-2xl" role="status">
+          <div className="alert alert-info rounded-xl" role="status">
             <span>
               {businessName} isn&apos;t taking online bookings right now. Please
               contact them directly to book.

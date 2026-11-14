@@ -29,7 +29,7 @@ export function CollabMark({ groomerLogoUrl, groomerName }: CollabMarkProps) {
 
   return (
     <div className="pointer-events-none absolute right-3 top-3 z-20 sm:right-5 sm:top-5">
-      <div className="flex items-center gap-2 rounded-full border border-base-content/10 bg-base-100/80 px-3 py-1.5 shadow-card backdrop-blur-md">
+      <div className="flex items-center gap-2 rounded-full border border-base-300 bg-base-100 px-3 py-1.5 shadow-card">
         {/* Pawxis brand */}
         <Image
           src="/pawxisLogo.png"

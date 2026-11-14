@@ -74,7 +74,7 @@ export function ThemeMenu({
           role="menu"
           aria-label="Color theme"
           className={[
-            'absolute z-50 max-h-[70vh] w-60 overflow-auto rounded-box border border-base-content/10 bg-base-100 p-2 shadow-card',
+            'absolute z-50 max-h-[70vh] w-60 overflow-auto rounded-lg border border-base-300 bg-base-100 p-2 shadow-card',
             direction === 'down' ? 'top-full mt-2' : 'bottom-full mb-2',
             align === 'end' ? 'right-0' : 'left-0',
           ].join(' ')}

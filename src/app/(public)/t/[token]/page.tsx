@@ -45,7 +45,7 @@ export default async function TrackerPage({ params }: { params: { token: string 
             }}
           />
         ) : (
-          <div className="rounded-box border border-base-content/10 bg-base-100 p-8 text-center shadow-card">
+          <div className="rounded-lg border border-base-300 bg-base-100 p-8 text-center shadow-card">
             <h1 className="text-2xl font-bold text-base-content">Trip not found</h1>
             <p className="mt-3 text-base-content/70">
               This tracking link has expired or the trip has ended.

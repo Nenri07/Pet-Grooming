@@ -75,7 +75,7 @@ export function BeforeAfterPanel({
       </p>
 
       {locked ? (
-        <div className="rounded-box bg-base-200 p-4 text-center">
+        <div className="rounded-lg bg-base-200 p-4 text-center">
           <p className="font-medium text-base-content">A Pro feature</p>
           <p className="mt-1 text-sm text-base-content/60">
             Create branded before/after share cards to win new clients.
@@ -108,7 +108,7 @@ export function BeforeAfterPanel({
           </div>
 
           {before && after && (
-            <div className="mt-6 border-t border-base-content/10 pt-6">
+            <div className="mt-6 border-t border-base-300 pt-6">
               <p className="mb-3 text-sm font-medium text-base-content/70">Share card</p>
               <BeforeAfterCard
                 appointmentId={appointmentId}

@@ -127,7 +127,7 @@ export function BeforeAfterCard({
       {/* On-screen preview: the export card scaled down. The inner node keeps
           its true 1080×1350 size so html-to-image exports at full resolution. */}
       <div
-        className="mx-auto overflow-hidden rounded-box border border-base-content/10 shadow-card"
+        className="mx-auto overflow-hidden rounded-lg border border-base-300 shadow-card"
         style={{ width: 270, height: 338 }}
       >
         <div

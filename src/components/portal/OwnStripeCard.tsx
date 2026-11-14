@@ -68,7 +68,7 @@ export function OwnStripeCard({ status }: { status: OwnStripeStatus }) {
         <p className="text-sm text-base-content/70">Card deposits aren&apos;t available yet.</p>
       ) : status.connected ? (
         <div className="flex flex-col gap-3">
-          <div className="rounded-box bg-success/10 px-4 py-3 text-sm">
+          <div className="rounded-lg bg-success/10 px-4 py-3 text-sm">
             <p className="font-semibold text-base-content">
               Connected: {status.accountName ?? 'your Stripe account'}
               {status.livemode === false && <span className="badge badge-warning ml-2">Test mode</span>}

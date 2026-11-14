@@ -108,7 +108,23 @@ export interface Feature {
   withImage?: boolean;
   /** When true, the cell shows a "Pro" pill: part of the copy needs the Pro plan. */
   pro?: boolean;
+  /** Icon shown in the cell header (mapped to a lucide icon in BentoFeatures). */
+  icon?: FeatureIcon;
 }
+
+/** Icon keys available to bento cells. */
+export type FeatureIcon =
+  | 'booking'
+  | 'deposit'
+  | 'estimate'
+  | 'area'
+  | 'availability'
+  | 'messaging'
+  | 'calendar'
+  | 'petcard'
+  | 'rebook'
+  | 'beforeafter'
+  | 'analytics';
 
 // ---------------------------------------------------------------------------
 // Comparison table (Section 7.9)
@@ -291,6 +307,8 @@ export const landing: Landing = {
     },
   ],
 
+  // 1 wide cell + 10 normal cells: fills evenly at 2 columns (sm) and 3 columns
+  // (lg) with no empty slot. Keep it that way when adding or removing items.
   features: [
     {
       title: 'Smart booking page',
@@ -298,28 +316,59 @@ export const landing: Landing = {
       size: 'wide',
       withImage: true,
       pro: true,
+      icon: 'booking',
     },
     {
       title: 'Deposits',
-      body: 'Take a deposit up front so no-shows cost them, not you.',
+      body: 'Clients pay a deposit up front, straight into your own Stripe account. No-shows cost them, not you.',
+      icon: 'deposit',
+    },
+    {
+      title: 'Instant price estimates',
+      body: 'Clients see a price range before they book, built from your service price and your own coat and weight rules.',
+      icon: 'estimate',
+    },
+    {
+      title: 'Service area',
+      body: 'Set a radius or draw your boundary on a map. Addresses outside it can\u2019t book.',
+      icon: 'area',
+    },
+    {
+      title: 'Availability, no double-booking',
+      body: 'Set your weekly hours and block days off. A slot is held while a client checks out, so two people can\u2019t grab it.',
+      icon: 'availability',
     },
     {
       title: 'Client messaging',
       body: 'Confirmations, reminders and messages by email, sent in your name. Replies come straight to your inbox.',
+      icon: 'messaging',
     },
     {
       title: 'Native calendar',
-      body: 'Your whole week in one place, with a read-only feed for your phone calendar. No third-party sync.',
-      size: 'tall',
+      body: 'Day and week views with drag to move or resize, plus a read-only feed for your phone calendar. No third-party sync.',
+      icon: 'calendar',
     },
     {
       title: 'Digital Pet Cards',
-      body: 'Coat, temperament and past styles travel with every pet, so each visit feels personal.',
+      body: 'Coat, temperament and past styles travel with every pet, on a shareable page with a QR code and PDF.',
+      icon: 'petcard',
     },
     {
       title: 'Rebooking autopilot',
       body: 'Nudge clients to rebook on the right cycle for their pet\u2019s coat, automatically.',
       pro: true,
+      icon: 'rebook',
+    },
+    {
+      title: 'Before/after share cards',
+      body: 'Turn a groom\u2019s before and after photos into a card your clients can share.',
+      pro: true,
+      icon: 'beforeafter',
+    },
+    {
+      title: 'Business analytics',
+      body: 'Bookings, deposits and estimated service revenue, compared with last month.',
+      icon: 'analytics',
     },
   ],
 

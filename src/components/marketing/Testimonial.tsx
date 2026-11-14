@@ -19,52 +19,54 @@ export function Testimonial() {
   if (testimonials.length === 0) return null;
 
   return (
-    <section aria-labelledby="testimonials-heading" className="bg-base-100 px-gutter py-section">
-      <SectionHeading
-        eyebrow="Loved by groomers"
-        title="What solo groomers say"
-      />
+    <section aria-labelledby="testimonials-heading" className="bg-base-100 py-band">
+      <div className="mx-auto max-w-7xl px-6 md:px-8">
+        <SectionHeading
+          eyebrow="Loved by groomers"
+          title="What solo groomers say"
+        />
 
-      <motion.div
-        className="mx-auto mt-16 grid max-w-6xl gap-6 md:grid-cols-3"
-        variants={staggerParent(0.12)}
-        initial="hidden"
-        whileInView="show"
-        viewport={{ once: true, amount: 0.2 }}
-      >
-        {testimonials.map((t) => (
-          <motion.figure
-            key={t.author}
-            variants={fadeUp}
-            className="reveal-init flex flex-col rounded-box border border-base-content/10 bg-base-200 p-8 shadow-card"
-          >
-            <Quote className="h-8 w-8 text-accent" aria-hidden="true" />
-            <blockquote className="mt-4 flex-1 text-base-content/80">
-              &ldquo;{t.quote}&rdquo;
-            </blockquote>
-            <figcaption className="mt-6 flex items-center gap-3">
-              {t.avatar && (
-                <span className="relative h-10 w-10 overflow-hidden rounded-full">
-                  <Image
-                    src={t.avatar}
-                    alt=""
-                    fill
-                    loading="lazy"
-                    sizes="40px"
-                    className="object-cover"
-                  />
-                </span>
-              )}
-              <span>
-                <p className="font-semibold text-base-content">{t.author}</p>
-                {t.role && (
-                  <p className="text-sm text-base-content/60">{t.role}</p>
+        <motion.div
+          className="mx-auto mt-14 grid max-w-6xl gap-6 md:grid-cols-3"
+          variants={staggerParent(0.12)}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, amount: 0.2 }}
+        >
+          {testimonials.map((t) => (
+            <motion.figure
+              key={t.author}
+              variants={fadeUp}
+              className="reveal-init flex flex-col rounded-lg border border-base-300 bg-base-200 p-8 shadow-card"
+            >
+              <Quote className="h-8 w-8 text-accent" aria-hidden="true" />
+              <blockquote className="mt-4 flex-1 text-base-content/80">
+                &ldquo;{t.quote}&rdquo;
+              </blockquote>
+              <figcaption className="mt-6 flex items-center gap-3">
+                {t.avatar && (
+                  <span className="relative h-10 w-10 overflow-hidden rounded-full">
+                    <Image
+                      src={t.avatar}
+                      alt=""
+                      fill
+                      loading="lazy"
+                      sizes="40px"
+                      className="object-cover"
+                    />
+                  </span>
                 )}
-              </span>
-            </figcaption>
-          </motion.figure>
-        ))}
-      </motion.div>
+                <span>
+                  <p className="font-semibold text-base-content">{t.author}</p>
+                  {t.role && (
+                    <p className="text-sm text-base-content/60">{t.role}</p>
+                  )}
+                </span>
+              </figcaption>
+            </motion.figure>
+          ))}
+        </motion.div>
+      </div>
     </section>
   );
 }

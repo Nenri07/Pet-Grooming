@@ -24,7 +24,7 @@ export default function Loading() {
         {Array.from({ length: 7 }).map((_, i) => (
           <div
             key={i}
-            className="rounded-box border border-base-content/10 bg-base-100 p-3"
+            className="rounded-lg border border-base-300 bg-base-100 p-3"
           >
             <Skeleton className="mb-3 h-4 w-16" />
             <div className="space-y-2">

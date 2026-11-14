@@ -186,14 +186,14 @@ export function StepPetInfo({ state, dispatch, services }: BookingStepProps) {
           the calendar slot duration. A single service is shown read-only; a
           calm notice shows when the groomer has configured none. */}
       {services.length === 0 ? (
-        <div className="alert rounded-2xl" role="status">
+        <div className="alert rounded-xl" role="status">
           <span>
             This groomer hasn&apos;t added any bookable services yet. Please
             contact them directly to arrange an appointment.
           </span>
         </div>
       ) : services.length === 1 ? (
-        <div className="rounded-2xl border border-base-300 bg-base-200/60 p-3 text-sm">
+        <div className="rounded-xl border border-base-300 bg-base-200/60 p-3 text-sm">
           <span className="text-base-content/60">Service: </span>
           <span className="font-medium text-base-content">{services[0].name}</span>
           <span className="text-base-content/60">

@@ -81,7 +81,7 @@ function ChartTooltip({
   if (!active || !payload || payload.length === 0) return null;
   return (
     <div
-      className="rounded-box border p-3 text-sm shadow-card"
+      className="rounded-lg border p-3 text-sm shadow-card"
       style={{
         backgroundColor: COLOR.surface,
         borderColor: COLOR.surfaceBorder,

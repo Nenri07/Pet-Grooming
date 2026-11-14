@@ -240,7 +240,7 @@ export function StepCalendar({ state, dispatch, services, groomerSlug }: Booking
       {/* Conflict message (Requirement 6.4). Shown alone; never together with
           the no-availability message below. */}
       {conflictMessage && (
-        <div className="alert alert-error rounded-2xl" role="alert">
+        <div className="alert alert-error rounded-xl" role="alert">
           <span>{conflictMessage}</span>
         </div>
       )}
@@ -250,7 +250,7 @@ export function StepCalendar({ state, dispatch, services, groomerSlug }: Booking
 
         {ui.status === 'error' && (
           <div className="flex flex-col gap-3">
-            <div className="alert alert-error rounded-2xl" role="alert">
+            <div className="alert alert-error rounded-xl" role="alert">
               <span>{ui.message}</span>
             </div>
             <button
@@ -269,7 +269,7 @@ export function StepCalendar({ state, dispatch, services, groomerSlug }: Booking
         {/* No-availability (Requirement 6.5). Suppressed while a conflict
             message is shown so the two never appear simultaneously. */}
         {hasNoAvailability && !conflictMessage && (
-          <div className="alert rounded-2xl" role="status">
+          <div className="alert rounded-xl" role="status">
             <span>
               {ui.status === 'ready' && ui.outsideArea
                 ? 'This address is outside the area this groomer covers. Please check the address, or contact the groomer directly.'

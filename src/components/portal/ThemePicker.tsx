@@ -71,11 +71,11 @@ function ThemeCard({
       aria-label={`Use the ${label} theme`}
       onClick={onSelect}
       className={[
-        'flex min-h-[44px] min-w-0 items-center justify-between gap-3 rounded-box border p-3 text-left transition-colors',
+        'flex min-h-[44px] min-w-0 items-center justify-between gap-3 rounded-lg border p-3 text-left transition-colors',
         'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
         selected
           ? 'border-primary ring-2 ring-primary/40 bg-base-200'
-          : 'border-base-content/10 bg-base-100 hover:bg-base-200',
+          : 'border-base-300 bg-base-100 hover:bg-base-200',
       ].join(' ')}
     >
       <span className="flex min-w-0 items-center gap-3">

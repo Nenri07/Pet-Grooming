@@ -55,25 +55,36 @@ export function OrderRadarShowcase() {
   React.useLayoutEffect(() => {
     if (!ready || reduced || !scopeRef.current) return;
     const scope = scopeRef.current;
+    const target = scope.querySelector<HTMLElement>('[data-radar-pin-target]');
+    if (!target) return;
 
-    const ctx = gsap.context(() => {
+    // Pin only where the whole panel fits inside the viewport (two-column
+    // layout on a reasonably tall screen). Below that the panel is taller than
+    // the screen, so pinning would clip it; it renders in its final state.
+    const mm = gsap.matchMedia(scope);
+    mm.add('(min-width: 1024px) and (min-height: 720px)', () => {
       setProgress(0);
       gsap.timeline({
         scrollTrigger: {
-          trigger: scope,
-          start: 'top top',
-          end: '+=160%',
-          pin: '[data-radar-pin-target]',
+          // Pin the panel by its own centre (a little below the viewport
+          // centre to allow for the fixed header) instead of a full-height
+          // box, so there is no blank band above or below it.
+          trigger: target,
+          start: 'center center+=40',
+          end: () => `+=${Math.round(window.innerHeight * 1.2)}`,
+          pin: target,
           pinSpacing: true,
           scrub: true,
+          invalidateOnRefresh: true,
           onUpdate: (self) => setProgress(self.progress),
           onLeaveBack: () => setProgress(0),
         },
       });
-    }, scope);
+      return () => setProgress(1); // restore the final state when the query stops matching
+    });
 
     return () => {
-      ctx.revert();
+      mm.revert();
       setProgress(1); // restore final state after teardown
     };
   }, [ready, reduced]);
@@ -86,13 +97,13 @@ export function OrderRadarShowcase() {
       id="order-radar"
       ref={scopeRef}
       aria-labelledby="order-radar-heading"
-      className="relative bg-base-200"
+      className="bg-base-100"
     >
       <div
         data-radar-pin-target
-        className="flex min-h-[100svh] items-center overflow-hidden"
+        className="flex items-center overflow-hidden py-band"
       >
-        <div className="mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-10 px-gutter py-section lg:grid-cols-2">
+        <div className="mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-10 px-6 md:px-8 lg:grid-cols-2">
           {/* ---- Copy ---- */}
           <div className="max-w-lg">
             <p className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-accent">
@@ -112,11 +123,11 @@ export function OrderRadarShowcase() {
           </div>
 
           {/* ---- Map panel ---- */}
-          <div className="relative mx-auto aspect-[4/3] w-full max-w-xl rounded-box border border-base-content/10 bg-base-100 shadow-card">
+          <div className="relative mx-auto aspect-[4/3] w-full max-w-xl rounded-lg border border-base-300 bg-base-100 shadow-card">
             {/* Subtle grid texture (decorative). */}
             <div
               aria-hidden
-              className="absolute inset-0 rounded-box bg-primary/5"
+              className="absolute inset-0 rounded-lg bg-primary/5"
               style={{
                 backgroundImage:
                   'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)',
@@ -170,7 +181,7 @@ export function OrderRadarShowcase() {
                     transform: `translate(-50%, -50%) scale(${0.6 + v * 0.4})`,
                   }}
                 >
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-content shadow-glow">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-content">
                     <span className="h-2 w-2 rounded-full bg-primary-content" />
                   </span>
                   <span className="mt-1 block text-center text-[0.65rem] font-semibold tabular-nums text-base-content/70">
@@ -192,7 +203,7 @@ export function OrderRadarShowcase() {
             >
               <span className="relative flex h-6 w-6 items-center justify-center">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent/50" />
-                <span className="relative inline-flex h-6 w-6 items-center justify-center rounded-full bg-accent text-accent-content shadow-glow">
+                <span className="relative inline-flex h-6 w-6 items-center justify-center rounded-full bg-accent text-accent-content">
                   <span className="h-2 w-2 rounded-full bg-accent-content" />
                 </span>
               </span>
@@ -200,7 +211,7 @@ export function OrderRadarShowcase() {
 
             {/* Order Radar card (slides in) */}
             <div
-              className="absolute bottom-4 left-4 right-4 rounded-box border border-primary/20 bg-base-100/90 p-4 shadow-card backdrop-blur"
+              className="absolute bottom-4 left-4 right-4 rounded-lg border border-primary/20 bg-base-100/90 p-4 shadow-card backdrop-blur"
               style={{
                 opacity: cardVis,
                 transform: `translateY(${(24 * (1 - cardVis)).toFixed(1)}px)`,

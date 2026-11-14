@@ -13,7 +13,7 @@ import { Toaster } from 'sonner';
  * - At most 3 toasts are visible at once; additional toasts queue until a
  *   visible one is dismissed or expires (visibleToasts={3}).
  *
- * Cards/toasts use rounded-2xl styling with a soft shadow to match the theme.
+ * Cards/toasts use rounded-xl styling with a soft shadow to match the theme.
  */
 export function ToastProvider() {
   return (
@@ -24,7 +24,7 @@ export function ToastProvider() {
       richColors
       toastOptions={{
         classNames: {
-          toast: 'rounded-2xl shadow-card',
+          toast: 'rounded-xl shadow-card',
           error: 'bg-error text-error-content',
         },
       }}

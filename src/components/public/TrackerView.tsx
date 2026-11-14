@@ -30,7 +30,7 @@ import { safeHttpsImageSrc } from '@/lib/images';
  */
 const MapSkeleton = () => (
   <div
-    className="h-72 w-full animate-pulse rounded-box border border-base-content/10 bg-base-200 sm:h-80"
+    className="h-72 w-full animate-pulse rounded-lg border border-base-300 bg-base-200 sm:h-80"
     aria-hidden="true"
   />
 );
@@ -137,7 +137,7 @@ export function TrackerView({ token, initial }: TrackerViewProps) {
   const useMapbox = React.useMemo(() => isMapboxToken(mapboxToken), [mapboxToken]);
 
   return (
-    <div className="overflow-hidden rounded-box border border-base-content/10 bg-base-100 shadow-card">
+    <div className="overflow-hidden rounded-lg border border-base-300 bg-base-100 shadow-card">
       {/* Branded header */}
       <div className="bg-hero px-6 py-7 text-center">
         {safeHttpsImageSrc(data.logoUrl) ? (
@@ -149,7 +149,7 @@ export function TrackerView({ token, initial }: TrackerViewProps) {
             className="mx-auto h-14 w-14 rounded-full object-cover ring-2 ring-base-100"
           />
         ) : (
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-base-100/80 text-primary ring-2 ring-base-100">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-base-100 text-primary ring-2 ring-base-100">
             <PawPrint className="h-7 w-7" aria-hidden="true" />
           </div>
         )}
@@ -201,7 +201,7 @@ export function TrackerView({ token, initial }: TrackerViewProps) {
                   />
                 )
               ) : (
-                <div className="flex h-72 w-full flex-col items-center justify-center rounded-box border border-base-content/10 bg-base-200 p-5 text-center sm:h-80">
+                <div className="flex h-72 w-full flex-col items-center justify-center rounded-lg border border-base-300 bg-base-200 p-5 text-center sm:h-80">
                   {data.liveUnavailable ? (
                     <p className="text-sm text-base-content/70">
                       Live location isn&apos;t available for this trip. Your groomer

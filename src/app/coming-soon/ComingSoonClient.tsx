@@ -159,7 +159,7 @@ export function ComingSoonClient({ launchAtMs }: ComingSoonClientProps) {
           />
         </motion.div>
 
-        <motion.span variants={item} className="mb-5 inline-flex items-center gap-2 rounded-full border border-base-content/10 bg-base-100/70 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-primary backdrop-blur-md">
+        <motion.span variants={item} className="mb-5 inline-flex items-center gap-2 rounded-full border border-base-300 bg-base-100 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
           <span className="relative flex h-2 w-2">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
@@ -180,7 +180,7 @@ export function ComingSoonClient({ launchAtMs }: ComingSoonClientProps) {
 
         <motion.div variants={item} className="mt-9 flex items-center justify-center gap-3 sm:gap-4">
           {units.map((u) => (
-            <div key={u.label} className="flex min-w-[64px] flex-col items-center rounded-2xl border border-base-content/10 bg-base-100/70 px-3 py-3 shadow-card backdrop-blur-md sm:min-w-[76px] sm:px-4">
+            <div key={u.label} className="flex min-w-[64px] flex-col items-center rounded-xl border border-base-300 bg-base-100 px-3 py-3 shadow-card sm:min-w-[76px] sm:px-4">
               <span className="font-display text-2xl font-bold tabular-nums text-base-content sm:text-3xl">{String(u.value).padStart(2, '0')}</span>
               <span className="mt-1 text-[0.65rem] font-medium uppercase tracking-wide text-base-content/50">{u.label}</span>
             </div>
@@ -189,7 +189,7 @@ export function ComingSoonClient({ launchAtMs }: ComingSoonClientProps) {
 
         <motion.div variants={item} className="mt-9 w-full max-w-md">
           {form.kind === 'success' ? (
-            <div role="status" className="flex items-center justify-center gap-2 rounded-2xl border border-success/30 bg-success/10 px-4 py-4 text-sm font-medium text-base-content">
+            <div role="status" className="flex items-center justify-center gap-2 rounded-xl border border-success/30 bg-success/10 px-4 py-4 text-sm font-medium text-base-content">
               <CheckCircle2 className="h-5 w-5 shrink-0 text-success" aria-hidden="true" />
               {form.message}
             </div>
@@ -198,8 +198,8 @@ export function ComingSoonClient({ launchAtMs }: ComingSoonClientProps) {
               <input type="email" inputMode="email" autoComplete="email" required value={email}
                 onChange={(e) => { setEmail(e.target.value); if (form.kind === 'error') setForm({ kind: 'idle' }); }}
                 placeholder="you@example.com" aria-label="Email address for early access" aria-invalid={form.kind === 'error'}
-                className="min-h-[48px] flex-1 rounded-2xl border border-base-content/15 bg-base-100/80 px-4 text-base text-base-content outline-none backdrop-blur-md transition focus:border-primary focus:ring-2 focus:ring-primary/30" />
-              <button type="submit" disabled={form.kind === 'submitting'} className="btn btn-primary min-h-[48px] gap-2 rounded-2xl px-6 text-base">
+                className="min-h-[48px] flex-1 rounded-xl border border-base-content/15 bg-base-100 px-4 text-base text-base-content outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30" />
+              <button type="submit" disabled={form.kind === 'submitting'} className="btn btn-primary min-h-[48px] gap-2 rounded-xl px-6 text-base">
                 {form.kind === 'submitting' ? (
                   <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
                 ) : (

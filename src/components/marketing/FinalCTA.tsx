@@ -19,9 +19,9 @@ export function FinalCTA() {
   const { finalCta } = landing;
 
   return (
-    <section aria-labelledby="final-cta-heading" className="relative isolate overflow-hidden bg-base-100">
-      <div className="mx-auto max-w-6xl px-gutter py-section">
-        <div className="relative overflow-hidden rounded-box bg-hero p-10 text-center shadow-card sm:p-16">
+    <section aria-labelledby="final-cta-heading" className="bg-base-100 py-band border-t border-base-300">
+      <div className="mx-auto max-w-7xl px-6 md:px-8">
+        <div className="relative overflow-hidden rounded-lg bg-hero p-10 text-center shadow-card sm:p-16">
           {/* Token overlay for contrast on the gradient. */}
           <div
             aria-hidden
@@ -43,7 +43,7 @@ export function FinalCTA() {
               <motion.div whileHover={reduced ? undefined : micro.hover} whileTap={micro.tap}>
                 <Link
                   href={finalCta.primaryCta.href}
-                  className="btn btn-primary min-h-[44px] px-8 shadow-glow"
+                  className="btn btn-primary min-h-[44px] px-8"
                 >
                   {finalCta.primaryCta.label}
                 </Link>

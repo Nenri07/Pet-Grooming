@@ -84,8 +84,8 @@ export function PetCardShowcase() {
   });
 
   return (
-    <section aria-labelledby="petcard-heading" className="bg-base-100">
-      <div className="mx-auto max-w-6xl px-gutter py-section">
+    <section aria-labelledby="petcard-heading" className="bg-base-200 py-band">
+      <div className="mx-auto max-w-7xl px-6 md:px-8">
         <SectionHeading
           titleId="petcard-heading"
           eyebrow="Looks like a big brand"
@@ -116,7 +116,7 @@ export function PetCardShowcase() {
               data-deco-layer
               className="pointer-events-none absolute -right-6 -top-8 -z-0 h-40 w-40 rounded-full bg-primary/10 blur-2xl"
             />
-            <div className="relative aspect-square w-full overflow-hidden rounded-box border border-base-content/10 shadow-card">
+            <div className="relative aspect-square w-full overflow-hidden rounded-lg border border-base-300 shadow-card">
               {/* Before (base layer) */}
               <Image
                 src={images.before.src}
@@ -151,16 +151,16 @@ export function PetCardShowcase() {
                 className="absolute inset-y-0 w-0.5 -translate-x-1/2 bg-base-100 transition-[left] duration-150 ease-out"
                 style={{ left: `${pos}%` }}
               >
-                <span className="absolute top-1/2 left-1/2 flex h-9 w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-base-100 text-primary shadow-glow">
+                <span className="absolute top-1/2 left-1/2 flex h-9 w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-base-100 text-primary">
                   ↔
                 </span>
               </div>
 
               {/* Labels */}
-              <span className="absolute left-3 top-3 rounded-badge bg-base-100/80 px-2.5 py-1 text-xs font-semibold text-base-content">
+              <span className="absolute left-3 top-3 rounded-badge bg-base-100 px-2.5 py-1 text-xs font-semibold text-base-content">
                 Before
               </span>
-              <span className="absolute right-3 top-3 rounded-badge bg-base-100/80 px-2.5 py-1 text-xs font-semibold text-base-content">
+              <span className="absolute right-3 top-3 rounded-badge bg-base-100 px-2.5 py-1 text-xs font-semibold text-base-content">
                 After
               </span>
             </div>

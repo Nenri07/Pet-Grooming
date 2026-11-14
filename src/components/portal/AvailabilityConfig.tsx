@@ -472,7 +472,7 @@ function BlockedDatesEditor({
           blockedDates.map((block, index) => (
             <div
               key={`${block.startDateTime}-${block.endDateTime}-${index}`}
-              className="flex items-center justify-between gap-3 rounded-2xl bg-base-200 px-4 py-2"
+              className="flex items-center justify-between gap-3 rounded-xl bg-base-200 px-4 py-2"
             >
               <span className="text-sm text-base-content">
                 {formatBlockedRange(block)}

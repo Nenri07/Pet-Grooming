@@ -47,7 +47,7 @@ export default function CreditsPage() {
         {entries.map((img) => (
           <li
             key={img.credit.photoId}
-            className="rounded-box border border-base-content/10 bg-base-200 p-5 shadow-card"
+            className="rounded-lg border border-base-300 bg-base-200 p-5 shadow-card"
           >
             <p className="font-display text-lg font-semibold text-base-content">
               <a

@@ -19,7 +19,7 @@ import { images } from '@/content/images.generated';
 /** A styled phone mockup wrapper. */
 function Phone({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mx-auto w-full max-w-[16rem] rounded-[2rem] border border-base-content/10 bg-base-100 p-3 shadow-card">
+    <div className="mx-auto w-full max-w-[16rem] rounded-[2rem] border border-base-300 bg-base-100 p-3 shadow-card">
       <div className="mx-auto mb-3 h-1.5 w-16 rounded-full bg-base-content/15" />
       <div className="space-y-3 rounded-[1.4rem] bg-base-200 p-4">{children}</div>
     </div>
@@ -39,7 +39,7 @@ function Bubble({
     <div className={mine ? 'flex justify-end' : 'flex justify-start'}>
       <p
         className={[
-          'max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-snug',
+          'max-w-[85%] rounded-xl px-3 py-2 text-sm leading-snug',
           mine
             ? 'bg-primary text-primary-content'
             : 'bg-base-100 text-base-content shadow-soft',
@@ -53,7 +53,7 @@ function Bubble({
 
 export function FillMyDayEta() {
   return (
-    <section aria-labelledby="fillmyday-heading" className="relative overflow-hidden bg-base-200">
+    <section aria-labelledby="fillmyday-heading" className="relative overflow-hidden bg-base-100 py-band">
       {/* Parallax supporting image on a dedicated wrapper (GSAP-owned). */}
       <Parallax speed={0.25} className="pointer-events-none absolute inset-0 -z-10">
         <div className="relative h-[120%] w-full opacity-20">
@@ -70,7 +70,7 @@ export function FillMyDayEta() {
         </div>
       </Parallax>
 
-      <div className="mx-auto max-w-6xl px-gutter py-section">
+      <div className="mx-auto max-w-7xl px-6 md:px-8">
         <SectionHeading
           eyebrow="Never lose a slot"
           title="Fill cancellations and keep clients in the loop"
@@ -103,7 +103,7 @@ export function FillMyDayEta() {
           {/* Live ETA tracker */}
           <Reveal delay={0.1} className="flex flex-col items-center gap-6 text-center">
             <Phone>
-              <div className="rounded-2xl bg-base-100 p-4 shadow-soft">
+              <div className="rounded-xl bg-base-100 p-4 shadow-soft">
                 <p className="text-xs font-semibold uppercase tracking-wide text-primary">
                   On the way
                 </p>

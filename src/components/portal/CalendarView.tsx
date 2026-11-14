@@ -542,13 +542,13 @@ function FilterBar({
   serviceOptions: { id: string; name: string }[];
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-box border border-base-content/10 bg-base-100 p-3 shadow-card">
+    <div className="flex flex-wrap items-center gap-3 rounded-lg border border-base-300 bg-base-100 p-3 shadow-card">
       <label className="flex items-center gap-2 text-sm">
         <span className="text-base-content/70">Status</span>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as AppointmentStatus | 'all')}
-          className="select select-bordered select-sm min-h-[44px] border-base-content/10 bg-base-200"
+          className="select select-bordered select-sm min-h-[44px] border-base-300 bg-base-200"
           aria-label="Filter by status"
         >
           <option value="all">All</option>
@@ -564,7 +564,7 @@ function FilterBar({
         <select
           value={serviceFilter}
           onChange={(e) => setServiceFilter(e.target.value)}
-          className="select select-bordered select-sm min-h-[44px] border-base-content/10 bg-base-200"
+          className="select select-bordered select-sm min-h-[44px] border-base-300 bg-base-200"
           aria-label="Filter by service"
         >
           <option value="all">All</option>
@@ -594,7 +594,7 @@ function IcsHint({ feedUrl }: { feedUrl: string | null }) {
   return (
     <a
       href="/availability"
-      className="flex items-center gap-2 rounded-box border border-base-content/10 bg-base-200 px-3 py-2 text-sm text-base-content/80 transition-colors hover:bg-base-300"
+      className="flex items-center gap-2 rounded-lg border border-base-300 bg-base-200 px-3 py-2 text-sm text-base-content/80 transition-colors hover:bg-base-300"
     >
       <ExternalLink className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
       {feedUrl
@@ -631,7 +631,7 @@ function GridLines({ pxPerMin }: { pxPerMin: number }) {
       {HOUR_LINES.map((h) => (
         <div
           key={h}
-          className="pointer-events-none absolute inset-x-0 border-t border-base-content/10"
+          className="pointer-events-none absolute inset-x-0 border-t border-base-300"
           style={{ top: (h - DAY_START_HOUR) * 60 * pxPerMin }}
         />
       ))}
@@ -758,11 +758,11 @@ function DayView({
   };
 
   return (
-    <div className="rounded-box border border-base-content/10 bg-base-100 p-2 shadow-card sm:p-4">
+    <div className="rounded-lg border border-base-300 bg-base-100 p-2 shadow-card sm:p-4">
       <div className="flex">
         <TimeAxis pxPerMin={pxPerMin} />
         <div
-          className="relative flex-1 rounded-box bg-base-200/40"
+          className="relative flex-1 rounded-lg bg-base-200/40"
           style={{ height: VISIBLE_MINUTES * pxPerMin }}
           onClick={handleColumnClick}
           role="button"
@@ -896,7 +896,7 @@ function AppointmentDetailPanel({
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 24 }}
         transition={{ duration: 0.25 }}
-        className="relative z-10 w-full max-w-md rounded-t-box border border-base-content/10 bg-base-100 p-5 shadow-card sm:rounded-box"
+        className="relative z-10 w-full max-w-md rounded-t-box border border-base-300 bg-base-100 p-5 shadow-card sm:rounded-lg"
       >
         <div className="mb-4 flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -1028,7 +1028,7 @@ function TravelChip({
   const top = Math.max(0, minutesFromDayStart(curr.startMs)) * pxPerMin - 10;
   return (
     <div
-      className="absolute left-2 z-20 flex items-center gap-1 rounded-full border border-base-content/10 bg-base-100 px-2 py-0.5 text-[10px] text-base-content/70 shadow-card"
+      className="absolute left-2 z-20 flex items-center gap-1 rounded-full border border-base-300 bg-base-100 px-2 py-0.5 text-[10px] text-base-content/70 shadow-card"
       style={{ top }}
       aria-hidden="true"
     >
@@ -1144,7 +1144,7 @@ function WeekView({
     };
 
   return (
-    <div className="overflow-x-auto rounded-box border border-base-content/10 bg-base-100 p-2 shadow-card">
+    <div className="overflow-x-auto rounded-lg border border-base-300 bg-base-100 p-2 shadow-card">
       <DndContext
         sensors={sensors}
         onDragMove={handleDragMove}
@@ -1170,7 +1170,7 @@ function WeekView({
                     {day.getDate()}
                   </div>
                   <div
-                    className="relative rounded-box bg-base-200/40"
+                    className="relative rounded-lg bg-base-200/40"
                     style={{ height: VISIBLE_MINUTES * pxPerMin }}
                     onClick={handleColumnClick(day)}
                     role="button"
@@ -1323,9 +1323,9 @@ function MapPanel({
       animate={{ opacity: 1, height: 'auto' }}
       exit={{ opacity: 0, height: 0 }}
       transition={{ duration: 0.25 }}
-      className="overflow-hidden rounded-box border border-base-content/10 bg-base-100 shadow-card"
+      className="overflow-hidden rounded-lg border border-base-300 bg-base-100 shadow-card"
     >
-      <div className="flex items-center gap-2 border-b border-base-content/10 bg-base-200 px-4 py-3">
+      <div className="flex items-center gap-2 border-b border-base-300 bg-base-200 px-4 py-3">
         <MapIcon className="h-5 w-5 text-primary" aria-hidden="true" />
         <span className="text-sm font-semibold text-base-content">
           Route map (Mapbox) — coming soon
@@ -1343,7 +1343,7 @@ function MapPanel({
             {stops.map((s, i) => (
               <li
                 key={s.id}
-                className="flex items-start gap-3 rounded-box border border-base-content/10 bg-base-200/50 px-3 py-2"
+                className="flex items-start gap-3 rounded-lg border border-base-300 bg-base-200/50 px-3 py-2"
               >
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-content">
                   {i + 1}
@@ -1474,7 +1474,7 @@ function AddBookingModal({
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 24 }}
         transition={{ duration: 0.25 }}
-        className="relative z-10 w-full max-w-md rounded-t-box border border-base-content/10 bg-base-100 p-5 shadow-card sm:rounded-box"
+        className="relative z-10 w-full max-w-md rounded-t-box border border-base-300 bg-base-100 p-5 shadow-card sm:rounded-lg"
       >
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-base-content">Add booking</h2>
@@ -1520,7 +1520,7 @@ function AddBookingModal({
                   setPetId('');
                 }}
                 required
-                className="select select-bordered min-h-[44px] border-base-content/10 bg-base-200"
+                className="select select-bordered min-h-[44px] border-base-300 bg-base-200"
               >
                 <option value="">Select a client…</option>
                 {clients.map((c) => (
@@ -1538,7 +1538,7 @@ function AddBookingModal({
                 onChange={(e) => setPetId(e.target.value)}
                 required
                 disabled={!selectedClient}
-                className="select select-bordered min-h-[44px] border-base-content/10 bg-base-200"
+                className="select select-bordered min-h-[44px] border-base-300 bg-base-200"
               >
                 <option value="">
                   {selectedClient ? 'Select a pet…' : 'Choose a client first'}
@@ -1558,7 +1558,7 @@ function AddBookingModal({
                 value={serviceId}
                 onChange={(e) => setServiceId(e.target.value)}
                 required
-                className="select select-bordered min-h-[44px] border-base-content/10 bg-base-200"
+                className="select select-bordered min-h-[44px] border-base-300 bg-base-200"
               >
                 <option value="">Select a service…</option>
                 {services.map((s) => (
@@ -1577,7 +1577,7 @@ function AddBookingModal({
                   value={startLocal}
                   onChange={(e) => setStartLocal(e.target.value)}
                   required
-                  className="input input-bordered min-h-[44px] border-base-content/10 bg-base-200"
+                  className="input input-bordered min-h-[44px] border-base-300 bg-base-200"
                 />
               </label>
               <label className="flex w-28 flex-col gap-1 text-sm">
@@ -1589,7 +1589,7 @@ function AddBookingModal({
                   value={durationMin}
                   onChange={(e) => setDurationMin(Number(e.target.value))}
                   required
-                  className="input input-bordered min-h-[44px] border-base-content/10 bg-base-200"
+                  className="input input-bordered min-h-[44px] border-base-300 bg-base-200"
                 />
               </label>
             </div>

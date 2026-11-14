@@ -591,7 +591,7 @@ function DigitalCardPanel({ petId }: { petId: string }) {
       </button>
 
       {card && (
-        <div className="flex flex-col gap-3 rounded-2xl bg-base-200 p-4">
+        <div className="flex flex-col gap-3 rounded-xl bg-base-200 p-4">
           <p className="text-sm font-medium text-base-content">Shareable link</p>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <input
@@ -681,7 +681,7 @@ export function PetProfile({ pet: initialPet, serviceHistory }: PetProfileProps)
       <Card>
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-base-200">
+            <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-base-200">
               {photoSrc ? (
                 <Image
                   src={photoSrc}

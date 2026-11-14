@@ -264,7 +264,7 @@ export function ImageUpload({
     <div className="flex flex-col gap-2">
       {/* Preview / dropzone */}
       <div className="flex items-center gap-4">
-        <div className="relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-base-300 bg-base-200">
+        <div className="relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-base-300 bg-base-200">
           {previewSrc ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img

@@ -53,7 +53,7 @@ export function TrialCountdownBanner({
       <div
         role="status"
         className={cx(
-          'flex flex-wrap items-center gap-x-3 gap-y-1 rounded-box border border-warning/40 bg-warning/15 px-4 py-2 text-sm text-base-content',
+          'flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-warning/40 bg-warning/15 px-4 py-2 text-sm text-base-content',
           className
         )}
       >
@@ -84,7 +84,7 @@ export function TrialCountdownBanner({
       <div
         role="status"
         className={cx(
-          'flex flex-wrap items-center gap-x-3 gap-y-1 rounded-box border border-warning/40 bg-warning/15 px-4 py-2 text-sm text-base-content',
+          'flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-warning/40 bg-warning/15 px-4 py-2 text-sm text-base-content',
           className
         )}
       >
@@ -113,7 +113,7 @@ export function TrialCountdownBanner({
     <div
       role="status"
       className={cx(
-        'flex flex-wrap items-center gap-x-3 gap-y-1 rounded-box border border-base-content/10 bg-base-100 px-4 py-2 text-sm text-base-content/80',
+        'flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-base-300 bg-base-100 px-4 py-2 text-sm text-base-content/80',
         className
       )}
     >

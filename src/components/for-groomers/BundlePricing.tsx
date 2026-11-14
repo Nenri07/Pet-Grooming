@@ -66,7 +66,7 @@ export function BundlePricing() {
         />
 
         {/* Founding-member banner (real numbers from FOUNDING). */}
-        <div className="mx-auto mt-8 max-w-2xl rounded-box border border-primary/20 bg-primary/5 px-6 py-4 text-center">
+        <div className="mx-auto mt-8 max-w-2xl rounded-lg border border-primary/20 bg-primary/5 px-6 py-4 text-center">
           <p className="text-sm text-base-content">
             <span className="font-semibold text-primary">First {FOUNDING.spots} groomers:</span>{' '}
             Solo ${FOUNDING.soloMonth} / Pro ${FOUNDING.proMonth}, locked for life.
@@ -128,10 +128,10 @@ export function BundlePricing() {
                 key={plan.name}
                 variants={variant}
                 className={[
-                  'reveal-init flex flex-col rounded-box border p-8 shadow-card',
+                  'reveal-init flex flex-col rounded-lg border p-8 shadow-card',
                   plan.featured
-                    ? 'border-primary/40 bg-base-100 shadow-glow'
-                    : 'border-base-content/10 bg-base-200',
+                    ? 'border-primary/40 bg-base-100'
+                    : 'border-base-300 bg-base-200',
                 ].join(' ')}
               >
                 <div className="flex items-center justify-between">
@@ -172,7 +172,7 @@ export function BundlePricing() {
                     href={pricing.cta.href}
                     className={[
                       'btn min-h-[44px] w-full',
-                      plan.featured ? 'btn-primary shadow-glow' : 'btn-outline',
+                      plan.featured ? 'btn-primary' : 'btn-outline',
                     ].join(' ')}
                   >
                     {pricing.cta.label}

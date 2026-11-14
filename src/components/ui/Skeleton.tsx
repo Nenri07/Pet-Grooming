@@ -46,7 +46,7 @@ export function Skeleton({
       aria-hidden="true"
       className={cx(
         'animate-pulse bg-base-300/60 motion-reduce:animate-none',
-        circle ? 'rounded-full' : 'rounded-box',
+        circle ? 'rounded-full' : 'rounded-lg',
         className
       )}
       style={{ width, height, ...style }}
@@ -85,7 +85,7 @@ export function SkeletonCard({ className }: { className?: string }) {
     <div
       aria-hidden="true"
       className={cx(
-        'rounded-box border border-base-content/10 bg-base-100 p-4',
+        'rounded-lg border border-base-300 bg-base-100 p-4',
         className
       )}
     >
@@ -101,7 +101,7 @@ export function SkeletonStat({ className }: { className?: string }) {
     <div
       aria-hidden="true"
       className={cx(
-        'rounded-box border border-base-content/10 bg-base-100 p-4',
+        'rounded-lg border border-base-300 bg-base-100 p-4',
         className
       )}
     >

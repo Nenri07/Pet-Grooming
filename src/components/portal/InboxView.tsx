@@ -149,8 +149,8 @@ export function InboxView({ threads, smsConfigured }: InboxViewProps) {
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-[280px_1fr]">
       {/* Thread list */}
-      <aside className="rounded-2xl bg-base-100 shadow-card">
-        <div className="border-b border-base-content/10 px-4 py-3">
+      <aside className="rounded-xl bg-base-100 shadow-card">
+        <div className="border-b border-base-300 px-4 py-3">
           <h2 className="font-display text-lg font-semibold text-base-content">Threads</h2>
         </div>
         <ul className="max-h-[60vh] overflow-y-auto">
@@ -191,10 +191,10 @@ export function InboxView({ threads, smsConfigured }: InboxViewProps) {
       </aside>
 
       {/* Conversation pane */}
-      <section className="flex min-h-[60vh] flex-col rounded-2xl bg-base-100 shadow-card">
+      <section className="flex min-h-[60vh] flex-col rounded-xl bg-base-100 shadow-card">
         {activeThread ? (
           <>
-            <header className="border-b border-base-content/10 px-4 py-3">
+            <header className="border-b border-base-300 px-4 py-3">
               <h3 className="font-medium text-base-content">{activeThread.name}</h3>
               {activeThread.phone && (
                 <p className="text-sm text-base-content/60">{activeThread.phone}</p>
@@ -214,7 +214,7 @@ export function InboxView({ threads, smsConfigured }: InboxViewProps) {
                   className={`flex ${m.direction === 'out' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${
+                    className={`max-w-[80%] rounded-xl px-3 py-2 text-sm ${
                       m.direction === 'out'
                         ? 'bg-primary text-primary-content'
                         : 'bg-base-200 text-base-content'
@@ -248,7 +248,7 @@ export function InboxView({ threads, smsConfigured }: InboxViewProps) {
             )}
 
             {/* Quick actions */}
-            <div className="flex flex-wrap gap-2 border-t border-base-content/10 px-4 py-2">
+            <div className="flex flex-wrap gap-2 border-t border-base-300 px-4 py-2">
               {QUICK_ACTIONS.map((a) => (
                 <button
                   key={a.kind}
@@ -263,7 +263,7 @@ export function InboxView({ threads, smsConfigured }: InboxViewProps) {
             </div>
 
             {/* Reply box */}
-            <div className="flex items-end gap-2 border-t border-base-content/10 p-3">
+            <div className="flex items-end gap-2 border-t border-base-300 p-3">
               <textarea
                 value={reply}
                 onChange={(e) => setReply(e.target.value)}

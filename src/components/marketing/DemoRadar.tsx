@@ -228,7 +228,7 @@ export function DemoRadar({ demo }: { demo: Demo }) {
         </div>
 
         {/* Summary card */}
-        <div className="mt-6 rounded-box border border-base-content/10 bg-base-100 p-5 shadow-card">
+        <div className="mt-6 rounded-lg border border-base-300 bg-base-100 p-5 shadow-card">
           {selectedComputed?.result ? (
             <>
               <p className="text-xs font-semibold uppercase tracking-wide text-primary">
@@ -271,10 +271,10 @@ export function DemoRadar({ demo }: { demo: Demo }) {
 
       {/* ---- Map panel (mirrors OrderRadarShowcase visual language) ---- */}
       <div className="order-1 lg:order-2">
-        <div className="relative mx-auto aspect-[4/3] w-full max-w-xl rounded-box border border-base-content/10 bg-base-100 shadow-card">
+        <div className="relative mx-auto aspect-[4/3] w-full max-w-xl rounded-lg border border-base-300 bg-base-100 shadow-card">
           <div
             aria-hidden
-            className="absolute inset-0 rounded-box bg-primary/5"
+            className="absolute inset-0 rounded-lg bg-primary/5"
             style={{
               backgroundImage:
                 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)',
@@ -314,7 +314,7 @@ export function DemoRadar({ demo }: { demo: Demo }) {
               className="absolute -translate-x-1/2 -translate-y-1/2"
               style={{ left: `${s.x}%`, top: `${s.y}%` }}
             >
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-content shadow-glow">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-content">
                 <span className="h-2 w-2 rounded-full bg-primary-content" />
               </span>
               <span className="mt-1 block text-center text-[0.65rem] font-semibold tabular-nums text-base-content/70">
@@ -330,7 +330,7 @@ export function DemoRadar({ demo }: { demo: Demo }) {
           >
             <span className="relative flex h-6 w-6 items-center justify-center">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent/50" />
-              <span className="relative inline-flex h-6 w-6 items-center justify-center rounded-full bg-accent text-accent-content shadow-glow">
+              <span className="relative inline-flex h-6 w-6 items-center justify-center rounded-full bg-accent text-accent-content">
                 <span className="h-2 w-2 rounded-full bg-accent-content" />
               </span>
             </span>

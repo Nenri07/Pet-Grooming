@@ -77,7 +77,7 @@ export function BundleHero() {
             <motion.div whileHover={reduced ? undefined : micro.hover} whileTap={micro.tap}>
               <Link
                 href={hero.primaryCta.href}
-                className="btn btn-primary min-h-[44px] px-8 shadow-glow"
+                className="btn btn-primary min-h-[44px] px-8"
               >
                 {hero.primaryCta.label}
               </Link>
@@ -115,9 +115,9 @@ function BrandedSiteMock({ business }: { business: string }) {
   const slug = business.toLowerCase().replace(/[^a-z0-9]+/g, '');
 
   return (
-    <div className="rounded-box border border-base-content/10 bg-base-100/80 shadow-card backdrop-blur">
+    <div className="rounded-lg border border-base-300 bg-base-100 shadow-card backdrop-blur">
       {/* Browser chrome */}
-      <div className="flex items-center gap-2 border-b border-base-content/10 px-4 py-3">
+      <div className="flex items-center gap-2 border-b border-base-300 px-4 py-3">
         <span className="h-2.5 w-2.5 rounded-full bg-base-content/20" />
         <span className="h-2.5 w-2.5 rounded-full bg-base-content/20" />
         <span className="h-2.5 w-2.5 rounded-full bg-base-content/20" />
@@ -135,7 +135,7 @@ function BrandedSiteMock({ business }: { business: string }) {
         </div>
 
         {/* Hero-ish strip */}
-        <div className="mt-4 rounded-2xl bg-hero p-4">
+        <div className="mt-4 rounded-xl bg-hero p-4">
           <p className="font-display text-base font-semibold text-base-content">
             Mobile grooming that comes to you
           </p>
@@ -143,7 +143,7 @@ function BrandedSiteMock({ business }: { business: string }) {
         </div>
 
         {/* Booking card */}
-        <div className="mt-4 rounded-2xl border border-primary/20 bg-primary/5 p-4">
+        <div className="mt-4 rounded-xl border border-primary/20 bg-primary/5 p-4">
           <div className="flex items-center gap-2">
             <CalendarCheck className="h-4 w-4 text-primary" aria-hidden="true" />
             <p className="text-xs font-semibold uppercase tracking-wide text-primary">

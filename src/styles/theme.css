@@ -5,12 +5,13 @@
    visible-by-default reveal guard. */
 
 :root {
-  --font-display-stack: var(--font-display), "Iowan Old Style", Georgia, serif;
-  --font-body-stack: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  --font-display-stack: var(--font-display), system-ui, sans-serif;
+  --font-body-stack: var(--font-body), system-ui, sans-serif;
+  --font-mono-stack: var(--font-mono), monospace;
 }
 
 html { font-family: var(--font-body-stack); font-size: 16px; line-height: 1.6; }
-h1, h2, h3, .font-display { font-family: var(--font-display-stack); letter-spacing: -0.02em; }
+h1, h2, h3, h4, .font-display { font-family: var(--font-display-stack); letter-spacing: -0.02em; }
 
 /* ============================================================================
    VISIBLE BY DEFAULT

@@ -184,8 +184,8 @@ export function AnimatedPetCard({
     >
       <motion.article
         className={cx(
-          'relative aspect-[3/4.1] w-full overflow-hidden rounded-box',
-          'border border-base-content/10 bg-base-100 shadow-card',
+          'relative aspect-[3/4.1] w-full overflow-hidden rounded-lg',
+          'border border-base-300 bg-base-100 shadow-card',
           '[transform-style:preserve-3d]',
         )}
         style={reduced ? undefined : { rotateX, rotateY }}
@@ -233,7 +233,7 @@ export function AnimatedPetCard({
         />
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-base-content/10 rounded-box"
+          className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-base-content/10 rounded-lg"
         />
 
         {/* ---- Floating paw particles (ambient, reduced-motion safe) ------ */}
@@ -264,7 +264,7 @@ export function AnimatedPetCard({
         )}
 
         {/* ---- Groomer branding header pill (top-left) -------------------- */}
-        <div className="absolute left-3 top-3 z-10 flex items-center gap-2 rounded-full border border-base-content/10 bg-base-100/70 px-2.5 py-1.5 backdrop-blur-md">
+        <div className="absolute left-3 top-3 z-10 flex items-center gap-2 rounded-full border border-base-300 bg-base-100 px-2.5 py-1.5">
           {safeHttpsImageSrc(data.branding.logoUrl) ? (
             <span className="relative h-6 w-6 shrink-0 overflow-hidden rounded-full bg-base-100">
               <Image
@@ -292,7 +292,7 @@ export function AnimatedPetCard({
             onClick={() => setShowQr((v) => !v)}
             aria-pressed={showQr}
             aria-label={showQr ? 'Hide QR code' : 'Show QR code to scan'}
-            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-base-content/10 bg-white p-1.5 shadow-card transition-transform hover:scale-105"
+            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-base-300 bg-white p-1.5 shadow-card transition-transform "
           >
             {showQr ? (
               <QRCodeSVG
@@ -307,7 +307,7 @@ export function AnimatedPetCard({
               <QrCode aria-hidden="true" className="h-7 w-7 text-neutral-800" />
             )}
           </button>
-          <span className="rounded-full bg-base-100/70 px-2 py-0.5 text-[0.6rem] font-medium text-base-content/70 backdrop-blur-md">
+          <span className="rounded-full bg-base-100 px-2 py-0.5 text-[0.6rem] font-medium text-base-content/70">
             {showQr ? 'Scan for details' : 'Tap for QR'}
           </span>
         </div>
@@ -321,7 +321,7 @@ export function AnimatedPetCard({
         >
           {/* Coat "verified" badge */}
           <motion.div variants={reduced ? undefined : itemVariants}>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-base-content/10 bg-base-100/70 px-2.5 py-1 text-xs font-medium text-primary backdrop-blur-md">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-base-300 bg-base-100 px-2.5 py-1 text-xs font-medium text-primary">
               <BadgeCheck aria-hidden="true" className="h-3.5 w-3.5" />
               {titleCase(data.coatCondition)} coat
             </span>
@@ -382,7 +382,7 @@ export function AnimatedPetCard({
           {/* Stat row — pet facts */}
           <motion.div
             variants={reduced ? undefined : itemVariants}
-            className="grid grid-cols-3 gap-2 rounded-box border border-base-content/10 bg-base-100/60 p-3 backdrop-blur-md"
+            className="grid grid-cols-3 gap-2 rounded-lg border border-base-300 bg-base-100 p-3"
           >
             <Stat
               icon={<PawPrint className="h-4 w-4" />}

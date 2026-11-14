@@ -49,7 +49,7 @@ export function LiveEtaControl({
         <div className="flex flex-col gap-3">
           {/* Persistent "Sharing location" banner (§11.2 privacy). */}
           <div
-            className="flex items-center gap-2 rounded-box border border-primary/20 bg-primary/5 px-4 py-3"
+            className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3"
             role="status"
           >
             <Radio className="h-5 w-5 animate-pulse text-primary" aria-hidden="true" />

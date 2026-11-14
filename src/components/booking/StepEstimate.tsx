@@ -128,7 +128,7 @@ export function StepEstimate({ state, dispatch, services, groomerSlug }: Booking
         )}
 
         {ui.status === 'error' && (
-          <div className="alert alert-error rounded-2xl" role="alert">
+          <div className="alert alert-error rounded-xl" role="alert">
             <span>{ui.message}</span>
           </div>
         )}

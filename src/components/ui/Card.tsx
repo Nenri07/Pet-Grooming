@@ -1,12 +1,11 @@
 import * as React from 'react';
 
 /**
- * Card — responsive surface component with rounded-2xl corners and a soft
- * shadow (shadow-card), matching the PawPort premium aesthetic.
+ * Card — responsive surface component with rounded-xl corners and a hairline
+ * border, matching the Linear/Vercel/Stripe aesthetic.
  *
  * Requirements:
- * - 18.5: Cards styled at rounded-2xl with drop shadows no darker than 10%
- *   opacity (the `shadow-card` token defined in tailwind.config.ts).
+ * - 18.5: Cards styled with borders and minimal shadows.
  */
 
 function cx(...classes: Array<string | false | null | undefined>): string {
@@ -16,7 +15,7 @@ function cx(...classes: Array<string | false | null | undefined>): string {
 type CardProps = React.HTMLAttributes<HTMLDivElement> & {
   /** Removes default padding when the card wraps custom layout. */
   noPadding?: boolean;
-  /** Renders a hover elevation transition for interactive cards. */
+  /** Renders a hover border transition for interactive cards. */
   interactive?: boolean;
 };
 
@@ -30,9 +29,9 @@ export function Card({
   return (
     <div
       className={cx(
-        'rounded-2xl bg-base-100 shadow-card',
-        !noPadding && 'p-4 sm:p-6',
-        interactive && 'transition-shadow hover:shadow-lg focus-within:shadow-lg',
+        'rounded-xl bg-base-100 border border-base-300',
+        !noPadding && 'p-5',
+        interactive && 'transition-colors duration-150 hover:border-base-content/20',
         className
       )}
       {...rest}

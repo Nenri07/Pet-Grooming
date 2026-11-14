@@ -74,7 +74,7 @@ const ServiceAreaMap = dynamic(() => import('./ServiceAreaMap'), {
   ssr: false,
   loading: () => (
     <div
-      className="h-72 w-full animate-pulse rounded-box border border-base-content/10 bg-base-200 sm:h-96"
+      className="h-72 w-full animate-pulse rounded-lg border border-base-300 bg-base-200 sm:h-96"
       aria-hidden="true"
     />
   ),
@@ -336,7 +336,7 @@ function BusinessProfileForm({ initialSettings }: BusinessSettingsProps) {
         </div>
 
         {/* Service area — base address + radius drive the routing engine. */}
-        <fieldset className="rounded-2xl border border-base-300 p-4">
+        <fieldset className="rounded-xl border border-base-300 p-4">
           <legend className="px-1 text-sm font-medium text-base-content">Service area</legend>
 
           <div className="form-control">
@@ -450,7 +450,7 @@ function BusinessProfileForm({ initialSettings }: BusinessSettingsProps) {
           </p>
 
           {fields.length === 0 ? (
-            <p className="rounded-2xl border border-dashed border-base-300 p-4 text-sm text-base-content/60">
+            <p className="rounded-xl border border-dashed border-base-300 p-4 text-sm text-base-content/60">
               No estimate rules yet. Add one to fine-tune pricing for specific coats or weights.
             </p>
           ) : (
@@ -460,7 +460,7 @@ function BusinessProfileForm({ initialSettings }: BusinessSettingsProps) {
                 return (
                   <div
                     key={fieldItem.id}
-                    className="rounded-2xl border border-base-300 p-4"
+                    className="rounded-xl border border-base-300 p-4"
                   >
                     <div className="mb-3 flex items-center justify-between">
                       <span className="text-sm font-medium text-base-content">

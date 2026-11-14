@@ -73,7 +73,7 @@ export default function DemoPage({ params }: DemoPageProps) {
       />
 
       {/* ---- Claim banner (Master Spec §17) ---- */}
-      <div className="border-b border-base-content/10 bg-base-200">
+      <div className="border-b border-base-300 bg-base-200">
         <div className="mx-auto flex max-w-6xl flex-col items-start gap-3 px-gutter py-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-base-content/80">
             This is a preview built for{' '}
@@ -98,11 +98,11 @@ export default function DemoPage({ params }: DemoPageProps) {
                 alt={`${demo.businessName} logo`}
                 width={72}
                 height={72}
-                className="h-18 w-18 rounded-box object-contain"
+                className="h-18 w-18 rounded-lg object-contain"
               />
             ) : (
               <span
-                className="flex h-16 w-16 items-center justify-center rounded-box bg-primary text-2xl font-bold text-primary-content"
+                className="flex h-16 w-16 items-center justify-center rounded-lg bg-primary text-2xl font-bold text-primary-content"
                 style={accent ? { backgroundColor: accent } : undefined}
                 aria-hidden
               >
@@ -161,7 +161,7 @@ export default function DemoPage({ params }: DemoPageProps) {
             ].map((s) => (
               <div
                 key={s.step}
-                className="rounded-box border border-base-content/10 bg-base-100 p-6 shadow-card"
+                className="rounded-lg border border-base-300 bg-base-100 p-6 shadow-card"
               >
                 <span
                   className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-content"

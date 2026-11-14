@@ -338,7 +338,7 @@ function RouteStop({
             onOpen(stop.id);
           }
         }}
-        className="cursor-pointer rounded-box border border-base-content/10 bg-base-100 p-3 transition-colors hover:bg-base-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="cursor-pointer rounded-lg border border-base-300 bg-base-100 p-3 transition-colors hover:bg-base-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -403,7 +403,7 @@ function TodaysRouteCard({
       </div>
 
       {stops.length === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center rounded-box bg-base-200 px-4 py-10 text-center">
+        <div className="flex flex-1 flex-col items-center justify-center rounded-lg bg-base-200 px-4 py-10 text-center">
           <CalendarClock
             className="mb-3 h-8 w-8 text-base-content/40"
             aria-hidden="true"
@@ -452,7 +452,7 @@ function UpcomingRow({
             onOpen(item.id);
           }
         }}
-        className="cursor-pointer rounded-box border border-base-content/10 bg-base-100 p-3 transition-colors hover:bg-base-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="cursor-pointer rounded-lg border border-base-300 bg-base-100 p-3 transition-colors hover:bg-base-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -516,7 +516,7 @@ function UpcomingCard({
       </div>
 
       {upcoming.length === 0 ? (
-        <p className="rounded-box bg-base-200 px-4 py-6 text-center text-sm text-base-content/60">
+        <p className="rounded-lg bg-base-200 px-4 py-6 text-center text-sm text-base-content/60">
           No upcoming bookings in the next 14 days.
         </p>
       ) : (
@@ -549,7 +549,7 @@ function RadarRow({
   const when = [item.label, item.dateLabel, item.timeLabel].filter(Boolean).join(' ');
 
   return (
-    <div className="rounded-box border border-primary/20 bg-primary/5 p-4">
+    <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
       <p className="text-[0.7rem] font-bold uppercase tracking-[0.14em] text-primary">
         New booking · Order Radar
       </p>
@@ -595,7 +595,7 @@ function OrderRadarLocked() {
         </h2>
         <Lock className="ml-auto h-4 w-4 text-base-content/40" aria-hidden="true" />
       </div>
-      <div className="flex flex-1 flex-col items-center justify-center rounded-box bg-base-200 px-4 py-8 text-center">
+      <div className="flex flex-1 flex-col items-center justify-center rounded-lg bg-base-200 px-4 py-8 text-center">
         <p className="font-medium text-base-content">A Pro feature</p>
         <p className="mt-1 text-sm text-base-content/60">
           See how far each new booking is from your route and how much driving it
@@ -629,7 +629,7 @@ function OrderRadarCard({
         </h2>
       </div>
       {!routingReady ? (
-        <div className="rounded-box bg-base-200 px-4 py-6 text-center">
+        <div className="rounded-lg bg-base-200 px-4 py-6 text-center">
           <p className="text-sm font-medium text-base-content">Add your base address to turn on routing</p>
           <p className="mt-1 text-sm text-base-content/60">
             Order Radar measures each booking against where you start your day.
@@ -639,7 +639,7 @@ function OrderRadarCard({
           </Link>
         </div>
       ) : radar.length === 0 ? (
-        <p className="rounded-box bg-base-200 px-4 py-6 text-center text-sm text-base-content/60">
+        <p className="rounded-lg bg-base-200 px-4 py-6 text-center text-sm text-base-content/60">
           No new bookings this week. New ones show here with their distance and extra driving.
         </p>
       ) : (
@@ -703,7 +703,7 @@ function Metric({
   diff: React.ReactNode;
 }) {
   return (
-    <div className="rounded-box bg-base-100 p-3 shadow-card">
+    <div className="rounded-lg bg-base-100 p-3 shadow-card">
       <p className="text-xs font-medium uppercase tracking-wide text-base-content/50">
         {label}
       </p>
@@ -737,7 +737,7 @@ function KpiStrip({
       <Metric label="No-show rate" diff={<DiffPill value={summary.noShowRateDiff} suffix="pt" invert />}>
         <NumberTicker value={summary.noShowRate} suffix="%" decimals={1} />
       </Metric>
-      <Link href="/billing" className="col-span-2 rounded-box bg-base-100 p-3 shadow-card transition-colors hover:bg-base-200 lg:col-span-1">
+      <Link href="/billing" className="col-span-2 rounded-lg bg-base-100 p-3 shadow-card transition-colors hover:bg-base-200 lg:col-span-1">
         <p className="text-xs font-medium uppercase tracking-wide text-base-content/50">Messages</p>
         <p className="mt-1 text-2xl font-bold text-base-content">
           {smsUsed}

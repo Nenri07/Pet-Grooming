@@ -70,10 +70,10 @@ export function ReceiptShowcase() {
   return (
     <section
       aria-labelledby="receipt-heading"
-      className="bg-base-200"
+      className="bg-base-100 py-band"
       ref={floatRef as React.RefObject<HTMLDivElement>}
     >
-      <div className="mx-auto max-w-6xl px-gutter py-section">
+      <div className="mx-auto max-w-7xl px-6 md:px-8">
         <SectionHeading
           titleId="receipt-heading"
           eyebrow={receipt.eyebrow}

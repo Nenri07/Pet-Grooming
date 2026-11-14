@@ -44,8 +44,8 @@ export function Comparison() {
   const { comparison } = landing;
 
   return (
-    <section aria-labelledby="comparison-heading" className="bg-base-200">
-      <div className="mx-auto max-w-5xl px-gutter py-section">
+    <section aria-labelledby="comparison-heading" className="bg-base-200 py-band border-t border-base-300">
+      <div className="mx-auto max-w-7xl px-6 md:px-8">
         <SectionHeading
           eyebrow="How we compare"
           title="Built for the road, not the salon"
@@ -53,13 +53,13 @@ export function Comparison() {
         />
 
         <Reveal className="mt-14">
-          <div className="overflow-x-auto rounded-box border border-base-content/10 bg-base-100 shadow-card">
+          <div className="overflow-x-auto rounded-lg border border-base-300 bg-base-100 shadow-card">
             <table className="w-full min-w-[30rem] border-collapse text-left">
               <caption className="sr-only" id="comparison-heading">
                 Pawxis compared with typical grooming software
               </caption>
               <thead>
-                <tr className="border-b border-base-content/10">
+                <tr className="border-b border-base-300">
                   <th scope="col" className="p-4 text-sm font-medium text-base-content/60">
                     Capability
                   </th>
@@ -75,7 +75,7 @@ export function Comparison() {
                 {comparison.rows.map((row) => (
                   <tr
                     key={row.label}
-                    className="border-b border-base-content/10 last:border-0"
+                    className="border-b border-base-300 last:border-0"
                   >
                     <th
                       scope="row"

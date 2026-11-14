@@ -176,7 +176,7 @@ function PaymentsNotSetUp({
         </p>
       </div>
 
-      <div className="alert alert-info rounded-2xl" role="status">
+      <div className="alert alert-info rounded-xl" role="status">
         <span>
           {businessName} hasn&apos;t enabled online payments yet, so we
           can&apos;t take your deposit here.{' '}
@@ -247,7 +247,7 @@ function NoDepositConfirm({
         <h2 className="text-xl font-semibold text-base-content">Confirm your booking</h2>
         <p className="text-sm text-base-content/60">Step 5 of 5 — No deposit required</p>
       </div>
-      <div className="alert rounded-2xl" role="status">
+      <div className="alert rounded-xl" role="status">
         <span>
           No deposit is required for this booking. Tap confirm and you&apos;re all
           set — we&apos;ll send the details to the groomer.
@@ -309,14 +309,14 @@ function CardDepositConfirm({
         <h2 className="text-xl font-semibold text-base-content">Pay your deposit</h2>
         <p className="text-sm text-base-content/60">Step 5 of 5 — {money} deposit</p>
       </div>
-      <div className="alert rounded-2xl" role="status">
+      <div className="alert rounded-xl" role="status">
         <span>
           A {money} deposit holds your time. You&apos;ll pay on Stripe&apos;s secure page and come
           straight back to your confirmation. The rest is paid on the day.
         </span>
       </div>
       {error && (
-        <div className="alert alert-error rounded-2xl" role="alert">
+        <div className="alert alert-error rounded-xl" role="alert">
           <span>{error}</span>
         </div>
       )}
@@ -355,7 +355,7 @@ function PayByLinkConfirm({
         <h2 className="text-xl font-semibold text-base-content">Confirm your booking</h2>
         <p className="text-sm text-base-content/60">Step 5 of 5 — {money} deposit</p>
       </div>
-      <div className="alert rounded-2xl" role="status">
+      <div className="alert rounded-xl" role="status">
         <span>
           This groomer takes a {money} deposit with {label}. Confirm your booking, then
           tap <strong>Pay with {label}</strong> on the next screen. The link is also in your
@@ -539,7 +539,7 @@ export function BookingFlow({ groomer, initialState, prefillNotice }: BookingFlo
   return (
     <div className="mx-auto w-full max-w-xl">
       {prefillNotice && (
-        <div className="mb-4 rounded-box border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-base-content">
+        <div className="mb-4 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-base-content">
           {prefillNotice}
         </div>
       )}

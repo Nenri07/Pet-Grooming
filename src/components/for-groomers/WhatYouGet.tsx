@@ -73,7 +73,7 @@ export function WhatYouGet() {
                 key={f.title}
                 variants={item}
                 className={[
-                  'group reveal-init relative flex flex-col justify-between overflow-hidden rounded-box border border-base-content/10 bg-base-200 p-6 shadow-card transition-shadow duration-300 hover:shadow-glow',
+                  'group reveal-init relative flex flex-col justify-between overflow-hidden rounded-lg border border-base-300 bg-base-200 p-6 shadow-card transition-shadow duration-300 hover:shadow-glow',
                   cellClasses(f.size),
                 ].join(' ')}
               >
@@ -84,7 +84,7 @@ export function WhatYouGet() {
                 />
 
                 <div className="relative">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
                     <Icon className="h-5 w-5" aria-hidden="true" />
                   </span>
                   <h3 className="mt-4 flex flex-wrap items-center gap-2 font-display text-lg font-bold text-base-content">
@@ -95,7 +95,7 @@ export function WhatYouGet() {
                 </div>
 
                 {img && (
-                  <div className="relative mt-5 aspect-[16/9] w-full overflow-hidden rounded-2xl border border-base-content/10">
+                  <div className="relative mt-5 aspect-[16/9] w-full overflow-hidden rounded-xl border border-base-300">
                     <Image
                       src={img.src}
                       alt={img.alt}
@@ -104,7 +104,7 @@ export function WhatYouGet() {
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 66vw, 33vw"
                       placeholder="blur"
                       blurDataURL={img.blurDataURL}
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      className="object-cover transition-transform duration-500 group-"
                     />
                   </div>
                 )}

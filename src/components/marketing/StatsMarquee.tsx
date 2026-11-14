@@ -19,13 +19,13 @@ export function StatsMarquee() {
   const hasStats = stats.length > 0;
 
   return (
-    <section aria-labelledby="proof-heading" className="bg-base-200 py-section">
+    <section aria-labelledby="proof-heading" className="bg-base-200 py-band border-t border-base-300">
       <h2 id="proof-heading" className="sr-only">
         Services and proof
       </h2>
 
       {/* Proof row: real stats if present, otherwise founding-program line. */}
-      <div className="mx-auto max-w-5xl px-gutter">
+      <div className="mx-auto max-w-7xl px-6 md:px-8">
         {hasStats ? (
           <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
             {stats.map((s) => (
@@ -42,7 +42,7 @@ export function StatsMarquee() {
             ))}
           </div>
         ) : (
-          <div className="mx-auto max-w-2xl rounded-box border border-primary/20 bg-primary/5 px-6 py-8 text-center">
+          <div className="mx-auto max-w-2xl rounded-lg border border-primary/20 bg-primary/5 px-6 py-8 text-center">
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-accent">
               Founding groomer program
             </p>

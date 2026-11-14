@@ -187,7 +187,7 @@ export default async function RebookPage({ params }: { params: { token: string }
           />
         </>
       ) : (
-        <div className="mx-auto w-full max-w-md rounded-box border border-base-content/10 bg-base-100 p-8 text-center shadow-card">
+        <div className="mx-auto w-full max-w-md rounded-lg border border-base-300 bg-base-100 p-8 text-center shadow-card">
           <h1 className="text-2xl font-bold text-base-content">Link expired</h1>
           <p className="mt-3 text-base-content/70">
             This rebooking link is no longer valid. Please contact your groomer to

@@ -84,7 +84,7 @@ export function ClaimView({
   const durationMin = Math.max(0, Math.round((endMs - startMs) / 60000));
 
   return (
-    <div className="overflow-hidden rounded-box border border-base-content/10 bg-base-100 shadow-card">
+    <div className="overflow-hidden rounded-lg border border-base-300 bg-base-100 shadow-card">
       {/* Branded header */}
       <div className="bg-hero px-6 py-8 text-center">
         {safeHttpsImageSrc(logoUrl) ? (
@@ -96,7 +96,7 @@ export function ClaimView({
             className="mx-auto h-16 w-16 rounded-full object-cover ring-2 ring-base-100"
           />
         ) : (
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-base-100/80 text-primary ring-2 ring-base-100">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-base-100 text-primary ring-2 ring-base-100">
             <PawPrint className="h-8 w-8" aria-hidden="true" />
           </div>
         )}
@@ -137,7 +137,7 @@ export function ClaimView({
             <h1 className="text-center font-display text-2xl font-bold text-base-content">
               A spot just opened{petName ? ` for ${petName}` : ''}
             </h1>
-            <div className="mt-6 flex items-start gap-3 rounded-box bg-base-200 p-4">
+            <div className="mt-6 flex items-start gap-3 rounded-lg bg-base-200 p-4">
               <CalendarClock className="mt-0.5 h-5 w-5 text-primary" aria-hidden="true" />
               <div>
                 <p className="font-medium text-base-content">{formatWhen(startMs, timezone)}</p>

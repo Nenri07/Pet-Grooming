@@ -49,7 +49,7 @@ export function LogoutButton({
         disabled={pending}
         aria-label={label}
         className={[
-          'flex min-h-[44px] w-full items-center gap-3 rounded-box border border-base-content/10 bg-base-100 px-4 py-3 text-base font-medium text-base-content transition-colors hover:bg-base-200',
+          'flex min-h-[44px] w-full items-center gap-3 rounded-lg border border-base-300 bg-base-100 px-4 py-3 text-base font-medium text-base-content transition-colors hover:bg-base-200',
           'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
           className ?? '',
         ].join(' ')}

@@ -27,8 +27,8 @@ export function PricingCTA() {
   const { pricing, founding } = landing;
 
   return (
-    <section id="pricing" aria-labelledby="pricing-heading" className="bg-base-100">
-      <div className="mx-auto max-w-6xl px-gutter py-section">
+    <section id="pricing" aria-labelledby="pricing-heading" className="bg-base-100 py-band">
+      <div className="mx-auto max-w-7xl px-6 md:px-8">
         <SectionHeading
           eyebrow="Simple pricing"
           title="One plan per van. No surprises."
@@ -36,7 +36,7 @@ export function PricingCTA() {
         />
 
         {/* Founding-member banner */}
-        <div className="mx-auto mt-8 max-w-2xl rounded-box border border-primary/20 bg-primary/5 px-6 py-4 text-center">
+        <div className="mx-auto mt-8 max-w-2xl rounded-lg border border-primary/20 bg-primary/5 px-6 py-4 text-center">
           <p className="text-sm text-base-content">
             <span className="font-semibold text-primary">
               First {founding.spots} groomers:
@@ -100,10 +100,10 @@ export function PricingCTA() {
                 key={plan.name}
                 variants={item}
                 className={[
-                  'reveal-init flex flex-col rounded-box border p-8 shadow-card',
+                  'reveal-init flex flex-col rounded-lg border p-8 shadow-card',
                   plan.featured
-                    ? 'border-primary/40 bg-base-100 shadow-glow'
-                    : 'border-base-content/10 bg-base-200',
+                    ? 'border-primary/40 bg-base-100'
+                    : 'border-base-300 bg-base-200',
                 ].join(' ')}
               >
                 <div className="flex items-center justify-between">
@@ -143,7 +143,7 @@ export function PricingCTA() {
                     href={plan.cta.href}
                     className={[
                       'btn min-h-[44px] w-full',
-                      plan.featured ? 'btn-primary shadow-glow' : 'btn-outline',
+                      plan.featured ? 'btn-primary' : 'btn-outline',
                     ].join(' ')}
                   >
                     {plan.cta.label}

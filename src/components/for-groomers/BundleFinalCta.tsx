@@ -22,7 +22,7 @@ export function BundleFinalCta() {
       className="relative isolate overflow-hidden bg-base-100"
     >
       <div className="mx-auto max-w-6xl px-gutter py-section">
-        <div className="relative overflow-hidden rounded-box bg-hero p-10 text-center shadow-card sm:p-16">
+        <div className="relative overflow-hidden rounded-lg bg-hero p-10 text-center shadow-card sm:p-16">
           <div
             aria-hidden
             className="absolute inset-0 -z-10 bg-gradient-to-b from-base-100/40 to-base-100/60"
@@ -41,7 +41,7 @@ export function BundleFinalCta() {
               <motion.div whileHover={reduced ? undefined : micro.hover} whileTap={micro.tap}>
                 <Link
                   href={finalCta.primaryCta.href}
-                  className="btn btn-primary min-h-[44px] px-8 shadow-glow"
+                  className="btn btn-primary min-h-[44px] px-8"
                 >
                   {finalCta.primaryCta.label}
                 </Link>

@@ -201,7 +201,7 @@ export function BillingView(props: BillingViewProps) {
       {isLocked && (
         <div
           role="alert"
-          className="mb-4 flex items-start gap-3 rounded-box border-2 border-error/40 bg-error/10 p-4"
+          className="mb-4 flex items-start gap-3 rounded-lg border-2 border-error/40 bg-error/10 p-4"
         >
           <Lock className="mt-0.5 h-6 w-6 shrink-0 text-error" aria-hidden="true" />
           <div>
@@ -223,7 +223,7 @@ export function BillingView(props: BillingViewProps) {
       {!billingConfigured && (
         <div
           role="status"
-          className="mb-4 flex items-start gap-3 rounded-box border border-base-content/10 bg-base-200 p-4"
+          className="mb-4 flex items-start gap-3 rounded-lg border border-base-300 bg-base-200 p-4"
         >
           <Info className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
           <div>
@@ -240,7 +240,7 @@ export function BillingView(props: BillingViewProps) {
       {inGracePeriod && (
         <div
           role="alert"
-          className="mb-4 flex items-start gap-3 rounded-box border border-warning/30 bg-warning/10 p-4"
+          className="mb-4 flex items-start gap-3 rounded-lg border border-warning/30 bg-warning/10 p-4"
         >
           <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-warning" aria-hidden="true" />
           <div>
@@ -254,7 +254,7 @@ export function BillingView(props: BillingViewProps) {
       )}
 
       {error && (
-        <div role="alert" className="mb-4 rounded-box bg-error/10 p-3 text-sm text-error">
+        <div role="alert" className="mb-4 rounded-lg bg-error/10 p-3 text-sm text-error">
           {error}
         </div>
       )}
@@ -374,7 +374,7 @@ export function BillingView(props: BillingViewProps) {
       </div>
 
       {/* Founding banner (§13.2) */}
-      <div className="mt-4 flex items-start gap-3 rounded-box border border-primary/20 bg-primary/5 p-4">
+      <div className="mt-4 flex items-start gap-3 rounded-lg border border-primary/20 bg-primary/5 p-4">
         <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
         <div>
           <p className="font-medium text-base-content">

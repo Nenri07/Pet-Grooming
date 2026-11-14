@@ -71,7 +71,7 @@ export function BundleValue() {
                       : { opacity: 1, scale: 1, y: 0 }
                   }
                   transition={{ duration: 0.6, ease: easeOutExpo, delay: i * 0.06 }}
-                  className="flex items-center gap-3 rounded-box border border-base-content/10 bg-base-100 px-4 py-3 shadow-soft"
+                  className="flex items-center gap-3 rounded-lg border border-base-300 bg-base-100 px-4 py-3 shadow-soft"
                 >
                   <span className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-base-300 text-base-content/70">
                     <Icon className="h-4 w-4" aria-hidden="true" />
@@ -107,7 +107,7 @@ export function BundleValue() {
             initial={false}
             animate={animate ? { scale: 1.03 } : { scale: 1 }}
             transition={{ duration: 0.7, ease: easeOutExpo, delay: 0.2 }}
-            className="rounded-box border border-primary/30 bg-base-100 p-6 shadow-glow"
+            className="rounded-lg border border-primary/30 bg-base-100 p-6"
           >
             <div className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-primary" aria-hidden="true" />

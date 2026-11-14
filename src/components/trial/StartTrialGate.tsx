@@ -286,7 +286,7 @@ export function StartTrialGate({ email }: StartTrialGateProps) {
               {phoneNotConfigured ? (
                 <div
                   role="status"
-                  className="mt-4 flex items-start gap-3 rounded-box border border-base-content/10 bg-base-200 p-4"
+                  className="mt-4 flex items-start gap-3 rounded-lg border border-base-300 bg-base-200 p-4"
                 >
                   <Info className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
                   <div>

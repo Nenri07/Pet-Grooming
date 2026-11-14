@@ -129,7 +129,7 @@ function SearchAffordance() {
         onChange={(e) => setValue(e.target.value)}
         placeholder="Search clients…"
         aria-label="Search clients"
-        className="input input-bordered h-11 w-full rounded-btn border-base-content/10 bg-base-200 pl-9 text-sm focus:border-primary focus:outline-none"
+        className="h-11 w-full rounded-lg border border-base-300 bg-base-100 pl-9 pr-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
       />
     </form>
   );
@@ -142,7 +142,7 @@ function AvatarMenu() {
       href="/settings"
       aria-label="Account settings"
       title="Account settings"
-      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-content transition-transform hover:scale-[1.03]"
+      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-content transition-transform "
     >
       <span aria-hidden="true">PP</span>
     </Link>
@@ -179,7 +179,7 @@ export function PortalNav() {
   return (
     <>
       {/* ---- Top bar (all sizes) ---- */}
-      <header className="sticky top-0 z-30 flex items-center gap-2 border-b border-base-content/10 bg-base-100/80 px-3 py-2 backdrop-blur supports-[backdrop-filter]:bg-base-100/60 sm:px-4 md:hidden">
+      <header className="sticky top-0 z-30 flex items-center gap-2 border-b border-base-300 bg-base-100 px-3 py-2 sm:px-4 md:hidden">
         <Link
           href="/dashboard"
           className="inline-flex min-w-0 items-center gap-2 font-display text-xl font-bold text-primary"
@@ -204,8 +204,8 @@ export function PortalNav() {
       {/* ---- Desktop / tablet collapsible sidebar (md+) ---- */}
       <aside
         className={cx(
-          'sticky top-0 hidden h-screen max-h-screen shrink-0 flex-col overflow-hidden border-r border-base-content/10 bg-base-100 p-3 transition-[width] duration-200 ease-out md:flex',
-          collapsed ? 'w-[76px]' : 'w-64'
+          'sticky top-0 hidden h-screen max-h-screen shrink-0 flex-col overflow-hidden border-r border-base-300 bg-base-100 px-3 py-4 transition-[width] duration-200 ease-out md:flex',
+          collapsed ? 'w-[76px]' : 'w-60'
         )}
       >
         <div
@@ -268,14 +268,14 @@ export function PortalNav() {
                 aria-current={active ? 'page' : undefined}
                 title={collapsed ? label : undefined}
                 className={cx(
-                  'flex min-h-[44px] items-center gap-3 rounded-box px-3 py-2 text-base font-medium transition-colors',
+                  'flex min-h-[44px] items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                   collapsed && 'justify-center px-0',
                   active
-                    ? 'bg-primary text-primary-content shadow-glow'
-                    : 'text-base-content hover:bg-base-200'
+                    ? 'bg-base-200 text-base-content'
+                    : 'text-base-content/60 hover:bg-base-200/50 hover:text-base-content'
                 )}
               >
-                <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                <Icon className="h-4 w-4 shrink-0 stroke-[1.5px]" aria-hidden="true" />
                 {!collapsed && <span className="truncate">{label}</span>}
               </Link>
             );
@@ -283,11 +283,11 @@ export function PortalNav() {
         </nav>
 
         {/* Sidebar footer: SMS pill + theme + avatar (calm, tokenized).
-            Expanded: controls wrap so they never push past the w-64 width.
+            Expanded: controls wrap so they never push past the w-60 width.
             Collapsed: stack vertically, centered, on the icons-only rail. */}
         <div
           className={cx(
-            'mt-3 flex shrink-0 gap-2 border-t border-base-content/10 pt-3',
+            'mt-3 flex shrink-0 gap-2 border-t border-base-300 pt-3',
             collapsed
               ? 'flex-col items-center'
               : 'flex-col items-stretch'
@@ -322,7 +322,7 @@ export function PortalNav() {
       {/* ---- Mobile bottom tab bar (<md) ---- */}
       <nav
         aria-label="Primary"
-        className="fixed inset-x-0 bottom-0 z-30 flex items-stretch justify-around border-t border-base-content/10 bg-base-100/95 backdrop-blur pb-[env(safe-area-inset-bottom)] md:hidden"
+        className="fixed inset-x-0 bottom-0 z-30 flex items-stretch justify-around border-t border-base-300 bg-base-100 pb-[env(safe-area-inset-bottom)] md:hidden"
       >
         {BOTTOM_TABS.map(({ label, href, icon: Icon }) => {
           const active = isActive(pathname, href);
@@ -372,7 +372,7 @@ export function PortalNav() {
             onClick={() => setMoreOpen(false)}
             aria-hidden="true"
           />
-          <div className="absolute inset-x-0 bottom-0 rounded-t-box border-t border-base-content/10 bg-base-100 p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] shadow-card">
+          <div className="absolute inset-x-0 bottom-0 rounded-t-xl border-t border-base-300 bg-base-100 p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] shadow-soft">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="font-display text-lg font-semibold text-base-content">
                 More
@@ -395,7 +395,7 @@ export function PortalNav() {
                     href={href}
                     aria-current={active ? 'page' : undefined}
                     className={cx(
-                      'flex min-h-[56px] items-center gap-3 rounded-box px-4 py-3 text-base font-medium transition-colors',
+                      'flex min-h-[56px] items-center gap-3 rounded-lg px-4 py-3 text-base font-medium transition-colors',
                       active
                         ? 'bg-primary text-primary-content'
                         : 'bg-base-200 text-base-content hover:bg-base-300'
@@ -407,10 +407,10 @@ export function PortalNav() {
                 );
               })}
             </div>
-            <div className="mt-4 border-t border-base-content/10 pt-4">
+            <div className="mt-4 border-t border-base-300 pt-4">
               <LogoutButton variant="full" />
             </div>
-            <div className="mt-4 flex items-center justify-between border-t border-base-content/10 pt-4">
+            <div className="mt-4 flex items-center justify-between border-t border-base-300 pt-4">
               <SmsCreditsPill />
               <div className="flex items-center gap-1">
                 <ThemeMenu />
