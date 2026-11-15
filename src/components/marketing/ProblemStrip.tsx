@@ -9,7 +9,7 @@ import { landing } from '@/content/landing';
 export function ProblemStrip() {
   return (
     <section aria-labelledby="problem-heading" className="border-b border-base-300 bg-base-100 py-10 md:py-12">
-      <div className="mx-auto max-w-6xl px-6 md:px-10 lg:px-12">
+      <div className="mx-auto max-w-7xl px-6 md:px-8">
         <h2 id="problem-heading" className="sr-only">
           The daily grind of a solo mobile groomer
         </h2>

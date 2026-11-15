@@ -12,7 +12,7 @@ import { landing } from '@/content/landing';
 export function Faq() {
   return (
     <section aria-labelledby="faq-heading" className="bg-base-200 py-band border-t border-base-300">
-      <div className="mx-auto max-w-3xl px-6 md:px-10 lg:px-12">
+      <div className="mx-auto max-w-3xl px-6 md:px-8">
         <SectionHeading eyebrow="Questions" title="Frequently asked" />
 
         <Reveal className="mt-12 space-y-4">

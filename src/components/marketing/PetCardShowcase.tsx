@@ -85,7 +85,7 @@ export function PetCardShowcase() {
 
   return (
     <section aria-labelledby="petcard-heading" className="bg-base-200 py-band">
-      <div className="mx-auto max-w-6xl px-6 md:px-10 lg:px-12">
+      <div className="mx-auto max-w-7xl px-6 md:px-8">
         <SectionHeading
           titleId="petcard-heading"
           eyebrow="Looks like a big brand"

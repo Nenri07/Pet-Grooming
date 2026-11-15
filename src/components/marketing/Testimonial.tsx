@@ -20,7 +20,7 @@ export function Testimonial() {
 
   return (
     <section aria-labelledby="testimonials-heading" className="bg-base-100 py-band">
-      <div className="mx-auto max-w-6xl px-6 md:px-10 lg:px-12">
+      <div className="mx-auto max-w-7xl px-6 md:px-8">
         <SectionHeading
           eyebrow="Loved by groomers"
           title="What solo groomers say"

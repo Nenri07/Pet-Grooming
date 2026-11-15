@@ -20,7 +20,7 @@ export function FinalCTA() {
 
   return (
     <section aria-labelledby="final-cta-heading" className="bg-base-100 py-band border-t border-base-300">
-      <div className="mx-auto max-w-6xl px-6 md:px-10 lg:px-12">
+      <div className="mx-auto max-w-7xl px-6 md:px-8">
         <div className="relative overflow-hidden rounded-lg bg-hero p-10 text-center shadow-card sm:p-16">
           {/* Token overlay for contrast on the gradient. */}
           <div

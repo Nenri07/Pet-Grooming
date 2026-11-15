@@ -24,7 +24,7 @@ export function ProductTour() {
       aria-labelledby="tour-heading"
       className="border-y border-base-300 bg-base-100 py-band"
     >
-      <div className="mx-auto max-w-6xl px-6 md:px-10 lg:px-12">
+      <div className="mx-auto max-w-7xl px-6 md:px-8">
         <SectionHeading
           eyebrow="See it live"
           title="From booking link to booked day"

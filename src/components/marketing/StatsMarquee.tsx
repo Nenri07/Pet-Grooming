@@ -25,7 +25,7 @@ export function StatsMarquee() {
       </h2>
 
       {/* Proof row: real stats if present, otherwise founding-program line. */}
-      <div className="mx-auto max-w-6xl px-6 md:px-10 lg:px-12">
+      <div className="mx-auto max-w-7xl px-6 md:px-8">
         {hasStats ? (
           <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
             {stats.map((s) => (

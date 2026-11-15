@@ -103,7 +103,7 @@ export function OrderRadarShowcase() {
         data-radar-pin-target
         className="flex items-center overflow-hidden py-band"
       >
-        <div className="mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-10 px-6 md:px-10 lg:grid-cols-2 lg:px-12">
+        <div className="mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-10 px-6 md:px-8 lg:grid-cols-2">
           {/* ---- Copy ---- */}
           <div className="max-w-lg">
             <p className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-accent">
