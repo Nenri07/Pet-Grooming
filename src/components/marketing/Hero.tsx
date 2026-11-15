@@ -1,8 +1,7 @@
 import * as React from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { landing } from '@/content/landing';
-import { images } from '@/content/images.generated';
+import { HeroVisual } from './HeroVisual';
 
 /**
  * Hero (Section 7.1): the single <h1>.
@@ -58,20 +57,7 @@ export function Hero() {
           </div>
 
           <div className="lg:col-span-6">
-            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border border-base-300 bg-base-200">
-              <Image
-                src={images.hero.src}
-                // The generated alt calls this a "mobile groomer"; the photo is a
-                // studio grooming table, so describe what is actually shown.
-                alt="A groomer blow-drying a small dog on a grooming table"
-                fill
-                priority
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                placeholder="blur"
-                blurDataURL={images.hero.blurDataURL}
-                className="object-cover"
-              />
-            </div>
+            <HeroVisual />
           </div>
         </div>
       </div>
