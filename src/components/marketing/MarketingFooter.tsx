@@ -30,7 +30,7 @@ export function MarketingFooter() {
 
   return (
     <footer className="bg-base-200 text-base-content">
-      <div className="mx-auto max-w-6xl px-gutter py-section">
+      <div className="mx-auto max-w-6xl px-6 py-section md:px-10 lg:px-12">
         <div className="grid gap-10 md:grid-cols-5">
           <div className="md:col-span-1">
             <Link href="/" className="inline-flex items-center text-primary">

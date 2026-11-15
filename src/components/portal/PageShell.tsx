@@ -11,7 +11,7 @@ import * as React from 'react';
  * Use `PAGE_CLASS` on the outermost element of a page (add `flex flex-col
  * gap-6` etc. as needed) and `PageHeader` for the title block.
  */
-export const PAGE_CLASS = 'mx-auto w-full max-w-7xl';
+export const PAGE_CLASS = 'mx-auto w-full max-w-6xl';
 
 export function PageHeader({
   title,

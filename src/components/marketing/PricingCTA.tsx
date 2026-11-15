@@ -28,7 +28,7 @@ export function PricingCTA() {
 
   return (
     <section id="pricing" aria-labelledby="pricing-heading" className="bg-base-100 py-band">
-      <div className="mx-auto max-w-7xl px-6 md:px-8">
+      <div className="mx-auto max-w-6xl px-6 md:px-10 lg:px-12">
         <SectionHeading
           eyebrow="Simple pricing"
           title="One plan per van. No surprises."

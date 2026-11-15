@@ -42,9 +42,11 @@ export function MarketingHeader() {
     <div ref={scopeRef as React.RefObject<HTMLDivElement>}>
       <header
         data-header
-        className="fixed inset-x-0 top-0 z-50 flex h-36 items-center justify-between px-gutter transition-[height,background-color,box-shadow] duration-300 [&.is-scrolled]:h-28 [&.is-scrolled]:bg-base-100 [&.is-scrolled]:border-b [&.is-scrolled]:border-base-300 [&.is-scrolled]:shadow-soft"
+        className="fixed inset-x-0 top-0 z-50 flex h-36 items-center justify-between px-6 md:px-10 lg:px-[max(3rem,calc((100vw-72rem)/2+3rem))] transition-[height,background-color,box-shadow] duration-300 [&.is-scrolled]:h-28 [&.is-scrolled]:bg-base-100 [&.is-scrolled]:border-b [&.is-scrolled]:border-base-300 [&.is-scrolled]:shadow-soft"
       >
-        <Link href="/" className="inline-flex items-center text-primary">
+        {/* The logo PNG has ~20% transparent padding each side (64px at h-32);
+            pull it left so the visible mark lines up with the page content. */}
+        <Link href="/" className="-ml-16 inline-flex items-center text-primary">
           <Image
             src="/pawxisLogo.png"
             alt="Pawxis"

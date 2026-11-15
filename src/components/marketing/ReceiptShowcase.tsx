@@ -73,7 +73,7 @@ export function ReceiptShowcase() {
       className="bg-base-100 py-band"
       ref={floatRef as React.RefObject<HTMLDivElement>}
     >
-      <div className="mx-auto max-w-7xl px-6 md:px-8">
+      <div className="mx-auto max-w-6xl px-6 md:px-10 lg:px-12">
         <SectionHeading
           titleId="receipt-heading"
           eyebrow={receipt.eyebrow}

@@ -70,7 +70,7 @@ export function FillMyDayEta() {
         </div>
       </Parallax>
 
-      <div className="mx-auto max-w-7xl px-6 md:px-8">
+      <div className="mx-auto max-w-6xl px-6 md:px-10 lg:px-12">
         <SectionHeading
           eyebrow="Never lose a slot"
           title="Fill cancellations and keep clients in the loop"

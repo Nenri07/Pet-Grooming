@@ -20,11 +20,11 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   MoreHorizontal,
-  X,
-} from 'lucide-react';
+  X, UserRound } from 'lucide-react';
 import { ThemeMenu } from './ThemeMenu';
 import { SmsCreditsPill } from './SmsCreditsPill';
 import { LogoutButton } from './LogoutButton';
+import { useSession } from 'next-auth/react';
 
 /**
  * PortalNav — the authenticated Groomer_Portal navigation shell (Master Spec §8).
@@ -136,7 +136,17 @@ function SearchAffordance() {
 }
 
 /** Avatar/initials button linking to Settings. */
+function initialsOf(name: string | null | undefined): string {
+  const parts = (name ?? '').trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '';
+  const first = parts[0][0] ?? '';
+  const last = parts.length > 1 ? parts[parts.length - 1][0] ?? '' : '';
+  return (first + last).toUpperCase();
+}
+
 function AvatarMenu() {
+  const { data } = useSession();
+  const initials = initialsOf(data?.user?.name);
   return (
     <Link
       href="/settings"
@@ -144,7 +154,7 @@ function AvatarMenu() {
       title="Account settings"
       className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-content transition-transform "
     >
-      <span aria-hidden="true">PP</span>
+      {initials ? <span aria-hidden="true">{initials}</span> : <UserRound className="h-5 w-5" aria-hidden="true" />}
     </Link>
   );
 }
@@ -313,7 +323,7 @@ export function PortalNav() {
 
       {/* ---- Desktop top search strip (md+): keeps search reachable without a
              separate header row on every page. ---- */}
-      <div className="pointer-events-none fixed right-4 top-3 z-20 hidden md:block">
+      <div className="pointer-events-none fixed right-8 top-3 z-20 hidden md:block lg:right-12 xl:right-16">
         <div className="pointer-events-auto">
           <SearchAffordance />
         </div>

@@ -21,13 +21,11 @@ export function Hero() {
 
   return (
     <section id="hero" className="border-b border-base-300 bg-base-100 pb-14 pt-28 md:pb-20 md:pt-36">
-      <div className="mx-auto max-w-7xl px-6 md:px-8">
+      <div className="mx-auto max-w-6xl px-6 md:px-10 lg:px-12">
         <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-16">
           <div className="lg:col-span-6">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-base-300 bg-base-100 px-3 py-1 text-xs font-medium text-base-content/70">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />
-              {eyebrow}
-            </div>
+            {/* Same eyebrow style as every other section heading. */}
+            <p className="mb-5 text-sm font-semibold uppercase tracking-[0.3em] text-accent">{eyebrow}</p>
 
             <h1 className="mb-6 max-w-[20ch] font-display text-hero font-semibold text-base-content">
               {first}

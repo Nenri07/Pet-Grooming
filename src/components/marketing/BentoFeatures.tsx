@@ -54,7 +54,7 @@ export function BentoFeatures() {
 
   return (
     <section id="features" aria-labelledby="features-heading" className="bg-base-200 py-band">
-      <div className="mx-auto max-w-7xl px-6 md:px-8">
+      <div className="mx-auto max-w-6xl px-6 md:px-10 lg:px-12">
         <SectionHeading
           eyebrow="Everything in one place"
           title="Run your whole day from one app"
