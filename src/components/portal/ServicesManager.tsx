@@ -25,6 +25,7 @@ import {
   SERVICE_DURATION_MIN,
   SERVICE_DURATION_MAX,
 } from '@/lib/validators/service';
+import { PAGE_CLASS, PageHeader } from './PageShell';
 
 /**
  * ServicesManager — client component for the Groomer Portal services page.
@@ -460,25 +461,24 @@ export function ServicesManager({ initialServices }: ServicesManagerProps) {
   }, [deleteTarget]);
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-base-content">Services</h1>
-          <p className="text-sm text-base-content/60">
-            Manage the services clients can book and their pricing.
-          </p>
-        </div>
-        {formMode === null && (
-          <button
-            type="button"
-            onClick={() => setFormMode('create')}
-            className="btn btn-primary min-h-[44px]"
-          >
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            <span className="hidden sm:inline">New service</span>
-          </button>
-        )}
-      </div>
+    <div className={`${PAGE_CLASS} flex flex-col gap-6`}>
+      <PageHeader
+        className="mb-0"
+        title="Services"
+        description="Manage the services clients can book and their pricing."
+        actions={
+          formMode === null ? (
+            <button
+              type="button"
+              onClick={() => setFormMode('create')}
+              className="btn btn-primary min-h-[44px]"
+            >
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              <span>New service</span>
+            </button>
+          ) : null
+        }
+      />
 
       {/* Create / edit form */}
       {formMode !== null && (
@@ -512,7 +512,7 @@ export function ServicesManager({ initialServices }: ServicesManagerProps) {
           description="Create your first service so clients can book it during checkout."
         />
       ) : (
-        <div className="flex flex-col gap-4">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {services.map((service) => (
             <ServiceRow
               key={service.id}

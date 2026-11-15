@@ -6,6 +6,7 @@ import { authOptions } from '@/lib/auth/config';
 import { listPets } from '@/actions/pets';
 import { Card } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { PAGE_CLASS, PageHeader } from '@/components/portal/PageShell';
 
 /**
  * Pets list page (server component).
@@ -30,13 +31,11 @@ export default async function PetsPage() {
   const pets = await listPets();
 
   return (
-    <div className="mx-auto w-full max-w-4xl">
-      <header className="mb-6">
-        <h1 className="text-2xl font-bold text-base-content">Pets</h1>
-        <p className="mt-1 text-sm text-base-content/60">
-          Browse your pets and open one to create a shareable Digital Pet Card.
-        </p>
-      </header>
+    <div className={PAGE_CLASS}>
+      <PageHeader
+        title="Pets"
+        description="Browse your pets and open one to create a shareable Digital Pet Card."
+      />
 
       {pets.length === 0 ? (
         <EmptyState

@@ -37,6 +37,14 @@ export function BillingSessionRefresh(): null {
 
   // Guard so React Strict Mode's double-invoke (dev) doesn't refresh twice.
   const didRefresh = React.useRef(false);
+  // Follow-up re-check timers. Held in a ref (not cleaned up by the effect
+  // below) because `router.replace('/billing')` drops the query param, which
+  // flips `shouldRefresh` and would otherwise cancel them straight away.
+  const timersRef = React.useRef<number[]>([]);
+  React.useEffect(() => {
+    const timers = timersRef;
+    return () => timers.current.forEach((t) => window.clearTimeout(t));
+  }, []);
 
   React.useEffect(() => {
     if (!shouldRefresh || didRefresh.current) return;
@@ -46,8 +54,20 @@ export function BillingSessionRefresh(): null {
     // Subscription, then drop the one-shot query param so a reload / back nav
     // doesn't re-trigger. Both are best-effort — a failure just means the TTL
     // backstop applies.
-    void update();
+    void update().finally(() => router.refresh());
     router.replace('/billing');
+
+    // The payment webhook can land a few seconds AFTER the customer returns
+    // from checkout. The portal layout (which holds the "Trial ended" banner)
+    // is not re-rendered by client navigation, so it would keep showing the
+    // pre-payment state until a hard reload. Re-check a few times over ~15s;
+    // each refresh re-renders the server tree and the banner clears as soon as
+    // the subscription is active. Bounded, not a polling loop.
+    timersRef.current = [3000, 8000, 15000].map((ms) =>
+      window.setTimeout(() => {
+        void update().finally(() => router.refresh());
+      }, ms)
+    );
   }, [shouldRefresh, update, router]);
 
   return null;

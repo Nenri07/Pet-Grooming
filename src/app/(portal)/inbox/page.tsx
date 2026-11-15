@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth/config';
 import { loadInboxThreads } from '@/actions/sms';
 import { isSmsConfigured } from '@/lib/sms/provider';
 import { InboxView } from '@/components/portal/InboxView';
+import { PAGE_CLASS, PageHeader } from '@/components/portal/PageShell';
 
 /**
  * Inbox (`/inbox`) — two-way SMS threads (Master Spec §12, §8).
@@ -29,11 +30,8 @@ export default async function InboxPage() {
   const threads = result.ok ? result.threads : [];
 
   return (
-    <div className="mx-auto w-full max-w-5xl">
-      <header className="mb-6">
-        <h1 className="font-display text-2xl font-bold text-base-content sm:text-3xl">Inbox</h1>
-        <p className="mt-1 text-base-content/60">Text your clients from one place.</p>
-      </header>
+    <div className={PAGE_CLASS}>
+      <PageHeader title="Inbox" description="Text your clients from one place." />
 
       {!smsConfigured && (
         <div className="mb-4 rounded-xl border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-base-content/80">

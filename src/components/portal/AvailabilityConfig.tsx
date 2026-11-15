@@ -17,6 +17,7 @@ import {
   validateWindow,
   isEndAfterStart,
 } from '@/lib/availability/validate';
+import { PAGE_CLASS, PageHeader } from './PageShell';
 
 /**
  * AvailabilityConfig — client editor for the Groomer Portal availability page.
@@ -406,7 +407,7 @@ function BlockedDatesEditor({
 
       {/* Add form */}
       <div className="flex flex-col gap-3">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3">
           <div className="form-control">
             <label className="label" htmlFor="blocked-start">
               <span className="label-text">Start</span>
@@ -630,23 +631,23 @@ export function AvailabilityConfig({ initialConfig }: AvailabilityConfigProps) {
   );
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold text-base-content">Availability</h1>
-        <p className="text-sm text-base-content/60">
-          Configure your weekly hours, block off dates, and subscribe to your
-          calendar feed.
-        </p>
-      </div>
-
-      <CalendarFeedCard initialFeedUrl={initialConfig.feedUrl} />
-
-      <WeeklyWindowsEditor windows={windows} setWindows={setWindows} />
-
-      <BlockedDatesEditor
-        blockedDates={blockedDates}
-        setBlockedDates={setBlockedDates}
+    <div className={PAGE_CLASS}>
+      <PageHeader
+        title="Availability"
+        description="Set your weekly hours, block off dates, and subscribe to your calendar feed."
       />
+
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]">
+        <WeeklyWindowsEditor windows={windows} setWindows={setWindows} />
+
+        <div className="flex flex-col gap-6">
+          <BlockedDatesEditor
+            blockedDates={blockedDates}
+            setBlockedDates={setBlockedDates}
+          />
+          <CalendarFeedCard initialFeedUrl={initialConfig.feedUrl} />
+        </div>
+      </div>
     </div>
   );
 }

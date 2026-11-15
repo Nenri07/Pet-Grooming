@@ -48,6 +48,7 @@ import {
 } from '@/actions/appointments';
 import type { AppointmentStatus } from '@/types';
 import { formatInTz } from '@/lib/timezone';
+import { PAGE_CLASS } from './PageShell';
 
 /**
  * CalendarView — the portal calendar (Master Spec §9.6).
@@ -336,7 +337,7 @@ export function CalendarView({ appointments, profile }: CalendarViewProps) {
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 pb-24 md:pb-6">
+    <div className={`${PAGE_CLASS} flex flex-col gap-4 pb-24 md:pb-6`}>
       <CalendarHeader
         view={view}
         setView={setView}
@@ -442,7 +443,7 @@ function CalendarHeader({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-bold text-base-content">Calendar</h1>
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-base-content sm:text-3xl">Calendar</h1>
         <div className="flex items-center gap-2">
           <div className="join" role="group" aria-label="Calendar view">
             <button

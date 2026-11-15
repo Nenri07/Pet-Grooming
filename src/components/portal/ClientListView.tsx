@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonCard } from '@/components/ui/Skeleton';
 import { useDebounce } from '@/hooks/useDebounce';
 import { searchClients } from '@/actions/clients';
+import { PAGE_CLASS, PageHeader } from './PageShell';
 
 /**
  * ClientListView — searchable, paginated list of the groomer's clients.
@@ -111,13 +112,8 @@ export function ClientListView({
   const hasResults = clients.length > 0;
 
   return (
-    <div className="mx-auto w-full max-w-4xl">
-      <header className="mb-6">
-        <h1 className="text-2xl font-bold text-base-content">Clients</h1>
-        <p className="mt-1 text-sm text-base-content/60">
-          Search and browse your clients.
-        </p>
-      </header>
+    <div className={PAGE_CLASS}>
+      <PageHeader title="Clients" description="Search and browse your clients." />
 
       <label className="input input-bordered mb-6 flex min-h-[44px] items-center gap-2">
         <Search className="h-4 w-4 text-base-content/50" aria-hidden="true" />

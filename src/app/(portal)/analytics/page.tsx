@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth/config';
 import { getMonthlyAnalytics, getAnalyticsSeries } from '@/actions/analytics';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { AnalyticsCharts } from '@/components/portal/AnalyticsCharts';
+import { PAGE_CLASS, PageHeader } from '@/components/portal/PageShell';
 
 /**
  * Analytics dashboard page (server component).
@@ -105,10 +106,8 @@ export default async function AnalyticsPage() {
 
   if (!result.ok) {
     return (
-      <div className="mx-auto max-w-5xl">
-        <h1 className="mb-6 text-2xl font-semibold text-base-content">
-          Analytics
-        </h1>
+      <div className={PAGE_CLASS}>
+        <PageHeader title="Analytics" />
         <div role="alert" className="alert alert-error">
           <span>{result.error}</span>
         </div>
@@ -119,11 +118,8 @@ export default async function AnalyticsPage() {
   const { current, diff, hasData } = result;
 
   return (
-    <div className="mx-auto max-w-5xl">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-base-content">Analytics</h1>
-        <p className="text-sm text-base-content/60">This month at a glance</p>
-      </div>
+    <div className={PAGE_CLASS}>
+      <PageHeader title="Analytics" description="This month at a glance." />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <MetricCard

@@ -92,7 +92,6 @@ function ThemeCard({
           <span className="truncate text-sm font-medium text-base-content">
             {label}
           </span>
-          <span className="truncate text-xs text-base-content/50">{id}</span>
         </span>
       </span>
       {selected && (

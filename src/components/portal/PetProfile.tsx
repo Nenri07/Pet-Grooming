@@ -31,6 +31,7 @@ import {
 import { TEMPERAMENT_OPTIONS } from '@/config/temperaments';
 import { COAT_CONDITION_OPTIONS } from '@/config/coat-conditions';
 import { SPECIAL_FLAG_OPTIONS } from '@/config/special-flags';
+import { PAGE_CLASS } from './PageShell';
 
 /**
  * PetProfile — client component for the Groomer Portal pet profile page.
@@ -676,7 +677,8 @@ export function PetProfile({ pet: initialPet, serviceHistory }: PetProfileProps)
   );
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+    <div className={`${PAGE_CLASS}`}>
+    <div className="flex w-full max-w-4xl flex-col gap-6">
       {/* Header: photo + name */}
       <Card>
         <div className="flex items-start justify-between gap-4">
@@ -755,6 +757,7 @@ export function PetProfile({ pet: initialPet, serviceHistory }: PetProfileProps)
         <h2 className="mb-4 text-lg font-semibold text-base-content">Service history</h2>
         <ServiceTimeline history={serviceHistory} />
       </Card>
+    </div>
     </div>
   );
 }

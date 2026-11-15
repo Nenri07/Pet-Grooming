@@ -7,6 +7,7 @@ import { connectDB } from '@/lib/db/connect';
 import { getClientById } from '@/actions/clients';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { PAGE_CLASS } from '@/components/portal/PageShell';
 
 /**
  * Client detail page (server component).
@@ -80,7 +81,8 @@ export default async function ClientDetailPage({
   const address = formatAddress(client.address);
 
   return (
-    <div className="mx-auto w-full max-w-4xl">
+    <div className={PAGE_CLASS}>
+    <div className="w-full max-w-4xl">
       <div className="mb-6">
         <Link
           href="/clients"
@@ -173,6 +175,7 @@ export default async function ClientDetailPage({
           />
         )}
       </section>
+    </div>
     </div>
   );
 }

@@ -22,6 +22,7 @@ import {
 } from '@/actions/billing';
 import type { BillingInterval } from '@/lib/plans';
 import type { CheckoutPlan, BillingResult } from '@/lib/billing/provider';
+import { PAGE_CLASS, PageHeader } from './PageShell';
 
 /**
  * BillingView — the subscription & usage screen (Master Spec §13.2, §13.4).
@@ -183,15 +184,11 @@ export function BillingView(props: BillingViewProps) {
         : prices.proMonth;
 
   return (
-    <div className="mx-auto w-full max-w-5xl">
-      <header className="mb-6">
-        <h1 className="font-display text-2xl font-bold text-base-content sm:text-3xl">
-          Billing &amp; plan
-        </h1>
-        <p className="mt-1 text-base-content/60">
-          Manage your subscription, invoices and message credits.
-        </p>
-      </header>
+    <div className={PAGE_CLASS}>
+      <PageHeader
+        title="Billing & plan"
+        description="Manage your subscription, invoices and message credits."
+      />
 
       {/* Hard-lockout banner (R3.2, R4.1) — shown PROMINENTLY at the top when
           the groomer has been redirected here because access is revoked (trial

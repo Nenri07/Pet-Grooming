@@ -7,8 +7,8 @@
 body {
   min-height: 100vh;
   font-family: var(--font-body), system-ui, sans-serif;
-  background: var(--b1);
-  color: var(--bc);
+  background: oklch(var(--b1));
+  color: oklch(var(--bc));
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -18,7 +18,7 @@ h1, h2, h3, h4 {
 }
 
 :focus-visible {
-  outline: 2px solid var(--p);
+  outline: 2px solid oklch(var(--p));
   outline-offset: 2px;
 }
 
@@ -32,12 +32,87 @@ h1, h2, h3, h4 {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: color-mix(in oklch, var(--bc) 15%, transparent);
+  background: oklch(var(--bc) / 0.15);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: color-mix(in oklch, var(--bc) 25%, transparent);
+  background: oklch(var(--bc) / 0.25);
+}
+
+/* ----------------------------------------------------------------------------
+   Portal / form polish. The theme sets --rounded-btn to a full pill (right for
+   the brand's buttons) but that also made every text input, select and
+   textarea a pill. Form controls get a calm 8px radius instead. Joined inputs
+   (e.g. the booking-link field) keep daisyUI's own join radii.
+   ---------------------------------------------------------------------------- */
+@layer components {
+  .input:not(.join-item),
+  .select:not(.join-item),
+  .textarea {
+    border-radius: 0.5rem;
+  }
+
+  /* Quiet status badges: tinted fill + hairline instead of loud solid colour.
+     Text is mixed toward the base content colour so it stays readable in both
+     themes. */
+  .badge.badge-success,
+  .badge.badge-info,
+  .badge.badge-warning,
+  .badge.badge-error {
+    font-weight: 500;
+  }
+  .badge.badge-success {
+    background-color: oklch(var(--su) / 0.14);
+    border-color: oklch(var(--su) / 0.35);
+    color: color-mix(in oklch, oklch(var(--su)) 50%, oklch(var(--bc)));
+  }
+  .badge.badge-info {
+    background-color: oklch(var(--in) / 0.14);
+    border-color: oklch(var(--in) / 0.35);
+    color: color-mix(in oklch, oklch(var(--in)) 50%, oklch(var(--bc)));
+  }
+  .badge.badge-warning {
+    background-color: oklch(var(--wa) / 0.18);
+    border-color: oklch(var(--wa) / 0.45);
+    color: color-mix(in oklch, oklch(var(--wa)) 40%, oklch(var(--bc)));
+  }
+  .badge.badge-error {
+    background-color: oklch(var(--er) / 0.14);
+    border-color: oklch(var(--er) / 0.35);
+    color: color-mix(in oklch, oklch(var(--er)) 55%, oklch(var(--bc)));
+  }
+
+  /* Quiet alerts, same idea: tint + hairline, normal text colour. */
+  .alert.alert-info,
+  .alert.alert-success,
+  .alert.alert-warning,
+  .alert.alert-error {
+    color: oklch(var(--bc));
+    border-radius: 0.5rem;
+  }
+  .alert.alert-info {
+    background-color: oklch(var(--in) / 0.10);
+    border-color: oklch(var(--in) / 0.30);
+  }
+  .alert.alert-success {
+    background-color: oklch(var(--su) / 0.10);
+    border-color: oklch(var(--su) / 0.30);
+  }
+  .alert.alert-warning {
+    background-color: oklch(var(--wa) / 0.14);
+    border-color: oklch(var(--wa) / 0.40);
+  }
+  .alert.alert-error {
+    background-color: oklch(var(--er) / 0.10);
+    border-color: oklch(var(--er) / 0.30);
+  }
+}
+
+/* The logo PNG has dark-brown lettering that vanishes on the dark theme's
+   near-black surfaces. Lift it there (every instance, incl. next/image URLs). */
+[data-theme='pawport_dark'] img[src*='pawxisLogo'] {
+  filter: brightness(2.6) contrast(0.92);
 }
 
 /* ----------------------------------------------------------------------------

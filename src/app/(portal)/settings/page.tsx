@@ -3,7 +3,9 @@ import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth/config';
 import { getBusinessSettings } from '@/actions/settings';
 import { BusinessSettings } from '@/components/portal/BusinessSettings';
-import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
+import { PAGE_CLASS, PageHeader } from '@/components/portal/PageShell';
+import { SettingsNav, type SettingsNavItem } from '@/components/portal/SettingsNav';
+import { SettingsSection } from '@/components/portal/SettingsSection';
 import { ThemePicker } from '@/components/portal/ThemePicker';
 import { LogoutButton } from '@/components/portal/LogoutButton';
 import { ConnectStatusCard } from '@/components/portal/ConnectStatusCard';
@@ -85,7 +87,8 @@ export default async function SettingsPage() {
 
   if (!result.ok) {
     return (
-      <div className="mx-auto w-full max-w-2xl">
+      <div className={PAGE_CLASS}>
+        <PageHeader title="Settings" />
         <div className="alert alert-error" role="alert">
           <span>{result.error}</span>
         </div>
@@ -93,37 +96,51 @@ export default async function SettingsPage() {
     );
   }
 
+  // Order here must match the order of the sections below.
+  const navItems: SettingsNavItem[] = [
+    { id: 'booking-link', label: 'Booking link' },
+    { id: 'profile', label: 'Business profile' },
+    { id: 'deposit', label: 'Deposit' },
+    { id: 'estimates', label: 'Estimate rules' },
+    { id: 'service-area', label: 'Service area' },
+    { id: 'payments', label: 'Payments' },
+    { id: 'appearance', label: 'Appearance' },
+    { id: 'account', label: 'Account' },
+  ];
+
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
-      <BusinessSettings initialSettings={result.settings} />
-
-      {connectConfigured ? (
-        <ConnectStatusCard connectConfigured={connectConfigured} status={connectStatus} />
-      ) : (
-        <OwnStripeCard status={ownStripe} />
-      )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Appearance</CardTitle>
-          <p className="text-sm text-base-content/60">
-            Pick a color theme. It applies instantly across your whole Pawxis
-            site — dashboard, booking pages, and everything in between.
-          </p>
-        </CardHeader>
-        <ThemePicker />
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Account</CardTitle>
-          <p className="text-sm text-base-content/60">
-            Sign out of Pawxis on this device. You can log back in anytime with
-            your email and password.
-          </p>
-        </CardHeader>
-        <LogoutButton variant="full" />
-      </Card>
+    <div className={PAGE_CLASS}>
+      <PageHeader
+        title="Settings"
+        description="Your business profile, booking link, payments and preferences."
+      />
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[11rem_minmax(0,1fr)] lg:gap-10">
+        <SettingsNav items={navItems} />
+        <div className="flex min-w-0 max-w-3xl flex-col gap-6">
+          <BusinessSettings initialSettings={result.settings} />
+          <section id="payments" aria-label="Payments" className="scroll-mt-24">
+            {connectConfigured ? (
+              <ConnectStatusCard connectConfigured={connectConfigured} status={connectStatus} />
+            ) : (
+              <OwnStripeCard status={ownStripe} />
+            )}
+          </section>
+          <SettingsSection
+            id="appearance"
+            title="Appearance"
+            description="Choose light or dark. It applies instantly across your dashboard and booking pages."
+          >
+            <ThemePicker />
+          </SettingsSection>
+          <SettingsSection
+            id="account"
+            title="Account"
+            description="Sign out of Pawxis on this device. You can log back in any time with your email and password."
+          >
+            <LogoutButton variant="full" />
+          </SettingsSection>
+        </div>
+      </div>
     </div>
   );
 }

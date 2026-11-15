@@ -19,6 +19,7 @@ import { canTransition } from '@/lib/appointments/status';
 import { LiveEtaControl } from '@/components/portal/LiveEtaControl';
 import { BeforeAfterPanel } from '@/components/portal/BeforeAfterPanel';
 import type { AppointmentStatus, WeightUnit } from '@/types';
+import { PAGE_CLASS } from './PageShell';
 
 /**
  * AppointmentDetail — full appointment view with status-change controls.
@@ -291,7 +292,8 @@ export function AppointmentDetail({ appointment }: AppointmentDetailProps) {
   const isTerminal = status === 'completed' || status === 'cancelled';
 
   return (
-    <div className="mx-auto w-full max-w-3xl">
+    <div className={PAGE_CLASS}>
+    <div className="w-full max-w-4xl">
       <header className="mb-6">
         <button
           type="button"
@@ -572,6 +574,7 @@ export function AppointmentDetail({ appointment }: AppointmentDetailProps) {
           </Card>
         </div>
       )}
+    </div>
     </div>
   );
 }

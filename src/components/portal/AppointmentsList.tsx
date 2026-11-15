@@ -6,6 +6,7 @@ import { CalendarClock, ClipboardList, User } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import type { AppointmentStatus } from '@/types';
+import { PAGE_CLASS, PageHeader } from './PageShell';
 
 /**
  * AppointmentsList — the groomer's full appointment list with client-side
@@ -218,15 +219,11 @@ export function AppointmentsList({ appointments }: AppointmentsListProps) {
   }, []);
 
   return (
-    <div className="mx-auto w-full max-w-4xl">
-      <header className="mb-6">
-        <h1 className="text-2xl font-bold text-base-content sm:text-3xl">
-          Appointments
-        </h1>
-        <p className="mt-1 text-base-content/60">
-          All appointments, earliest first. Filter by status or date range.
-        </p>
-      </header>
+    <div className={PAGE_CLASS}>
+      <PageHeader
+        title="Appointments"
+        description="All appointments, earliest first. Filter by status or date range."
+      />
 
       {/* Filter controls (Req 12.4). */}
       <Card className="mb-6">

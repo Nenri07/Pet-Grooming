@@ -6,7 +6,7 @@ import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { Link2, Plus, Trash2 } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
+import { SettingsSection } from './SettingsSection';
 import { ImageUpload } from '@/components/ui/ImageUpload';
 import { AddressPicker } from '@/components/ui/AddressPicker';
 import type { GeoPolygon } from '@/lib/routing/service-area';
@@ -135,7 +135,7 @@ function BusinessProfileForm({ initialSettings }: BusinessSettingsProps) {
     watch,
     setValue,
     setError,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
   } = useForm<ServiceSettingsInput, unknown, ServiceSettingsValues>({
     resolver: zodResolver(settingsSchema),
     mode: 'onBlur',
@@ -188,15 +188,13 @@ function BusinessProfileForm({ initialSettings }: BusinessSettingsProps) {
   });
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Business profile</CardTitle>
-        <CardDescription>
-          Your brand, contact details, deposit, and estimate rules shown to clients.
-        </CardDescription>
-      </CardHeader>
-
-      <form onSubmit={submit} noValidate className="flex flex-col gap-4" aria-label="Business settings">
+    <form onSubmit={submit} noValidate className="flex flex-col gap-6" aria-label="Business settings">
+      <SettingsSection
+        id="profile"
+        title="Business profile"
+        description="Your brand and contact details, shown to clients on your booking page."
+      >
+        <div className="flex flex-col gap-4">
         {/* Logo */}
         <div className="form-control">
           <label className="label" htmlFor="settings-logo">
@@ -285,6 +283,15 @@ function BusinessProfileForm({ initialSettings }: BusinessSettingsProps) {
           </div>
         </div>
 
+        </div>
+      </SettingsSection>
+
+      <SettingsSection
+        id="deposit"
+        title="Deposit"
+        description="Ask for a deposit when a client books, so no-shows cost them, not you."
+      >
+        <div className="flex flex-col gap-4">
         {/* Deposit */}
         <div className="form-control">
           <label className="label" htmlFor="settings-deposit">
@@ -335,107 +342,18 @@ function BusinessProfileForm({ initialSettings }: BusinessSettingsProps) {
           )}
         </div>
 
-        {/* Service area — base address + radius drive the routing engine. */}
-        <fieldset className="rounded-xl border border-base-300 p-4">
-          <legend className="px-1 text-sm font-medium text-base-content">Service area</legend>
+        </div>
+      </SettingsSection>
 
-          <div className="form-control">
-            <label className="label" htmlFor="settings-base-address">
-              <span className="label-text">Base address</span>
-            </label>
-            <input
-              id="settings-base-address"
-              type="text"
-              maxLength={BASE_ADDRESS_MAX_LENGTH}
-              autoComplete="street-address"
-              placeholder="Where you start your day, e.g. 123 Main St, Lahore"
-              className={cx(
-                'input input-bordered min-h-[44px] w-full',
-                errors.baseAddress && 'input-error'
-              )}
-              aria-invalid={errors.baseAddress ? 'true' : 'false'}
-              {...register('baseAddress')}
-            />
-            <div className="mt-2 flex flex-wrap items-center gap-3">
-              <AddressPicker
-                initialQuery={baseAddressValue}
-                near={initialSettings.baseLocation}
-                onPick={(a) => {
-                  const text = a.fullAddress || [a.street, a.city].filter(Boolean).join(', ');
-                  pinnedForRef.current = text;
-                  setValue('baseAddress', text, { shouldDirty: true, shouldValidate: true });
-                  setValue('baseLocation', { lat: a.lat, lng: a.lng }, { shouldDirty: true });
-                }}
-              />
-              {pinnedBase && (
-                <span className="text-xs text-base-content/60">Exact spot pinned. Save to keep it.</span>
-              )}
-            </div>
-            {errors.baseAddress ? (
-              <p className="mt-1 text-sm text-error" role="alert">
-                {errors.baseAddress.message}
-              </p>
-            ) : (
-              <p className="mt-1 text-xs text-base-content/60">
-                We use this to measure drive time and show smarter booking slots.
-              </p>
-            )}
-          </div>
-
-          <div className="form-control mt-3">
-            <label className="label" htmlFor="settings-service-radius">
-              <span className="label-text">Service radius (km)</span>
-            </label>
-            <input
-              id="settings-service-radius"
-              type="number"
-              inputMode="numeric"
-              min={SERVICE_RADIUS_MIN}
-              max={SERVICE_RADIUS_MAX}
-              step={1}
-              placeholder="e.g. 25"
-              className={cx(
-                'input input-bordered min-h-[44px] w-full sm:max-w-xs',
-                errors.serviceRadiusKm && 'input-error'
-              )}
-              aria-invalid={errors.serviceRadiusKm ? 'true' : 'false'}
-              {...register('serviceRadiusKm')}
-            />
-            {errors.serviceRadiusKm ? (
-              <p className="mt-1 text-sm text-error" role="alert">
-                {errors.serviceRadiusKm.message}
-              </p>
-            ) : (
-              <p className="mt-1 text-xs text-base-content/60">Leave blank for no limit.</p>
-            )}
-          </div>
-
-          {/* Drawn service area — authoritative over the radius when present. */}
-          <div className="form-control mt-3">
-            <p className="label-text font-medium">Service area map (optional)</p>
-            <p className="mb-2 mt-1 text-xs text-base-content/60">
-              Draw your exact service area on the map. Clients outside it can&apos;t book. If you
-              don&apos;t draw one, the service radius above is used.
-            </p>
-            <Controller
-              control={control}
-              name="serviceAreaPolygon"
-              render={({ field }) => (
-                <ServiceAreaMap
-                  token={process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? null}
-                  baseLocation={initialSettings.baseLocation}
-                  value={(field.value as GeoPolygon | null) ?? null}
-                  onChange={(poly) => field.onChange(poly)}
-                />
-              )}
-            />
-          </div>
-        </fieldset>
-
+      <SettingsSection
+        id="estimates"
+        title="Estimate rules"
+        description="Adjust the estimate shown to clients when a pet matches a coat condition or weight range."
+      >
         {/* Estimate rules */}
         <div className="form-control">
           <div className="mb-1 flex items-center justify-between">
-            <span className="label-text font-medium">Estimate rules</span>
+            <span className="label-text font-medium">Rules</span>
             <button
               type="button"
               onClick={() => append(EMPTY_RULE)}
@@ -445,9 +363,6 @@ function BusinessProfileForm({ initialSettings }: BusinessSettingsProps) {
               <span>Add rule</span>
             </button>
           </div>
-          <p className="mb-3 text-xs text-base-content/60">
-            Adjust the estimate by a percentage when a pet matches a coat condition and/or weight range.
-          </p>
 
           {fields.length === 0 ? (
             <p className="rounded-xl border border-dashed border-base-300 p-4 text-sm text-base-content/60">
@@ -602,17 +517,122 @@ function BusinessProfileForm({ initialSettings }: BusinessSettingsProps) {
           )}
         </div>
 
-        <div className="flex justify-end">
-          <button type="submit" disabled={isSubmitting} className="btn btn-primary min-h-[44px]">
-            {isSubmitting ? (
-              <span className="loading loading-spinner loading-sm" aria-hidden="true" />
+      </SettingsSection>
+
+      <SettingsSection
+        id="service-area"
+        title="Service area"
+        description="Where you start your day and how far you travel. Used for drive times and to stop out-of-area bookings."
+      >
+        <div className="flex flex-col">
+
+          <div className="form-control">
+            <label className="label" htmlFor="settings-base-address">
+              <span className="label-text">Base address</span>
+            </label>
+            <input
+              id="settings-base-address"
+              type="text"
+              maxLength={BASE_ADDRESS_MAX_LENGTH}
+              autoComplete="street-address"
+              placeholder="Where you start your day, e.g. 123 Main St, Lahore"
+              className={cx(
+                'input input-bordered min-h-[44px] w-full',
+                errors.baseAddress && 'input-error'
+              )}
+              aria-invalid={errors.baseAddress ? 'true' : 'false'}
+              {...register('baseAddress')}
+            />
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              <AddressPicker
+                initialQuery={baseAddressValue}
+                near={initialSettings.baseLocation}
+                onPick={(a) => {
+                  const text = a.fullAddress || [a.street, a.city].filter(Boolean).join(', ');
+                  pinnedForRef.current = text;
+                  setValue('baseAddress', text, { shouldDirty: true, shouldValidate: true });
+                  setValue('baseLocation', { lat: a.lat, lng: a.lng }, { shouldDirty: true });
+                }}
+              />
+              {pinnedBase && (
+                <span className="text-xs text-base-content/60">Exact spot pinned. Save to keep it.</span>
+              )}
+            </div>
+            {errors.baseAddress ? (
+              <p className="mt-1 text-sm text-error" role="alert">
+                {errors.baseAddress.message}
+              </p>
             ) : (
-              'Save changes'
+              <p className="mt-1 text-xs text-base-content/60">
+                We use this to measure drive time and show smarter booking slots.
+              </p>
             )}
-          </button>
+          </div>
+
+          <div className="form-control mt-3">
+            <label className="label" htmlFor="settings-service-radius">
+              <span className="label-text">Service radius (km)</span>
+            </label>
+            <input
+              id="settings-service-radius"
+              type="number"
+              inputMode="numeric"
+              min={SERVICE_RADIUS_MIN}
+              max={SERVICE_RADIUS_MAX}
+              step={1}
+              placeholder="e.g. 25"
+              className={cx(
+                'input input-bordered min-h-[44px] w-full sm:max-w-xs',
+                errors.serviceRadiusKm && 'input-error'
+              )}
+              aria-invalid={errors.serviceRadiusKm ? 'true' : 'false'}
+              {...register('serviceRadiusKm')}
+            />
+            {errors.serviceRadiusKm ? (
+              <p className="mt-1 text-sm text-error" role="alert">
+                {errors.serviceRadiusKm.message}
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-base-content/60">Leave blank for no limit.</p>
+            )}
+          </div>
+
+          {/* Drawn service area — authoritative over the radius when present. */}
+          <div className="form-control mt-3">
+            <p className="label-text font-medium">Service area map (optional)</p>
+            <p className="mb-2 mt-1 text-xs text-base-content/60">
+              Draw your exact service area on the map. Clients outside it can&apos;t book. If you
+              don&apos;t draw one, the service radius above is used.
+            </p>
+            <Controller
+              control={control}
+              name="serviceAreaPolygon"
+              render={({ field }) => (
+                <ServiceAreaMap
+                  token={process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? null}
+                  baseLocation={initialSettings.baseLocation}
+                  value={(field.value as GeoPolygon | null) ?? null}
+                  onChange={(poly) => field.onChange(poly)}
+                />
+              )}
+            />
+          </div>
         </div>
-      </form>
-    </Card>
+      </SettingsSection>
+
+      <div className="sticky bottom-20 z-10 flex items-center justify-between gap-3 rounded-xl border border-base-300 bg-base-100 px-4 py-3 md:bottom-4">
+        <p className="text-sm text-base-content/60" aria-live="polite">
+          {isDirty ? 'You have unsaved changes.' : 'All changes saved.'}
+        </p>
+        <button type="submit" disabled={isSubmitting} className="btn btn-primary min-h-[44px]">
+          {isSubmitting ? (
+            <span className="loading loading-spinner loading-sm" aria-hidden="true" />
+          ) : (
+            'Save changes'
+          )}
+        </button>
+      </div>
+    </form>
   );
 }
 
@@ -645,13 +665,11 @@ function BookingLinkSection({ initialSlug }: { initialSlug: string }) {
   }, [slug]);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Booking link</CardTitle>
-        <CardDescription>
-          The public address where clients book with you.
-        </CardDescription>
-      </CardHeader>
+    <SettingsSection
+      id="booking-link"
+      title="Booking link"
+      description="The public address where clients book with you. Share it anywhere."
+    >
 
       <div className="form-control">
         <label className="label" htmlFor="settings-slug">
@@ -702,7 +720,7 @@ function BookingLinkSection({ initialSlug }: { initialSlug: string }) {
           )}
         </button>
       </div>
-    </Card>
+    </SettingsSection>
   );
 }
 
@@ -711,18 +729,13 @@ function BookingLinkSection({ initialSlug }: { initialSlug: string }) {
 // ---------------------------------------------------------------------------
 
 export function BusinessSettings({ initialSettings }: BusinessSettingsProps) {
+  // Sections only; the Settings page supplies the header, side-nav and the
+  // remaining sections (payments, appearance, account).
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold text-base-content">Settings</h1>
-        <p className="text-sm text-base-content/60">
-          Configure your business profile and public booking link.
-        </p>
-      </div>
-
-      <BusinessProfileForm initialSettings={initialSettings} />
+    <>
       <BookingLinkSection initialSlug={initialSettings.groomerSlug} />
-    </div>
+      <BusinessProfileForm initialSettings={initialSettings} />
+    </>
   );
 }
 

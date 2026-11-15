@@ -26,6 +26,7 @@ import { Reveal, NumberTicker } from '@/components/motion';
 import { updateAppointmentStatus } from '@/actions/appointments';
 import { useLiveEta } from '@/hooks/useLiveEta';
 import type { AppointmentStatus } from '@/types';
+import { PAGE_CLASS, PageHeader } from './PageShell';
 
 /**
  * DashboardView — the portal's bento dashboard (Master Spec §8).
@@ -934,15 +935,8 @@ export function DashboardView({ data }: DashboardViewProps) {
   }, [router]);
 
   return (
-    <div className="mx-auto w-full max-w-6xl">
-      <header className="mb-5">
-        <h1 className="font-display text-2xl font-bold text-base-content sm:text-3xl">
-          Dashboard
-        </h1>
-        <p className="mt-1 text-base-content/60">
-          Your day at a glance.
-        </p>
-      </header>
+    <div className={PAGE_CLASS}>
+      <PageHeader title="Dashboard" description="Your day at a glance." />
 
       <KpiStrip summary={monthSummary} smsUsed={smsUsed} smsIncluded={smsIncluded} />
 

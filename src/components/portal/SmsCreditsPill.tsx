@@ -33,8 +33,11 @@ export function SmsCreditsPill({
   included: includedProp = 300,
   className,
 }: SmsCreditsPillProps) {
+  // Until the real numbers arrive, show just "Messages" rather than placeholder
+  // figures that are wrong for most plans (e.g. "0/300" on a 2,000 plan).
   const [used, setUsed] = React.useState(usedProp);
   const [included, setIncluded] = React.useState(includedProp);
+  const [loaded, setLoaded] = React.useState(false);
 
   // Best-effort live values; keep placeholder on any failure (§13.4).
   React.useEffect(() => {
@@ -45,6 +48,7 @@ export function SmsCreditsPill({
         if (cancelled || !data) return;
         if (typeof data.used === 'number') setUsed(data.used);
         if (typeof data.included === 'number') setIncluded(data.included);
+        setLoaded(true);
       })
       .catch(() => {
         /* keep placeholder */
@@ -62,12 +66,10 @@ export function SmsCreditsPill({
         className
       )}
       title="Client messages used this month (emails now, texts later)"
-      aria-label={`Messages: ${used} of ${included} used`}
+      aria-label={loaded ? `Messages: ${used} of ${included} used` : 'Messages'}
     >
       <MessageSquare className="h-3.5 w-3.5 shrink-0 text-primary" aria-hidden="true" />
-      <span>
-        Messages {used}/{included}
-      </span>
+      <span>{loaded ? `Messages ${used}/${included}` : 'Messages'}</span>
     </Link>
   );
 }
