@@ -118,6 +118,10 @@ export const TTL = {
   // Email-verification resend cooldown (R9.3, R10.1). `evf:rl:{email}` → '1',
   // SET NX EX 60; first resend wins, subsequent rejected until expiry.
   EMAIL_VERIFY_RESEND: 60, // evf:rl:{email}          EX 60 (resend cooldown)
+  // Password-reset token: `pwr:{sha256(token)}` → {userId}, 1 hour. Single use.
+  PASSWORD_RESET: 60 * 60, // pwr:{hash}               EX 3600 (1 h)
+  // Per-email cooldown between reset emails: `pwr:rl:{email}` EX 60.
+  PASSWORD_RESET_COOLDOWN: 60, // pwr:rl:{email}        EX 60
 } as const;
 
 export const keys = {
@@ -162,6 +166,11 @@ export const keys = {
   // R9.3/R10.1 email-verification resend cooldown marker, keyed on the
   // normalized email (R9.5) so the limit holds across serverless invocations.
   emailVerifyResend: (normalizedEmail: string) => `evf:rl:${normalizedEmail}`,
+  // Password-reset token record, keyed by the SHA-256 of the emailed token so a
+  // Redis read never exposes a usable link.
+  passwordReset: (tokenHash: string) => `pwr:${tokenHash}`,
+  // Per-email cooldown marker between reset emails.
+  passwordResetCooldown: (normalizedEmail: string) => `pwr:rl:${normalizedEmail}`,
 } as const;
 
 /** The value stored under a `claim:{token}` key (§11.1). */

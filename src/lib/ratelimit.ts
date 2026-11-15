@@ -43,6 +43,13 @@ function makeLimiter(tokens: number): Ratelimit | null {
 
 let _holdLimiter: Ratelimit | null | undefined;
 let _bookingLimiter: Ratelimit | null | undefined;
+let _authLimiter: Ratelimit | null | undefined;
+
+/** Password-reset endpoints limiter: 5 requests / minute / IP. */
+export function authRateLimit(): Ratelimit | null {
+  if (_authLimiter === undefined) _authLimiter = makeLimiter(5);
+  return _authLimiter;
+}
 
 /** Hold endpoint limiter: 10 requests / minute / IP. */
 export function holdRateLimit(): Ratelimit | null {

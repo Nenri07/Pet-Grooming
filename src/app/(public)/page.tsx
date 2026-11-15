@@ -3,6 +3,7 @@ import {
   Hero,
   ProblemStrip,
   HowItWorks,
+  ProductTour,
   OrderRadarShowcase,
   BentoFeatures,
   FillMyDayEta,
@@ -83,6 +84,7 @@ export default function Home() {
       <Hero />
       <ProblemStrip />
       <HowItWorks />
+      <ProductTour />
       <OrderRadarShowcase />
       <BentoFeatures />
       <FillMyDayEta />

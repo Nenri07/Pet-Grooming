@@ -9,6 +9,7 @@ export { SectionHeading } from './SectionHeading';
 // Landing sections in Section 7 order.
 export { ProblemStrip } from './ProblemStrip';
 export { HowItWorks } from './HowItWorks';
+export { ProductTour } from './ProductTour';
 export { OrderRadarShowcase } from './OrderRadarShowcase';
 export { BentoFeatures } from './BentoFeatures';
 export { FillMyDayEta } from './FillMyDayEta';

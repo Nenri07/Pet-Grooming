@@ -106,9 +106,14 @@ export function LoginForm({ googleEnabled }: LoginFormProps) {
           </div>
 
           <div className="form-control">
-            <label className="label" htmlFor="password">
-              <span className="label-text">Password</span>
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="label" htmlFor="password">
+                <span className="label-text">Password</span>
+              </label>
+              <Link href="/forgot-password" className="link link-primary text-sm">
+                Forgot password?
+              </Link>
+            </div>
             <input
               id="password"
               type="password"

@@ -118,7 +118,10 @@ function isComingSoonAllowed(pathname: string): boolean {
     pathname === COMING_SOON_ROUTE ||
     pathname.startsWith(`${COMING_SOON_ROUTE}/`) ||
     pathname === '/login' ||
-    pathname.startsWith('/login/')
+    pathname.startsWith('/login/') ||
+    // Password reset must work for the team during the takeover too.
+    pathname === '/forgot-password' ||
+    pathname === '/reset-password'
   );
 }
 

@@ -375,6 +375,20 @@ export async function sendEmailVerification(to: string, link: string): Promise<b
   });
 }
 
+export async function sendPasswordResetEmail(to: string, link: string): Promise<boolean> {
+  const body = [
+    paragraph('We received a request to reset the password for your Pawxis account.'),
+    button(link, 'Reset my password'),
+    `<div style="margin-top:18px;">${paragraph("This link works once and expires in 1 hour. If you didn't ask for this, you can ignore this email and your password will stay the same.", true)}</div>`,
+  ].join('');
+  return deliver('password reset', {
+    from: fromHeader(null),
+    to,
+    subject: 'Reset your Pawxis password',
+    html: layout({ brand: 'Pawxis', heading: 'Reset your password', body }),
+  });
+}
+
 export async function sendWaitlistNotification(signupEmail: string): Promise<boolean> {
   const to = process.env.BUSINESS_EMAIL;
   if (!signupEmail) return false;
