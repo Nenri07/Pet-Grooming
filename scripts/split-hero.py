@@ -3,7 +3,7 @@ split-hero.py - builds the landing-page hero layers from the master artwork.
 
     python3 scripts/split-hero.py
 
-Input:  public/images/marketing/pawxis-hero.png  (lossless master, 1600x1200, transparent)
+Input:  public/images/marketing/pawxis-hero-pets.png  (lossless master, 1600x1200, transparent)
 Output: public/images/marketing/pawxis-hero-{window,phone}.{webp,png}
 
 Two steps:
@@ -20,7 +20,7 @@ from pathlib import Path
 from PIL import Image
 
 DIR = Path(__file__).resolve().parent.parent / 'public' / 'images' / 'marketing'
-SRC = DIR / 'pawxis-hero.png'
+SRC = DIR / 'pawxis-hero-pets.png'
 SPLIT_X = 450   # first column of the window; the phone (bezel + highlight) ends at 449
 FEATHER = 64    # px over which the clipped shadow fades out at each side
 

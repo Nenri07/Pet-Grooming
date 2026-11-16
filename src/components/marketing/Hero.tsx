@@ -21,8 +21,8 @@ export function Hero() {
   return (
     <section id="hero" className="border-b border-base-300 bg-base-100 pb-14 pt-28 md:pb-20 md:pt-36">
       <div className="mx-auto max-w-7xl px-6 md:px-8">
-        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-16">
-          <div className="lg:col-span-6">
+        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-10 xl:gap-16">
+          <div className="lg:col-span-5">
             {/* Same eyebrow style as every other section heading. */}
             <p className="mb-5 text-sm font-semibold uppercase tracking-[0.3em] text-accent">{eyebrow}</p>
 
@@ -56,7 +56,7 @@ export function Hero() {
             <p className="mt-6 text-sm text-base-content/60">{trust}</p>
           </div>
 
-          <div className="lg:col-span-6">
+          <div className="lg:col-span-7">
             <HeroVisual />
           </div>
         </div>
