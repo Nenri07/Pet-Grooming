@@ -31,8 +31,18 @@ export interface Cta {
 export interface HeroContent {
   /** Small uppercase kicker above the headline. */
   eyebrow: string;
-  /** Main headline (rendered with font-display). */
-  headline: string;
+  /**
+   * Main headline, rendered as three lines: `lead`, then one rotating word
+   * (followed by a period), then `tail`. Reads as "Groom more pets. Drive less."
+   * `words[0]` is what shows with JS off, under reduced motion, and to screen
+   * readers, so keep it a general word that is always true.
+   */
+  headline: {
+    lead: string;
+    /** Plural pets / breeds, shown one at a time. Keep each short (about 10 characters or fewer) so it fits on one line. */
+    words: string[];
+    tail: string;
+  };
   /** Supporting subheadline. */
   sub: string;
   /** Primary CTA — drives to sign-up. */
@@ -285,7 +295,13 @@ export interface Landing {
 export const landing: Landing = {
   hero: {
     eyebrow: 'For solo mobile groomers',
-    headline: 'Groom more dogs. Drive less.',
+    headline: {
+      lead: 'Groom more',
+      // "pets" first (general), then the breeds that need professional grooming
+      // most often, then cats (the second-biggest group after dogs).
+      words: ['pets', 'Poodles', 'Doodles', 'Shih Tzus', 'Yorkies', 'Maltese', 'Goldens', 'cats'],
+      tail: 'Drive less.',
+    },
     sub: 'The booking, routing and no-show shield built for solo mobile groomers.',
     primaryCta: { label: 'Start free — 14 days', href: '/register' },
     secondaryCta: { label: 'See it in action', href: '#order-radar' },

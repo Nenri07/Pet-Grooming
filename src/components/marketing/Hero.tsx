@@ -2,6 +2,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { landing } from '@/content/landing';
 import { HeroVisual } from './HeroVisual';
+import { RotatingWord } from './RotatingWord';
 
 /**
  * Hero (Section 7.1): the single <h1>.
@@ -13,10 +14,9 @@ import { HeroVisual } from './HeroVisual';
 export function Hero() {
   const { eyebrow, headline, sub, primaryCta, secondaryCta, trust } = landing.hero;
 
-  // "Groom more dogs. Drive less." -> two-tone headline; falls back to plain text.
-  const split = headline.indexOf('. ');
-  const first = split > 0 ? headline.slice(0, split + 1) : headline;
-  const second = split > 0 ? headline.slice(split + 2) : '';
+  // The headline is three lines: lead / rotating pet / tail. Words[0] is the
+  // static version (SSR, reduced motion, screen readers, search engines).
+  const staticHeadline = `${headline.lead} ${headline.words[0]}. ${headline.tail}`;
 
   return (
     <section id="hero" className="border-b border-base-300 bg-base-100 pb-14 pt-28 md:pb-20 md:pt-36">
@@ -26,14 +26,13 @@ export function Hero() {
             {/* Same eyebrow style as every other section heading. */}
             <p className="mb-5 text-sm font-semibold uppercase tracking-[0.3em] text-accent">{eyebrow}</p>
 
-            <h1 className="mb-6 max-w-[20ch] font-display text-hero font-semibold text-base-content">
-              {first}
-              {second && (
-                <>
-                  <br />
-                  <span className="text-base-content/60">{second}</span>
-                </>
-              )}
+            <h1 className="mb-6 font-display text-hero font-semibold text-base-content">
+              <span className="sr-only">{staticHeadline}</span>
+              <span aria-hidden="true" className="block">
+                <span className="block">{headline.lead}</span>
+                <RotatingWord words={headline.words} className="text-primary" />
+                <span className="block text-base-content/60">{headline.tail}</span>
+              </span>
             </h1>
 
             <p className="mb-8 max-w-[55ch] text-lg leading-relaxed text-base-content/70 md:text-xl">{sub}</p>
