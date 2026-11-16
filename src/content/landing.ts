@@ -39,7 +39,7 @@ export interface HeroContent {
    */
   headline: {
     lead: string;
-    /** Plural pets / breeds, shown one at a time. Keep each short (about 10 characters or fewer) so it fits on one line. */
+    /** Plural pets, shown one at a time. Keep each short (about 10 characters or fewer) so it fits on one line. */
     words: string[];
     tail: string;
   };
@@ -297,9 +297,11 @@ export const landing: Landing = {
     eyebrow: 'For solo mobile groomers',
     headline: {
       lead: 'Groom more',
-      // "pets" first (general), then the breeds that need professional grooming
-      // most often, then cats (the second-biggest group after dogs).
-      words: ['pets', 'Poodles', 'Doodles', 'Shih Tzus', 'Yorkies', 'Maltese', 'Goldens', 'cats'],
+      // Ordered by US grooming market size: dogs (about 84% of revenue), then
+      // cats (second, fastest growing), then the general "pets". Small animals
+      // are a niche and the booking form is dog/cat only, so they are left out
+      // on purpose. words[0] is the static headline (matches the page title).
+      words: ['dogs', 'cats', 'pets'],
       tail: 'Drive less.',
     },
     sub: 'The booking, routing and no-show shield built for solo mobile groomers.',

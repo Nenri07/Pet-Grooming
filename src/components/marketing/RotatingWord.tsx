@@ -29,7 +29,7 @@ const roll: Variants = {
 export function RotatingWord({
   words,
   suffix = '.',
-  intervalMs = 2400,
+  intervalMs = 2800,
   className,
 }: {
   words: string[];
