@@ -1,0 +1,175 @@
+classDiagram
+  direction LR
+  class User {
+    +ObjectId _id PK
+    +String email unique
+    +String name
+    +String passwordHash
+    +String googleId unique
+    +String role
+    +Boolean isActive
+    +Date emailVerifiedAt
+    +Number failedLoginAttempts
+    +Date lockedUntil
+  }
+  class GroomerProfile {
+    +ObjectId _id PK
+    +ObjectId userId FK
+    +String businessName
+    +String groomerSlug unique
+    +String phone
+    +String businessEmail
+    +Number depositAmount
+    +String timezone
+    +String baseAddress
+    +GeoPoint baseLocation
+    +Number serviceRadiusKm
+    +String bookingMode
+    +String connectStatus
+    +Boolean onboardingComplete
+  }
+  class Subscription {
+    +ObjectId _id PK
+    +ObjectId groomerId FK
+    +String plan
+    +String status
+    +Date trialDeadline
+    +Date currentPeriodEnd
+    +String polarCustomerId
+    +String polarSubscriptionId
+    +Number smsIncluded
+    +Number smsTopupBalance
+    +Boolean foundingMember
+  }
+  class Service {
+    +ObjectId _id PK
+    +ObjectId groomerId FK
+    +String name
+    +String description
+    +Number basePrice
+    +Number durationMinutes
+    +Boolean isActive
+  }
+  class Client {
+    +ObjectId _id PK
+    +ObjectId groomerId FK
+    +String name
+    +String email
+    +String phone
+    +GeoPoint location
+    +Date smsConsentAt
+  }
+  class Pet {
+    +ObjectId _id PK
+    +ObjectId groomerId FK
+    +ObjectId clientId FK
+    +String name
+    +String breed
+    +Number weight
+    +Number age
+    +String temperament
+    +String coatCondition
+    +List~String~ specialFlags
+    +String digitalCardId unique
+    +Number rebookIntervalWeeks
+    +Date nextDueAt
+  }
+  class Appointment {
+    +ObjectId _id PK
+    +ObjectId groomerId FK
+    +ObjectId clientId FK
+    +ObjectId petId FK
+    +ObjectId serviceId FK
+    +List~ObjectId~ serviceIds FK
+    +Date scheduledDate
+    +Date scheduledEndDate
+    +String status
+    +String depositStatus
+    +Number depositDue
+    +Number amountCharged
+    +String bookingRef
+    +String source
+    +GeoPoint location
+  }
+  class Transaction {
+    +ObjectId _id PK
+    +ObjectId appointmentId FK
+    +ObjectId groomerId FK
+    +String stripePaymentId unique
+    +Number amount
+    +String currency
+    +String status
+  }
+  class SmsMessage {
+    +ObjectId _id PK
+    +ObjectId groomerId FK
+    +ObjectId clientId FK
+    +ObjectId appointmentId FK
+    +String direction
+    +String kind
+    +String body
+    +String status
+    +Boolean read
+  }
+  class Address {
+    <<embedded>>
+    +street
+    +city
+    +state
+    +postalCode
+  }
+  class EstimateRule {
+    <<embedded>>
+    +coatCondition
+    +weightRange
+    +priceAdjustmentPercent
+    +note
+  }
+  class WeeklyWindow {
+    <<embedded>>
+    +dayOfWeek
+    +startTime
+    +endTime
+  }
+  class BlockedDate {
+    <<embedded>>
+    +startDateTime
+    +endDateTime
+  }
+  class TravelFeeTier {
+    <<embedded>>
+    +uptoKm
+    +fee
+  }
+  class RouteMeta {
+    <<embedded>>
+    +prevId
+    +nextId
+    +extraDriveMin
+    +fromPrevKm
+    +score
+  }
+  class Tracking {
+    <<embedded>>
+    +token
+    +startedAt
+    +arrivedAt
+  }
+  User "1" --> "1" GroomerProfile : userId
+  User "1" --> "1" Subscription : groomerId
+  Client "1" --> "0..*" Pet : clientId
+  Client "1" --> "0..*" Appointment : clientId
+  Pet "1" --> "0..*" Appointment : petId
+  Service "1..*" --> "0..*" Appointment : serviceId, serviceIds
+  Appointment "1" --> "0..*" Transaction : appointmentId
+  Client "0..1" --> "0..*" SmsMessage : clientId
+  Appointment "0..1" --> "0..*" SmsMessage : appointmentId
+  Appointment "0..1" --> "0..1" Appointment : routeMeta.prevId, nextId
+  Client "1" *-- "1" Address : address
+  GroomerProfile "1" *-- "0..*" EstimateRule : estimateRules
+  GroomerProfile "1" *-- "0..*" WeeklyWindow : availabilityWindows
+  GroomerProfile "1" *-- "0..*" BlockedDate : blockedDates
+  GroomerProfile "1" *-- "0..*" TravelFeeTier : travelFeeTiers
+  Appointment "1" *-- "0..1" RouteMeta : routeMeta
+  Appointment "1" *-- "0..1" Tracking : tracking
+  note for User "Every collection except IdentityBinding and PrelaunchSignup also has a groomerId (FK to User). That is how each groomer only sees their own data."

@@ -30,6 +30,7 @@
 Related documents in `docs/`:
 - `PAWXIS_FINAL_REPORT.md`: running costs, unit economics, go-to-market plan.
 - `PAWXIS_OVERVIEW.md`: engineering handoff (architecture, data model, APIs).
+- `PAWXIS_DATABASE_SCHEMA.md`: every database collection and field, with UML diagrams (generated from the code).
 - `outreach.md`: sales outreach templates.
 
 ---

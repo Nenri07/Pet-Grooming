@@ -1,0 +1,60 @@
+classDiagram
+  direction LR
+  class FillEvent {
+    +ObjectId _id PK
+    +ObjectId groomerId FK
+    +Date gapStart
+    +Date gapEnd
+    +List~ObjectId~ offeredTo FK
+    +ObjectId filledBy FK
+    +Number revenueRecovered
+  }
+  class Waitlist {
+    +ObjectId _id PK
+    +ObjectId groomerId FK
+    +ObjectId clientId FK
+    +ObjectId petId FK
+    +ObjectId serviceId FK
+    +List~Number~ preferredDays
+    +String status
+  }
+  class CalendarBlock {
+    +ObjectId _id PK
+    +ObjectId groomerId FK
+    +String source
+    +Date startTime
+    +Date endTime
+  }
+  class PendingBooking {
+    +ObjectId _id PK
+    +String paymentIntentId unique
+    +ObjectId groomerId FK
+    +String groomerSlug
+    +String slotStart
+    +String bookingRef
+    +Date createdAt
+  }
+  class IdentityBinding {
+    +ObjectId _id PK
+    +String normalizedEmail
+    +String phoneHash unique
+    +Date firstTrialAt
+    +Date bindingExpiresAt
+  }
+  class PrelaunchSignup {
+    +ObjectId _id PK
+    +String email unique
+    +String source
+  }
+  class User
+  class Client
+  class Pet
+  class Service
+  User "1" --> "0..*" FillEvent : groomerId
+  Client "0..*" --> "0..*" FillEvent : offeredTo, filledBy
+  User "1" --> "0..*" Waitlist : groomerId
+  Client "1" --> "0..*" Waitlist : clientId
+  Pet "0..1" --> "0..*" Waitlist : petId
+  Service "0..1" --> "0..*" Waitlist : serviceId
+  User "1" --> "0..*" CalendarBlock : groomerId
+  User "1" --> "0..*" PendingBooking : groomerId
