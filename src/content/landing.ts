@@ -47,7 +47,7 @@ export interface HeroContent {
   sub: string;
   /** Primary CTA — drives to sign-up. */
   primaryCta: Cta;
-  /** Secondary CTA — jumps to the Order Radar demo section. */
+  /** Secondary CTA: jumps to the "See it in action" demo section (#tour). */
   secondaryCta: Cta;
   /** Small reassurance line under the CTAs. */
   trust: string;
@@ -306,7 +306,7 @@ export const landing: Landing = {
     },
     sub: 'The booking, routing and no-show shield built for solo mobile groomers.',
     primaryCta: { label: 'Start free — 14 days', href: '/register' },
-    secondaryCta: { label: 'See it in action', href: '#order-radar' },
+    secondaryCta: { label: 'See it in action', href: '#tour' },
     trust: 'No card required · Set up in 10 minutes',
   },
 
@@ -512,7 +512,7 @@ export const landing: Landing = {
     title: 'Groom more dogs. Drive less.',
     sub: 'Set up your booking page, calendar and no-show shield in about ten minutes.',
     primaryCta: { label: 'Start free — 14 days', href: '/register' },
-    secondaryCta: { label: 'See it in action', href: '#order-radar' },
+    secondaryCta: { label: 'See it in action', href: '#tour' },
     trust: 'No card required · Cancel any time',
   },
 };
