@@ -106,8 +106,8 @@ export function breadcrumbJsonLd(
 }
 
 /**
- * Product schema for the `/for-groomers` bundle ("branded website + booking
- * system"). Uses the REAL Solo/Pro monthly prices from the plan catalog
+ * Product schema for the `/for-groomers` bundle ("booking page + the tools that
+ * run your day"). Uses the REAL Solo/Pro monthly prices from the plan catalog
  * (`@/lib/plans`) as an AggregateOffer price range. No invented ratings or
  * review counts — only prices we actually charge.
  */
@@ -121,11 +121,11 @@ export function bundleProductJsonLd() {
   return {
     '@context': 'https://schema.org',
     '@type': 'Product',
-    name: 'Pawxis — pet grooming website + booking system',
+    name: 'Pawxis — booking page + scheduling for mobile pet groomers',
     url,
     category: 'BusinessApplication',
     description:
-      'A bundle for solo mobile pet groomers: your own branded website plus the booking, deposits, routing, client messaging and digital pet records behind it — one subscription.',
+      'A bundle for solo mobile pet groomers: your own booking page plus the deposits, routing, client messaging and digital pet records behind it, in one subscription.',
     brand: { '@type': 'Brand', name: 'Pawxis' },
     offers: {
       '@type': 'AggregateOffer',

@@ -1,11 +1,15 @@
 /**
  * Copy for the `/for-groomers` bundle pitch page — single source of truth.
  *
- * This page sells the BUNDLE ("your own branded website + the booking engine
- * behind it") to prospective solo mobile pet groomers. All copy lives here so
- * it can be edited in one place; every section is typed.
+ * This page sells the BUNDLE ("your own booking page + the tools that run your
+ * day") to prospective solo mobile pet groomers. All copy lives here so it can
+ * be edited in one place; every section is typed.
  *
  * Honesty rules (mirrors `content/landing.ts`, Section 7.7):
+ *   - Only describe what exists today. Anything planned is labelled "coming
+ *     soon" (own domain, automatic text reminders, client import, data export).
+ *     There is NO website builder, custom domain, subdomain site, client
+ *     import, data export or brand-colour setting.
  *   - No invented stats, ratings, or testimonials.
  *   - No fabricated competitor prices. The "what it replaces" framing talks
  *     about juggling several separate tools, never a named rival's pricing.
@@ -160,24 +164,24 @@ export interface ForGroomersContent {
 export const forGroomers: ForGroomersContent = {
   hero: {
     eyebrow: 'For solo mobile groomers',
-    headline: 'Your own branded website — plus the booking engine behind it.',
-    sub: 'Pawxis gives you a professional website at your own link and the booking, deposits and routing that run behind it. One subscription, set up in an afternoon.',
+    headline: 'Your own booking page, plus the tools that run your day.',
+    sub: 'Pawxis gives you a booking page with your name and logo, and the deposits, reminders and routing that run behind it. One subscription, set up in an afternoon.',
     primaryCta: { label: 'Start free — 14 days', href: '/register' },
-    secondaryCta: { label: 'See a live demo', href: '/demo/happy-paws' },
+    secondaryCta: { label: 'See a demo', href: '/demo/happy-paws' },
     trust: 'No card required · Your own booking link in minutes',
     mockBusiness: 'Happy Paws',
   },
 
   whatYouGet: {
     eyebrow: "What's in the bundle",
-    title: 'A website and a booking business, together',
+    title: 'The page your clients see, and the tools behind it',
     subtitle:
-      'Not just a pretty page and not just a calendar — the whole thing your clients see and the tools that keep your day running.',
+      'Not just a pretty page and not just a calendar. Everything from the first booking click to the invoice, in one place.',
     items: [
       {
-        title: 'Branded website at your own link',
+        title: 'Your own booking page',
         description:
-          'A polished site with your name, colours and services at a link you can share anywhere — no web designer, no monthly hosting bill on top.',
+          'A page with your name, logo and services, at a link you can share anywhere: pawxis.app/book/yourname. No web designer needed.',
         icon: 'globe',
         size: 'wide',
         image: 'featureBooking',
@@ -185,7 +189,7 @@ export const forGroomers: ForGroomersContent = {
       {
         title: 'Online booking with deposits',
         description:
-          'Clients pick a service and a time and pay a deposit up front, so a no-show costs them, not you.',
+          'Clients pick a service and a time and pay a deposit up front. The money goes straight to you, through your own Stripe account or payment link, so a no-show costs them, not you.',
         icon: 'calendar-check',
       },
       {
@@ -206,7 +210,7 @@ export const forGroomers: ForGroomersContent = {
       {
         title: 'Client messaging + reminders',
         description:
-          'Every client conversation in one inbox, with automatic reminders that quietly cut no-shows.',
+          'Confirmations and reminders go out by email in your name, and replies reach your own inbox. Message any client in one tap by WhatsApp, from your own phone, or by email.',
         icon: 'message-square',
       },
       {
@@ -218,7 +222,7 @@ export const forGroomers: ForGroomersContent = {
       {
         title: 'Live "on my way" tracking',
         description:
-          'Send clients a live arrival link on the day, so they know exactly when your van pulls up.',
+          'Clients get a live arrival link by email on the day, so they can see when your van will arrive.',
         icon: 'map-pin',
         pro: true,
       },
@@ -229,21 +233,21 @@ export const forGroomers: ForGroomersContent = {
     eyebrow: 'One bundle, not a pile of tools',
     title: 'Stop juggling three or four separate tools',
     subtitle:
-      'Most groomers stitch together a website builder, a booking tool, a reminder service and a spreadsheet for pet notes. Pawxis is all of that in one place, on one bill, that actually talk to each other.',
+      'Most groomers stitch together a booking tool, a reminder service, an invoice maker and a spreadsheet for pet notes. Pawxis puts them in one place, on one bill, and they work together.',
     replaces: [
-      { label: 'Website builder', role: 'Your public site', icon: 'globe' },
       { label: 'Booking tool', role: 'Scheduling + deposits', icon: 'calendar-check' },
       { label: 'Reminder & messaging tool', role: 'Reminders + client messages', icon: 'message-square' },
+      { label: 'Invoice maker', role: 'An invoice for every booking', icon: 'receipt' },
       { label: 'Pet records spreadsheet', role: 'Client & pet notes', icon: 'id-card' },
     ],
     bundleLabel: 'Pawxis',
-    note: 'Instead of paying for and wiring up several separate tools, you get one subscription where booking, client messaging, routing and your website already work together.',
+    note: 'Instead of paying for and wiring up several separate tools, you get one subscription where booking, client messaging, routing and invoices already work together.',
   },
 
   pricing: {
     eyebrow: 'Simple pricing',
     title: 'One plan per van. No surprises.',
-    subtitle: 'Website, booking and messaging are all included — pick the plan that fits.',
+    subtitle: 'Booking, deposits and client messaging are all included. Pick the plan that fits.',
     annualNote: 'Save two months when you pay annually.',
     solo: {
       name: 'Solo',
@@ -262,34 +266,34 @@ export const forGroomers: ForGroomersContent = {
     {
       question: 'Do I get my own domain?',
       answer:
-        'You get your own branded booking link straight away, and you can point a custom domain you own at your Pawxis site so clients see your name, not ours. There is no separate hosting bill on top.',
+        'Not yet. Your booking page lives at pawxis.app/book/yourname, with your name and logo on it. Using your own domain, like yourname.com, is coming soon.',
     },
     {
       question: 'Can clients book without downloading an app?',
       answer:
-        'Yes. Clients open a normal web link on their phone to book, pay a deposit and track your arrival. There is nothing for them to install — for you or for them.',
+        'Yes. Clients open a normal web link on their phone to book and pay a deposit. On Pro they can also follow your arrival on a live map. There is nothing to install, for you or for them.',
     },
     {
       question: 'What does setup take?',
       answer:
-        'Most groomers are live in an afternoon. You add your services and prices, set your hours, and your booking site is ready to share. You can import your existing client and pet list so you are not starting from scratch.',
+        'Most groomers are live in an afternoon. You add your services and prices, set your hours, and your booking page is ready to share. Importing an existing client list is coming soon. Until then, each client is added the first time they book through your link.',
     },
     {
       question: 'Is my data mine?',
       answer:
-        'Yes. Your clients, pets and bookings are yours. Plans are month-to-month, and you can export your data any time — including before you leave.',
+        'Yes. Your clients, pets and bookings are yours, and plans are month-to-month. A one-click data export is coming soon.',
     },
     {
-      question: 'Do client messages cost extra?',
-      answer: `No. Every plan includes a monthly allowance of client emails (${PLANS.solo.sms.toLocaleString('en-US')} on Solo, ${PLANS.pro.sms.toLocaleString('en-US')} on Pro), so reminders and confirmations are covered out of the box. If you send a lot, you can top up any time.`,
+      question: 'Do you text my clients?',
+      answer: `Not automatically yet. Automatic text reminders are coming soon. For now, confirmations, reminders and arrival links go out by email in your name. Every plan includes a monthly allowance of client emails (${PLANS.solo.sms.toLocaleString('en-US')} on Solo, ${PLANS.pro.sms.toLocaleString('en-US')} on Pro), and you can top up any time. You can also message any client by WhatsApp or from your own phone's texting app.`,
     },
   ],
 
   finalCta: {
-    title: 'Your website and your booking book, in one place.',
-    sub: 'Set up your branded site, calendar and no-show shield in about an afternoon.',
+    title: 'Your booking page and your day, in one place.',
+    sub: 'Set up your booking page, calendar and no-show shield in about an afternoon.',
     primaryCta: { label: 'Start free — 14 days', href: '/register' },
-    secondaryCta: { label: 'See a live demo', href: '/demo/happy-paws' },
+    secondaryCta: { label: 'See a demo', href: '/demo/happy-paws' },
     trust: 'No card required · Cancel any time',
   },
 };

@@ -14,10 +14,10 @@ import { forGroomers } from '@/content/for-groomers';
  * per-line reveal (heroLine + staggerParent) and the CTA micro-interaction; the
  * `bg-hero` gradient is always present as layer 0 so the hero is never empty.
  *
- * The right column is a <Tilt> mock of a groomer's OWN branded site: a mini
- * browser chrome showing "{Business} — Book now" with a booking card. Purely
- * illustrative, theme-tokens only. Under reduced motion Tilt renders flat and
- * all copy is visible immediately.
+ * The right column is a <Tilt> mock of a groomer's OWN booking page: a mini
+ * browser chrome showing "{Business} — Book now" with a booking card at
+ * pawxis.app/book/{slug}. Purely illustrative, theme-tokens only. Under reduced
+ * motion Tilt renders flat and all copy is visible immediately.
  */
 export function BundleHero() {
   const reduced = useReducedMotion();
@@ -96,10 +96,10 @@ export function BundleHero() {
           </motion.p>
         </motion.div>
 
-        {/* ---- Right: branded-site mock in a Tilt ---- */}
+        {/* ---- Right: booking-page mock in a Tilt ---- */}
         <div className="relative mx-auto w-full max-w-md">
           <Tilt className="relative z-10" max={reduced ? 0 : 10}>
-            <BrandedSiteMock business={hero.mockBusiness} />
+            <BookingPageMock business={hero.mockBusiness} />
           </Tilt>
         </div>
       </div>
@@ -108,11 +108,15 @@ export function BundleHero() {
 }
 
 /**
- * BrandedSiteMock — a static, theme-tokened mock of a groomer's own branded
- * booking site inside a mini browser chrome. No real data; illustrative only.
+ * BookingPageMock — a static, theme-tokened mock of a groomer's own booking
+ * page inside a mini browser chrome. No real data; illustrative only.
  */
-function BrandedSiteMock({ business }: { business: string }) {
-  const slug = business.toLowerCase().replace(/[^a-z0-9]+/g, '');
+function BookingPageMock({ business }: { business: string }) {
+  // "Happy Paws" -> "happy-paws", the same shape as a real booking slug.
+  const slug = business
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 
   return (
     <div className="rounded-lg border border-base-300 bg-base-100 shadow-card backdrop-blur">
@@ -122,7 +126,7 @@ function BrandedSiteMock({ business }: { business: string }) {
         <span className="h-2.5 w-2.5 rounded-full bg-base-content/20" />
         <span className="h-2.5 w-2.5 rounded-full bg-base-content/20" />
         <span className="ml-3 truncate rounded-full bg-base-200 px-3 py-1 text-xs font-medium text-base-content/50">
-          {slug}.pawport.app
+          pawxis.app/book/{slug}
         </span>
       </div>
 

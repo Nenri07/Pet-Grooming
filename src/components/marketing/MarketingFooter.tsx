@@ -3,11 +3,11 @@ import * as React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useTheme } from 'next-themes';
-import { Moon, Sun, Github, Twitter, Instagram } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 import { ThemeMenu } from '@/components/portal/ThemeMenu';
 
 /**
- * Marketing footer: nav links, social links, and a theme toggle that uses the
+ * Marketing footer: nav links and a theme toggle that uses the
  * same next-themes `useTheme` mechanism as the portal ThemeToggle (immediate
  * swap, persisted by ThemeProvider under storageKey "pawport-theme").
  */
@@ -43,17 +43,17 @@ export function MarketingFooter() {
               />
             </Link>
             <p className="mt-3 max-w-xs text-sm text-base-content/70">
-              Luxury mobile pet grooming, booked in seconds and brought right to
-              your door.
+              Booking, routing and no-show protection for solo mobile pet
+              groomers.
             </p>
           </div>
 
           <nav aria-label="Product" className="flex flex-col gap-2 text-sm">
             <span className="font-semibold text-base-content">Product</span>
-            <Link href="#features" className="text-base-content/70 hover:text-primary">
+            <Link href="/#features" className="text-base-content/70 hover:text-primary">
               Features
             </Link>
-            <Link href="#pricing" className="text-base-content/70 hover:text-primary">
+            <Link href="/#pricing" className="text-base-content/70 hover:text-primary">
               Pricing
             </Link>
             <Link href="/register" className="text-base-content/70 hover:text-primary">
@@ -68,9 +68,6 @@ export function MarketingFooter() {
             </Link>
             <Link href="/credits" className="text-base-content/70 hover:text-primary">
               Credits
-            </Link>
-            <Link href="#" className="text-base-content/70 hover:text-primary">
-              Contact
             </Link>
           </nav>
 
@@ -97,30 +94,7 @@ export function MarketingFooter() {
           </nav>
 
           <div className="flex flex-col gap-4">
-            <span className="text-sm font-semibold text-base-content">Follow along</span>
-            <div className="flex gap-2">
-              <Link
-                href="#"
-                aria-label="Twitter"
-                className="btn btn-ghost btn-circle min-h-[44px] min-w-[44px]"
-              >
-                <Twitter className="h-5 w-5" aria-hidden="true" />
-              </Link>
-              <Link
-                href="#"
-                aria-label="Instagram"
-                className="btn btn-ghost btn-circle min-h-[44px] min-w-[44px]"
-              >
-                <Instagram className="h-5 w-5" aria-hidden="true" />
-              </Link>
-              <Link
-                href="#"
-                aria-label="GitHub"
-                className="btn btn-ghost btn-circle min-h-[44px] min-w-[44px]"
-              >
-                <Github className="h-5 w-5" aria-hidden="true" />
-              </Link>
-            </div>
+            <span className="text-sm font-semibold text-base-content">Appearance</span>
             <div className="flex items-center gap-2">
               <button
                 type="button"

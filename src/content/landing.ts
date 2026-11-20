@@ -453,13 +453,17 @@ export const landing: Landing = {
   comparison: {
     otherLabel: 'Typical grooming software',
     rows: [
-      { label: 'Route-aware booking', pawport: true, typical: false, proOnly: true },
+      // Some competitors do offer route-aware scheduling, so we say "Varies"
+      // rather than claim nobody does. Same for price: rivals start anywhere
+      // from about $29 up, so we only state our own price.
+      { label: 'Route-aware booking', pawport: true, typical: 'Varies', proOnly: true },
       { label: 'Shows extra driving per booking', pawport: true, typical: false, proOnly: true },
       { label: 'Auto-fills cancelled slots', pawport: true, typical: false, proOnly: true },
-      { label: 'Client messaging included', pawport: true, typical: 'Extra add-on' },
+      // Ours goes out by email today (texts are coming soon), so say so.
+      { label: 'Client reminders included', pawport: 'By email', typical: 'Often an add-on' },
       { label: 'Digital Pet Cards', pawport: true, typical: false },
       { label: 'Built for a solo van', pawport: true, typical: 'Built for salons' },
-      { label: 'Starting price', pawport: '$29/mo', typical: '$49+/mo' },
+      { label: 'Starting price', pawport: '$29/mo', typical: 'Varies' },
     ],
   },
 
@@ -488,23 +492,28 @@ export const landing: Landing = {
 
   faq: [
     {
+      question: 'Do you send text messages to my clients?',
+      answer:
+        'Not automatically yet. Automatic text reminders are coming soon. For now, confirmations, reminders and arrival links go out by email, in your name. You can also message any client by WhatsApp or from your own phone\u2019s texting app, right from your inbox.',
+    },
+    {
       question: 'Do client messages cost extra?',
       answer: `No. Every plan includes a monthly allowance of client emails (${PLANS.solo.sms.toLocaleString('en-US')} on Solo, ${PLANS.pro.sms.toLocaleString('en-US')} on Pro), so confirmations and reminders are covered out of the box. If you send a lot, you can top up any time.`,
     },
     {
       question: 'Can I cancel any time?',
       answer:
-        'Yes. Plans are month-to-month and you can cancel whenever you like. Your data stays available so you can export it before you go.',
+        'Yes. Plans are month-to-month and you can cancel whenever you like.',
     },
     {
       question: 'Can I import my existing clients?',
       answer:
-        'Yes. You can bring your current client and pet list in when you set up, so you are not starting from scratch on day one.',
+        'Not yet. Importing your client list is coming soon. For now, each client is added the first time they book through your link.',
     },
     {
       question: 'Do my clients need to download an app?',
       answer:
-        'No. Clients book, pay a deposit and track your arrival from a normal web link on their phone. There is nothing for them to install.',
+        'No. Clients book and pay a deposit from a normal web link on their phone, and on Pro they can follow your arrival on a live map. There is nothing for them to install.',
     },
   ],
 

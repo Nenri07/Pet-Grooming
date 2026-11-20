@@ -6,6 +6,7 @@ import {
   CalendarCheck,
   MessageSquare,
   IdCard,
+  Receipt,
   ArrowRight,
   Sparkles,
   type LucideIcon,
@@ -17,8 +18,8 @@ import { forGroomers, type BundleIcon } from '@/content/for-groomers';
 /**
  * BundleValue — the "one bundle instead of 3-4 tools" visual.
  *
- * Left: a stack of separate tool cards (website builder, booking tool, SMS
- * tool, pet records). When the section scrolls into view, Framer scales + fades
+ * Left: a stack of separate tool cards (booking tool, reminder tool, invoice
+ * maker, pet records). When the section scrolls into view, Framer scales + fades
  * them slightly toward the centre and the single PawPort card scales up — a
  * light "merge" gesture. Under reduced motion (or JS off) it renders as a plain
  * static side-by-side with no transform, so the honest framing reads either way.
@@ -34,6 +35,7 @@ const ICONS: Partial<Record<BundleIcon, LucideIcon>> = {
   'calendar-check': CalendarCheck,
   'message-square': MessageSquare,
   'id-card': IdCard,
+  receipt: Receipt,
 };
 
 export function BundleValue() {
