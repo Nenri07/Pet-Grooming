@@ -398,6 +398,8 @@ Use these definitions when you read the dashboard and analytics.
 10. **No delete feature.** Clients, pets and accounts cannot be deleted from the interface. The privacy policy says to email a request. The free-trial record (hashed email, masked IP, device hash) is kept after an account is closed, and the policy says so.
 11. **The footer has no Contact link and no social links** until a real contact email and real accounts exist.
 12. **Comparison table.** The rows "Shows extra driving per booking" and "Auto-fills cancelled slots" say competitors do not offer them. This is not checked against every competitor. Review before heavy promotion.
+13. **Google sign-up gets an endless free trial (bug, not fixed).** Email sign-ups get a stored 14-day trial when they register (`registerGroomer`). Google sign-ups do not: only the user and profile are created (`src/lib/auth/config.ts`), so the app shows a fresh "14-day trial" on every visit and it never ends. Fix: save the same trial row when a Google user is first created. Until then, a groomer who signs up with Google is never asked to pay.
+14. **`/start-trial` needs phone verification.** It is only linked from Billing for an account with status "none". It says "We'll text you a 6-digit code", and without Twilio it shows "Phone verification isn't set up yet" and stops. Prospects do not reach it today. Decide what to do with it when you set up texting.
 
 ---
 
