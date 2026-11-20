@@ -12,6 +12,7 @@ import { BookingsPaused } from '@/components/booking/BookingsPaused';
 import { getEntitlements } from '@/lib/billing/entitlements';
 import { acceptsBookings } from '@/lib/billing/booking-guard';
 import { safeHttpsImageSrc } from '@/lib/images';
+import { isSmsConfigured } from '@/lib/sms/provider';
 
 /**
  * Public booking page — /book/[groomerSlug].
@@ -170,6 +171,8 @@ async function loadGroomer(
     }),
     businessPhone,
     businessEmail,
+    // The "Text me" checkbox only appears once automatic texting is switched on.
+    offerSms: isSmsConfigured(),
   };
 
   return { groomer, groomerId: String(profile.userId) };

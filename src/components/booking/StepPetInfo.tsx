@@ -56,6 +56,8 @@ export interface BookingStepProps {
   dispatch: React.Dispatch<BookingAction>;
   /** The groomer's bookable services, used from the estimate step onward. */
   services: Array<Pick<IService, 'name' | 'basePrice' | 'durationMinutes'>>;
+  /** Show the SMS-consent checkbox (owner-details step). Hidden unless texting is live. */
+  offerSms?: boolean;
 }
 
 /** Groups the breed options by their optgroup label, preserving order. */

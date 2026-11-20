@@ -62,6 +62,12 @@ export interface BookingGroomer {
    * confirmed automatically.
    */
   cardDeposit?: { amount: number } | null;
+  /**
+   * Show the "Text me appointment updates" checkbox. Only true when automatic
+   * texting is actually switched on (`isSmsConfigured()`); otherwise the box
+   * would collect consent for texts that are never sent. Defaults to hidden.
+   */
+  offerSms?: boolean;
 }
 
 /**
@@ -435,6 +441,7 @@ export function BookingFlow({ groomer, initialState, prefillNotice }: BookingFlo
     dispatch,
     services: groomer.services,
     groomerSlug: groomer.slug,
+    offerSms: groomer.offerSms === true,
   };
 
   // R17 gate: a deposit booking may only proceed to the payment step when the

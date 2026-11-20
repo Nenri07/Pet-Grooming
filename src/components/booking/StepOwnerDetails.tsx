@@ -67,7 +67,7 @@ function toFormValues(
  *
  * _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5_
  */
-export function StepOwnerDetails({ state, dispatch }: BookingStepProps) {
+export function StepOwnerDetails({ state, dispatch, offerSms }: BookingStepProps) {
   const {
     register,
     handleSubmit,
@@ -330,21 +330,25 @@ export function StepOwnerDetails({ state, dispatch }: BookingStepProps) {
         </div>
       </div>
 
-      {/* SMS consent — unchecked by default (Master Spec §12.3). */}
-      <div className="form-control mt-2">
-        <label className="flex cursor-pointer items-start gap-3" htmlFor="owner-sms-consent">
-          <input
-            id="owner-sms-consent"
-            type="checkbox"
-            className="checkbox checkbox-primary mt-0.5 min-h-[24px] min-w-[24px]"
-            checked={smsConsent}
-            onChange={(e) => setSmsConsent(e.target.checked)}
-          />
-          <span className="label-text text-sm text-base-content/70">
-            Text me appointment updates. Msg &amp; data rates may apply. Reply STOP to opt out.
-          </span>
-        </label>
-      </div>
+      {/* SMS consent — unchecked by default (Master Spec §12.3). Shown only when
+          automatic texting is on; otherwise it would promise texts we don't send.
+          Clients always get their confirmation and reminders by email. */}
+      {offerSms && (
+        <div className="form-control mt-2">
+          <label className="flex cursor-pointer items-start gap-3" htmlFor="owner-sms-consent">
+            <input
+              id="owner-sms-consent"
+              type="checkbox"
+              className="checkbox checkbox-primary mt-0.5 min-h-[24px] min-w-[24px]"
+              checked={smsConsent}
+              onChange={(e) => setSmsConsent(e.target.checked)}
+            />
+            <span className="label-text text-sm text-base-content/70">
+              Text me appointment updates. Msg &amp; data rates may apply. Reply STOP to opt out.
+            </span>
+          </label>
+        </div>
+      )}
 
       <div className="mt-2 flex gap-2">
         <button
