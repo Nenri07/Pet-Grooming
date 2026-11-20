@@ -68,7 +68,8 @@ import {
  *   2. Services & pricing — add at least one service.
  *   3. Logo upload      — brand logo (optional to upload, step is skippable
  *                          since a logo is not strictly required).
- *   4. Google Calendar  — service-account connection status; skippable (Req 2.7).
+ *   4. Calendar         — explains the built-in calendar and the read-only feed
+ *                          (there is no Google Calendar connection); skippable (Req 2.7).
  *   5. First availability — weekly recurring windows.
  *
  * Cross-cutting behaviour:
@@ -121,7 +122,7 @@ const STEP_META = [
   { title: 'Business info', icon: Building2 },
   { title: 'Services & pricing', icon: Scissors },
   { title: 'Logo', icon: ImageIcon },
-  { title: 'Google Calendar', icon: CalendarCheck },
+  { title: 'Calendar', icon: CalendarCheck },
   { title: 'Availability', icon: Clock3 },
 ] as const;
 
