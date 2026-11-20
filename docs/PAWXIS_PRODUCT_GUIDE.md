@@ -31,7 +31,8 @@ Related documents in `docs/`:
 - `PAWXIS_FINAL_REPORT.md`: running costs, unit economics, go-to-market plan.
 - `PAWXIS_OVERVIEW.md`: engineering handoff (architecture, data model, APIs).
 - `PAWXIS_DATABASE_SCHEMA.md`: every database collection and field, with UML diagrams (generated from the code).
-- `outreach.md`: sales outreach templates.
+- `PROSPECT_OFFER.md`: what to offer prospects, what is "coming soon", honest answers, messages, and the pre-send checklist.
+- `outreach.md`: demo links and the Facebook group post.
 
 ---
 
@@ -385,12 +386,18 @@ Use these definitions when you read the dashboard and analytics.
 | Referral program | **Not built** |
 
 ### Known gaps to decide on
-1. **The FAQ says "Can I import my existing clients? Yes",** but there is no import feature. Either build a CSV import or change the FAQ. Recommended: change the FAQ now.
-2. **Onboarding step 4 is labelled "Google Calendar",** but there is no Google Calendar connection. The step explains the built-in calendar and the feed. Rename it to "Calendar".
-3. **SMS:** many groomers expect texting. Turning it on means a cost per text and US carrier registration (A2P 10DLC), and the current prices assume email only.
+1. **Client import (fixed in the copy, still not built).** The FAQ used to say "Can I import my existing clients? Yes". It now says "Not yet, coming soon". A CSV import is the biggest barrier for groomers who switch from another app. There is also no way to add a client by hand: clients are created when they first book.
+2. **Onboarding step 4 (fixed).** It was labelled "Google Calendar". It is now "Calendar".
+3. **SMS:** many groomers expect texting. Turning it on means a cost per text and US carrier registration (A2P 10DLC), which needs a registered business. Until then the public pages say "coming soon", the "Text me appointment updates" checkbox on the booking form is hidden, and the legal pages describe email only. The checkbox returns automatically when Twilio is configured (`isSmsConfigured()`). When you switch texting on, update the privacy policy, terms and acceptable-use pages, and the guard in `tests/plan-copy.test.ts`.
 4. **Pet card links are shared manually** by the groomer. An easy improvement: include the pet card link in the confirmation or post-groom email.
 5. **Request mode:** groomers who want to approve each booking can't today.
 6. **The hero photo** shows a studio grooming table, not a mobile van, which weakens the "not a salon" message. Replace it with a van photo.
+7. **Website, own domain, data export: not built.** `/for-groomers` used to sell "your own branded website". It now sells "your own booking page" at `pawxis.app/book/yourname`. Own domain and a data export button are marked "coming soon". There are no brand colours, only name and logo.
+8. **Reminder schedule.** `vercel.json` runs `/api/cron/reminders` once a day (the Hobby limit), but the job is built to run every 15 minutes. With one run a day, reminders arrive at odd times and same-day bookings get none. Fix: Vercel Pro and a `*/15 * * * *` schedule, or a free external scheduler that calls the URL with `Authorization: Bearer <CRON_SECRET>`.
+9. **Legal pages still have placeholders** for the company name, address, contact email, jurisdiction and effective date. They carry a "template, not legal advice" notice. Fill them in and have a lawyer review them before taking payments.
+10. **No delete feature.** Clients, pets and accounts cannot be deleted from the interface. The privacy policy says to email a request. The free-trial record (hashed email, masked IP, device hash) is kept after an account is closed, and the policy says so.
+11. **The footer has no Contact link and no social links** until a real contact email and real accounts exist.
+12. **Comparison table.** The rows "Shows extra driving per booking" and "Auto-fills cancelled slots" say competitors do not offer them. This is not checked against every competitor. Review before heavy promotion.
 
 ---
 

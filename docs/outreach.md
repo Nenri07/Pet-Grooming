@@ -1,4 +1,8 @@
-# PawPort Outreach Templates
+# Pawxis Outreach Templates
+
+> **Start with `docs/PROSPECT_OFFER.md`.** It has the offer, what is and is not
+> ready ("coming soon"), honest answers to common questions, and the pre-send
+> checklist. This file covers the personalized demo links.
 
 Templates for reaching out to solo mobile groomers using **personalized demo
 links**. Every prospect gets a preview page at `/demo/{slug}` (generate one with
