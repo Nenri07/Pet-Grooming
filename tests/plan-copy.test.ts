@@ -83,6 +83,40 @@ describe('no overclaimed copy', () => {
     expect(text).not.toMatch(unbuilt);
   });
 
+  // There is no website builder, subdomain site, custom domain, client import,
+  // data export or brand-colour setting. These may appear only as "coming soon"
+  // (see the FAQ answers), never as something the customer gets today.
+  const falsePromises =
+    /branded (website|site)|website builder|your own (branded )?website|hosting bill|\.pawport\.app|your colou?rs|brand colou?rs|export (it|your data) (any time|before)|bring your current client|import your existing client and pet/i;
+
+  it.each([...contentObjects, ...sourceFiles])('$file promises no feature that does not exist', ({ text }) => {
+    expect(text).not.toMatch(falsePromises);
+  });
+
+  it('planned features are only described as "coming soon"', () => {
+    const faq = [...landing.faq, ...forGroomers.faq];
+    const answerFor = (re: RegExp) => faq.find((f) => re.test(f.question))?.answer ?? '';
+    expect(answerFor(/own domain/i)).toMatch(/coming soon/i);
+    expect(answerFor(/import/i)).toMatch(/coming soon/i);
+    expect(answerFor(/data mine/i)).toMatch(/coming soon/i);
+    expect(answerFor(/text/i)).toMatch(/coming soon/i);
+  });
+
+  // The legal pages must describe the product as it is. Automatic texting is
+  // off, deposits go to the groomer's own Stripe account or payment link (no
+  // Stripe Connect fee), and there is no self-serve delete. When any of that
+  // changes, update the pages in src/app/(public) and this guard together.
+  const legalPages = ['privacy', 'terms', 'cookies', 'refunds', 'acceptable-use'].map((slug) => ({
+    file: `legal/${slug}`,
+    text: readSrc(`src/app/(public)/${slug}/page.tsx`),
+  }));
+
+  it.each(legalPages)('$file does not describe features we do not have', ({ text }) => {
+    expect(text).not.toMatch(
+      /twilio|sms top-?ups?|reply(ing)? (with )?<?strong>?STOP|honou?r STOP|send SMS|via Stripe Connect|using Stripe Connect|platform or subscription fees|can delete Client and pet records/i,
+    );
+  });
+
   // _Requirements: 6.2_
   const proFeature = /order radar|fill my day|on (my|the) way|rebooking autopilot|before\s*\/\s*after/i;
   const soloFeature = /deposit|native calendar|pet card|reminder|client messaging/i;

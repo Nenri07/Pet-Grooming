@@ -164,7 +164,7 @@ export interface ForGroomersContent {
 export const forGroomers: ForGroomersContent = {
   hero: {
     eyebrow: 'For solo mobile groomers',
-    headline: 'Your own booking page, plus the tools that run your day.',
+    headline: 'Your own booking page, plus the tools behind it.',
     sub: 'Pawxis gives you a booking page with your name and logo, and the deposits, reminders and routing that run behind it. One subscription, set up in an afternoon.',
     primaryCta: { label: 'Start free — 14 days', href: '/register' },
     secondaryCta: { label: 'See a demo', href: '/demo/happy-paws' },
