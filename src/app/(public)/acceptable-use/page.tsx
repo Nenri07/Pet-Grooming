@@ -45,18 +45,20 @@ export default function AcceptableUsePage() {
         />
       </Section>
 
-      <Section heading="3. Messaging and SMS rules">
+      <Section heading="3. Messaging rules">
         <P>
-          The Service can send SMS and email on your behalf. You must only message
-          Clients who have consented to be contacted, send only messages that
-          relate to their bookings and your legitimate business, and honor
-          opt-outs immediately.
+          The Service sends booking confirmations, reminders and similar messages
+          to your Clients by email on your behalf, and its Inbox lets you contact
+          Clients yourself by email, WhatsApp or your phone&rsquo;s texting app.
+          You must only message Clients you have a legitimate relationship with,
+          send only messages that relate to their bookings and your legitimate
+          business, and honor opt-outs immediately.
         </P>
         <UL
           items={[
             'No spam, bulk unsolicited messaging, or marketing without consent.',
-            'Honor STOP requests — recipients who reply STOP must not be messaged again, and HELP requests must be supported.',
-            'Comply with all applicable messaging and telemarketing laws and carrier requirements.',
+            'Honor opt-out requests — if a Client asks you to stop, do not message them again through any channel.',
+            'Comply with all applicable email, messaging and telemarketing laws, and with the terms of any messaging app you use, including for messages you send from your own phone.',
           ]}
         />
       </Section>

@@ -30,7 +30,8 @@ export default function CookiesPage() {
           Pawxis uses only what it needs to work. We rely on strictly necessary
           cookies to run authenticated sessions and keep them secure, plus your
           browser&rsquo;s local storage for a small set of preferences. We do{' '}
-          <strong>not</strong> use advertising cookies or cross-site tracking.
+          <strong>not</strong> set advertising cookies or cross-site tracking
+          cookies, and we do not run analytics or ad trackers on our pages.
         </P>
       </Section>
 
@@ -54,8 +55,9 @@ export default function CookiesPage() {
       <Section heading="4. What we do not use">
         <UL
           items={[
-            'No advertising or marketing cookies.',
-            'No cross-site or third-party tracking cookies.',
+            'No advertising or marketing cookies from us.',
+            'No cross-site tracking cookies set by us.',
+            'No analytics or ad-tracking tools on our pages.',
             'No selling of browsing data.',
           ]}
         />
@@ -63,10 +65,19 @@ export default function CookiesPage() {
 
       <Section heading="5. Third-party processing">
         <P>
-          Some providers we use to deliver the Service — such as Stripe for
-          payments — may set their own cookies when you interact with their
-          components (for example a checkout). Those cookies are governed by the
-          respective provider&rsquo;s policies.
+          Some providers we use may set their own cookies or similar storage
+          when you open their pages or components:
+        </P>
+        <UL
+          items={[
+            'Stripe and Polar, on their checkout pages when you pay a deposit or a subscription.',
+            'Google, if you choose to sign in with Google.',
+            'Mapbox and OpenStreetMap, when a page shows a map.',
+            'Supademo, in the product tour on our home page. It loads only after you click to start it.',
+          ]}
+        />
+        <P>
+          Those cookies are governed by the respective provider&rsquo;s policies.
         </P>
       </Section>
 

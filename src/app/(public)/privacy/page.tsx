@@ -41,7 +41,10 @@ export default function PrivacyPage() {
           items={[
             <>
               <strong>Account data.</strong> Name, email address, phone number,
-              password (stored hashed), business details, and preferences.
+              password (stored hashed), business details such as business name,
+              logo, prices and service area, and preferences. If you choose to
+              sign in with Google, Google shares your name, email address and
+              profile picture with us.
             </>,
             <>
               <strong>Client and pet records.</strong> Information Groomers enter
@@ -50,19 +53,41 @@ export default function PrivacyPage() {
             </>,
             <>
               <strong>Booking and messaging data.</strong> Appointments,
-              availability, and the content and delivery status of SMS and email
-              reminders.
+              availability, and the confirmations, reminders and other messages
+              sent through the Service, with their delivery status. If a Groomer
+              logs a message they sent from their own phone (for example by
+              WhatsApp or text), we store the text of that message in the
+              Client&rsquo;s conversation.
             </>,
             <>
-              <strong>Payment data.</strong> Subscription and SMS top-up payments are
-              processed by Polar, our merchant of record; Client deposits are
-              processed by Stripe. We receive limited details such as status
-              and the last digits of a card; we do not store full card numbers.
+              <strong>Location data.</strong> Addresses are converted into map
+              coordinates to check service areas and plan routes. When a Groomer
+              starts live tracking for a visit, the position of the
+              Groomer&rsquo;s device is stored for up to two hours and shown to
+              the Client of that visit.
+            </>,
+            <>
+              <strong>Payment data.</strong> Pawxis subscriptions and message
+              top-ups are paid through Polar, our merchant of record. We receive
+              limited details such as plan status and the last digits of a card;
+              we do not see or store full card numbers. Client deposits are paid
+              to the Groomer, either by card through Stripe into the
+              Groomer&rsquo;s own Stripe account, or through a payment link the
+              Groomer provides. If a Groomer connects their own Stripe account,
+              we store the restricted API key they give us, encrypted. Pawxis
+              does not receive or hold Client deposit funds.
             </>,
             <>
               <strong>Device and usage data.</strong> IP address, device and
               browser information, and log data, used to operate the Service and
               for security and abuse prevention.
+            </>,
+            <>
+              <strong>Free-trial record.</strong> To limit repeated free trials,
+              we keep a small record that stays after an account is closed: the
+              normalized email address, a partly masked IP address and an
+              anonymous device identifier (a hash), plus a one-way hash of a
+              phone number if one is verified.
             </>,
           ]}
         />
@@ -80,14 +105,20 @@ export default function PrivacyPage() {
         />
       </Section>
 
-      <Section heading="4. SMS and email consent">
+      <Section heading="4. Email and other messages">
         <P>
-          Groomers are responsible for obtaining consent from their Clients before
-          contacting them by SMS or email through the Service, and for honoring
-          opt-outs. Clients can opt out of SMS at any time by replying{' '}
-          <strong>STOP</strong> to a message; replying <strong>HELP</strong> requests
-          help. We process these messages to deliver reminders and confirmations and
-          do not sell message content.
+          Pawxis sends booking confirmations, reminders and similar service
+          messages to a Groomer&rsquo;s Clients by email, on the
+          Groomer&rsquo;s behalf. Groomers are responsible for having the right
+          to contact their Clients and for honoring opt-out requests. Groomers
+          can also message Clients through WhatsApp or their phone&rsquo;s
+          texting app from their own device; those messages are sent by the
+          Groomer, not by Pawxis.
+        </P>
+        <P>
+          Pawxis does not currently send text messages (SMS) automatically. If
+          we add this, we will update this policy first and ask for consent
+          where the law requires it. We do not sell message content.
         </P>
       </Section>
 
@@ -95,8 +126,10 @@ export default function PrivacyPage() {
         <P>
           We use strictly necessary cookies to keep you signed in and to secure
           your session, and we use your browser&rsquo;s local storage to remember
-          your theme preference. We do not use advertising or cross-site tracking
-          cookies. See our <a href="/cookies">Cookie Policy</a> for details.
+          your theme preference. We do not set advertising or cross-site
+          tracking cookies. Some tools we embed, such as maps and checkout pages,
+          may set their own. See our <a href="/cookies">Cookie Policy</a> for
+          details.
         </P>
       </Section>
 
@@ -109,22 +142,42 @@ export default function PrivacyPage() {
           items={[
             <>
               <strong>Polar</strong> — merchant of record for Pawxis
-              subscriptions and SMS top-ups, including tax handling.
+              subscriptions and message top-ups, including tax handling.
             </>,
             <>
-              <strong>Stripe</strong> — via Stripe Connect, Client deposit
-              processing paid to Groomers.
+              <strong>Stripe</strong> — only when a Groomer connects their own
+              Stripe account: processes Client card deposits for that Groomer.
             </>,
             <>
-              <strong>Twilio</strong> — delivery of SMS reminders and
-              notifications.
+              <strong>Resend</strong> — delivery of email, such as booking
+              confirmations, reminders and account messages.
             </>,
             <>
-              <strong>Email provider</strong> — delivery of transactional email.
+              <strong>MongoDB Atlas</strong> — database hosting for account,
+              client, pet and booking records.
             </>,
             <>
-              <strong>Hosting and infrastructure providers</strong> — hosting,
-              storage, and operational tooling.
+              <strong>Upstash</strong> — short-lived data such as slot holds,
+              rate-limit counters and live-tracking positions.
+            </>,
+            <>
+              <strong>Vercel</strong> — hosting of the website and application.
+            </>,
+            <>
+              <strong>Cloudinary</strong> — storage of images uploaded to the
+              Service, such as logos, pet photos and before/after photos.
+            </>,
+            <>
+              <strong>Mapbox and OpenStreetMap</strong> — address search, maps
+              and driving directions. They receive addresses or coordinates and
+              the IP address of the device loading a map.
+            </>,
+            <>
+              <strong>Google</strong> — only if you choose to sign in with Google.
+            </>,
+            <>
+              <strong>Supademo</strong> — the interactive product tour on our
+              website. It loads only after you click to start it.
             </>,
           ]}
         />
@@ -139,9 +192,13 @@ export default function PrivacyPage() {
         <P>
           We keep personal data for as long as an account is active and as needed
           to provide the Service, then for a reasonable period to meet legal,
-          accounting, and security obligations. Groomers can delete Client and pet
-          records they control; some data may persist in backups for a limited
-          time before being overwritten.
+          accounting, and security obligations. To delete a Client or pet
+          record, or your whole account, email{' '}
+          <Placeholder>{PH.email}</Placeholder> from the address on your
+          account. We will delete it, except for data we must keep for legal or
+          accounting reasons and the free-trial record described in section 2.
+          Some data may persist in backups for a limited time before being
+          overwritten.
         </P>
       </Section>
 
@@ -159,9 +216,9 @@ export default function PrivacyPage() {
       <Section heading="9. Security">
         <P>
           We use technical and organizational measures designed to protect
-          personal data, including encrypted transport, hashed passwords, and
-          access controls. No system is perfectly secure, so we cannot guarantee
-          absolute security.
+          personal data, including encrypted transport, hashed passwords,
+          encryption of stored payment API keys, and access controls. No system
+          is perfectly secure, so we cannot guarantee absolute security.
         </P>
       </Section>
 

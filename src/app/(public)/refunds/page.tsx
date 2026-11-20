@@ -28,8 +28,9 @@ export default function RefundsPage() {
       <Section heading="1. Client deposits are set by each Groomer">
         <P>
           When a Client pays a deposit through a Groomer&rsquo;s booking page,
-          that payment is processed via Stripe and goes directly to the Groomer.
-          The deposit amount, cancellation window, no-show rules, and any refund
+          that payment goes directly to the Groomer, through the Groomer&rsquo;s
+          own Stripe account or the Groomer&rsquo;s own payment link. The deposit
+          amount, cancellation window, no-show rules, and any refund
           of a deposit are set and controlled by the <strong>Groomer</strong>,
           not by Pawxis.
         </P>
@@ -52,9 +53,9 @@ export default function RefundsPage() {
 
       <Section heading="3. Pawxis subscription — free trial">
         <P>
-          New Groomer accounts may include a 14-day free trial. We do not charge
-          you during the trial. If you cancel before the trial ends, you are not
-          billed for the subscription, so there is nothing to refund.
+          New Groomer accounts may include a 14-day free trial. The trial does
+          not require a payment method and we do not charge you during it, so
+          there is nothing to refund.
         </P>
       </Section>
 
@@ -67,7 +68,7 @@ export default function RefundsPage() {
           ]}
         />
         <P>
-          Subscriptions and SMS top-ups are sold through Polar, our merchant of
+          Subscriptions and message top-ups are sold through Polar, our merchant of
           record. Where a refund is granted, Polar returns it to your original
           payment method.
         </P>

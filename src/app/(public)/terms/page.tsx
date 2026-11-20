@@ -26,7 +26,7 @@ export default function TermsPage() {
   return (
     <LegalPage
       title="Terms of Service"
-      intro="These terms govern your access to and use of Pawxis, the mobile pet-grooming booking and subscription platform operated by the company named below."
+      intro="These terms govern your access to and use of Pawxis, the mobile pet-grooming booking and subscription platform operated by the person or business named below."
     >
       <Section heading="1. Who we are and acceptance of these terms">
         <P>
@@ -70,6 +70,10 @@ export default function TermsPage() {
           services arranged between a Groomer and a Client, and we do not provide
           pet-grooming services ourselves.
         </P>
+        <P>
+          Features described as &ldquo;coming soon&rdquo; are not yet available.
+          We do not promise when, or whether, they will be released.
+        </P>
       </Section>
 
       <Section heading="3. Accounts and eligibility">
@@ -86,19 +90,19 @@ export default function TermsPage() {
       <Section heading="4. Subscriptions, trial, and billing">
         <P>
           Groomer access to Pawxis is sold as a subscription. New Groomer
-          accounts may begin with a 14-day free trial. We do not charge you
-          during the trial, and if you cancel before the trial ends you will not
-          be billed for the subscription.
+          accounts may begin with a 14-day free trial that does not require a
+          payment method. We do not charge you during the trial. When it ends,
+          you can choose a paid plan to keep using the Service.
         </P>
         <UL
           items={[
-            'After the trial, the subscription renews automatically each billing period until cancelled, and your chosen payment method is charged the then-current fee plus any applicable taxes.',
-            'You can cancel at any time from your account settings. Cancellation stops future renewals; it does not retroactively refund the current period except as described in our Refund & Cancellation Policy.',
+            'A paid subscription renews automatically each billing period until cancelled, and the payment method you provided is charged the then-current fee plus any applicable taxes.',
+            'You can cancel at any time from the Billing page of your account. Cancellation stops future renewals; it does not retroactively refund the current period except as described in our Refund & Cancellation Policy.',
             'We may change subscription pricing with reasonable advance notice; changes apply to billing periods that begin after the notice.',
           ]}
         />
         <P>
-          Pawxis subscriptions and SMS top-ups are sold through Polar
+          Pawxis subscriptions and message top-ups are sold through Polar
           (polar.sh), which acts as our reseller and merchant of record. Polar
           processes the payment, issues the receipt, and handles applicable
           sales tax or VAT. By subscribing you also agree to Polar&rsquo;s
@@ -108,25 +112,27 @@ export default function TermsPage() {
 
       <Section heading="5. Client deposits and payment processing">
         <P>
-          Where a Groomer requires a deposit, payments from Clients are processed
-          through Stripe using Stripe Connect, and funds are paid directly to the
-          Groomer&rsquo;s connected Stripe account. For these Client deposits,
-          Pawxis is <strong>not</strong> the merchant of record — the Groomer is
-          the merchant and is solely responsible for the underlying grooming
-          service, pricing, taxes, deposit terms, and any refunds.
+          Where a Groomer requires a deposit, the Client pays it either by card
+          through Stripe, into the Groomer&rsquo;s own Stripe account that the
+          Groomer connected to Pawxis, or through a payment link the Groomer
+          provides. The funds go directly to the Groomer. For these Client
+          deposits, Pawxis is <strong>not</strong> the merchant of record — the
+          Groomer is the merchant and is solely responsible for the underlying
+          grooming service, pricing, taxes, deposit terms, and any refunds.
         </P>
         <P>
-          Pawxis facilitates the transaction and may collect platform or
-          subscription fees from Groomers, but we do not hold Client deposit funds
-          as the seller of the grooming service.
+          Pawxis does not receive, hold or transfer Client deposit funds, and we
+          do not take a percentage of them. We charge Groomers only the
+          subscription fees described above. The Groomer is responsible for
+          their Stripe account and its terms.
         </P>
       </Section>
 
       <Section heading="6. Acceptable use">
         <P>
           You agree to use the Service lawfully and not to misuse it. Prohibited
-          conduct includes, without limitation, sending unlawful or non-consented
-          SMS or email, scraping or bulk-extracting data, attempting to breach
+          conduct includes, without limitation, sending unlawful, unsolicited or
+          non-consented messages, scraping or bulk-extracting data, attempting to breach
           security or access other users&rsquo; data, uploading malware, or
           infringing others&rsquo; rights. Our{' '}
           <a href="/acceptable-use">Acceptable Use Policy</a> is incorporated into
@@ -140,8 +146,9 @@ export default function TermsPage() {
           including Client and pet records. You grant us a limited license to
           host, process, and display that content solely to operate and improve
           the Service. You are responsible for having the necessary rights and
-          consents for the data you upload, including consent to contact Clients
-          by SMS or email. Our handling of personal data is described in our{' '}
+          consents for the data you upload, including the right to contact
+          Clients by email, WhatsApp, text or any other channel you use. Our
+          handling of personal data is described in our{' '}
           <a href="/privacy">Privacy Policy</a>.
         </P>
       </Section>
